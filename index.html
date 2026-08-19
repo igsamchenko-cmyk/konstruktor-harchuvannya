@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Індивідуальний розрахунок калорійності та БЖВ і побудова тижневого меню з рівноцінних продуктів.">
+<meta name="theme-color" content="#2a78d6">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" type="image/png" href="./icon-192.png">
 <title>Конструктор програми харчування</title>
 <style>
   :root{
@@ -160,6 +165,38 @@
   .notice{background:#fff;border:1px solid var(--hairline);border-left:4px solid var(--warn);
     border-radius:10px;padding:10px 14px;font-size:13.5px;color:var(--ink-2);margin-top:12px}
 
+  /* --- прогрес (вага) --- */
+  .wform{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:14px}
+  .wform label.f{flex:0 0 auto}
+  .wform input{width:150px}
+  .wsum{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;margin-bottom:10px;font-size:14px;color:var(--ink-2)}
+  .wsum b{font-size:20px;color:var(--ink)}
+  .wchart{border:1px solid var(--border);border-radius:12px;background:#fff;padding:12px 8px 4px;overflow:hidden}
+  .wchart svg{display:block;width:100%;height:auto}
+  .wchart .axis{stroke:#c3c2b7;stroke-width:1}
+  .wchart .grid{stroke:#e1e0d9;stroke-width:1}
+  .wchart .lbl{fill:var(--muted);font-size:11px;font-family:inherit}
+  .wchart .dlab{fill:var(--ink);font-size:12px;font-weight:600;font-family:inherit}
+  .wlist{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+  .wlist li{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--hairline);
+    border-radius:999px;padding:4px 6px 4px 12px;font-size:13px;background:#fff;font-variant-numeric:tabular-nums}
+  .wlist button{border:0;background:#f0efec;border-radius:50%;width:20px;height:20px;line-height:1;
+    cursor:pointer;color:var(--ink-2);font-size:12px}
+  .wlist button:hover{background:var(--critical);color:#fff}
+  .wempty{color:var(--muted);font-size:14px;padding:24px 12px;text-align:center}
+
+  /* --- контакти --- */
+  .cta{margin-top:18px;background:linear-gradient(135deg,#eef4fc,#fcfcfb);
+    border:1px solid var(--border);border-radius:14px;padding:22px;display:flex;
+    flex-wrap:wrap;gap:16px;align-items:center}
+  .cta .ava{width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;
+    display:grid;place-items:center;font-size:20px;font-weight:700;flex:0 0 auto}
+  .cta .txt{flex:1;min-width:220px}
+  .cta .txt b{display:block;font-size:16px}
+  .cta .txt span{color:var(--ink-2);font-size:13.5px}
+  .cta .btns{display:flex;flex-wrap:wrap;gap:10px}
+  .cta a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:7px}
+
   /* --- print --- */
   #printView{display:none}
   @media print{
@@ -182,7 +219,8 @@
 </head>
 <body>
 <header class="app">
-  <span class="dev-badge"><span class="dot"></span>developed by <b>Ihor Samchenko</b></span>
+  <a class="dev-badge" href="https://t.me/samchenko_i" target="_blank" rel="noopener"
+     title="Написати в Telegram"><span class="dot"></span>developed by <b>Ihor Samchenko</b></a>
   <h1>Конструктор програми харчування</h1>
   <p>Індивідуальний розрахунок калорійності та БЖВ і побудова тижневого меню з рівноцінних продуктів —
      обирайте будь-який продукт зі списку, грами перерахуються автоматично.</p>
@@ -192,7 +230,9 @@
 <!-- ======== КРОК 1 ======== -->
 <section class="card" id="step1">
   <div class="step-tag"><span class="num">1</span> Дані клієнта</div>
-  <h2>Анкета</h2>
+  <h2 style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">Анкета
+    <button class="btn" id="btnNewClient" style="font-size:13px" title="Очистити всі дані й почати з чистої анкети">🧹 Новий клієнт</button></h2>
+  <p class="hint" style="margin-top:-8px">Усі дані автоматично зберігаються у вашому браузері на цьому пристрої.</p>
   <div class="grid cols-4">
     <label class="f">Ім'я клієнта
       <input type="text" id="fName" placeholder="Напр., Олена">
@@ -330,6 +370,35 @@
   <p class="hint" style="margin-top:14px">Програма має рекомендаційний характер і не замінює консультацію лікаря.
     При хронічних захворюваннях, вагітності чи РХП раціон погоджуйте з лікарем.</p>
 </section>
+
+<!-- ======== КРОК 5 ======== -->
+<section class="card" id="step5">
+  <div class="step-tag"><span class="num">5</span> Прогрес</div>
+  <h2>Трекінг ваги</h2>
+  <p class="hint" style="margin-top:-8px">Вносьте вагу раз на тиждень, зранку натщесерце — і стежте за динамікою.
+    Записи зберігаються на цьому пристрої.</p>
+  <div class="wform">
+    <label class="f">Дата<input type="date" id="wDate"></label>
+    <label class="f">Вага, кг<input type="number" id="wKg" min="30" max="300" step="0.1" placeholder="70.5"></label>
+    <button class="btn primary" id="btnAddW" style="height:38px">Додати запис</button>
+  </div>
+  <div class="wsum" id="wSummary"></div>
+  <div class="wchart" id="wChart"></div>
+  <ul class="wlist" id="wList"></ul>
+</section>
+
+<div class="cta">
+  <div class="ava">ІС</div>
+  <div class="txt">
+    <b>Потрібна персональна програма з супроводом?</b>
+    <span>Ihor Samchenko — індивідуальні програми харчування: розрахунок під вашу ціль,
+      корекція раціону та підтримка на всьому шляху.</span>
+  </div>
+  <div class="btns">
+    <a class="btn primary" href="https://t.me/samchenko_i" target="_blank" rel="noopener">✈️ Написати в Telegram</a>
+    <a class="btn" href="mailto:igsamchenko@gmail.com?subject=Персональна програма харчування">✉️ Написати на e-mail</a>
+  </div>
+</div>
 
 </main>
 <div id="printView"></div>
@@ -491,12 +560,50 @@ function gramBounds(p){
 /* ============ СТАН ============ */
 const DAY_NAMES = ['Понеділок','Вівторок','Середа','Четвер','П’ятниця','Субота','Неділя'];
 const DAY_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
-const state = {
+const DEFAULT_STATE = () => ({
   profile:{ name:'', sex:'f', age:30, height:168, weight:70, activity:1.375, goal:'loss' },
   settings:{ deficit:17, surplus:12, proteinPerKg:1.8, fatPct:27, meals:4 },
   activeDay:0,
-  days:[]           /* days[7] = [ meal -> [ {prodId, customG|null} ] ] */
-};
+  days:[],          /* days[7] = [ meal -> [ {prodId, customG|null} ] ] */
+  weights:[]        /* [{d:'2026-08-19', w:70.5}] */
+});
+const state = DEFAULT_STATE();
+
+/* ---- автозбереження у браузері ---- */
+const STORAGE_KEY = 'nutri_konstruktor_v1';
+let saveTimer = null;
+function saveLocal(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        profile:state.profile, settings:state.settings, days:state.days,
+        weights:state.weights, customProducts:PRODUCTS.filter(p=>p.custom)
+      }));
+    }catch(e){/* приватний режим або file:// — просто без збереження */}
+  }, 250);
+}
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    if(data.customProducts) for(const cp of data.customProducts)
+      if(!prodById(cp.i)) PRODUCTS.push(cp);
+    Object.assign(state.profile, data.profile||{});
+    Object.assign(state.settings, data.settings||{});
+    if(Array.isArray(data.days)) state.days = data.days;
+    if(Array.isArray(data.weights)) state.weights = data.weights;
+    for(const day of state.days) for(const meal of day) meal.forEach((c,ci)=>{
+      if(!prodById(c.prodId)){
+        const tpl = MEAL_COMPS[c.mealId] && MEAL_COMPS[c.mealId][ci];
+        c.prodId = pool(tpl ? tpl.cat : 'carb')[0].i;
+        c.customG = null;
+      }
+    });
+    return true;
+  }catch(e){ return false; }
+}
 
 const byId = id => document.getElementById(id);
 const prodById = id => PRODUCTS.find(p=>p.i===id);
@@ -684,6 +791,7 @@ function renderDay(){
         </div>`;
       }).join('')}
     </div>`).join('');
+  saveLocal();
 }
 
 function renderShop(){
@@ -707,7 +815,74 @@ function renderShop(){
 }
 
 function renderAll(){
-  renderTargets(); renderDayTabs(); renderDay(); renderShop();
+  renderTargets(); renderDayTabs(); renderDay(); renderShop(); renderWeight(); saveLocal();
+}
+
+/* ============ ТРЕКІНГ ВАГИ ============ */
+const fmtW = w => (Math.round(w*10)/10).toLocaleString('uk-UA');
+const fmtD = iso => { const [y,m,d] = iso.split('-'); return `${d}.${m}`; };
+function renderWeight(){
+  const ws = [...state.weights].sort((a,b)=>a.d.localeCompare(b.d));
+  /* підсумок */
+  let sum = '';
+  if(ws.length){
+    const first = ws[0], last = ws[ws.length-1];
+    const diff = last.w - first.w;
+    const col = diff < -0.05 ? 'var(--good-text)' : diff > 0.05 ? 'var(--s-fat)' : 'var(--ink-2)';
+    const goalGain = state.profile.goal === 'gain';
+    const diffCol = goalGain ? (diff > 0.05 ? 'var(--good-text)' : col) : col;
+    sum = `<span>Зараз: <b>${fmtW(last.w)} кг</b></span>
+      <span>Початок: ${fmtW(first.w)} кг (${fmtD(first.d)})</span>
+      <span style="color:${diffCol};font-weight:700">${diff>0?'+':''}${fmtW(diff)} кг за весь час</span>`;
+  }
+  byId('wSummary').innerHTML = sum;
+  /* список записів */
+  byId('wList').innerHTML = ws.map((e,i)=>
+    `<li>${fmtD(e.d)} — <b>${fmtW(e.w)}</b> кг
+      <button data-i="${state.weights.indexOf(e)}" title="Видалити запис">✕</button></li>`).join('');
+  /* графік */
+  const box = byId('wChart');
+  if(ws.length < 2){
+    box.innerHTML = `<div class="wempty">${ws.length===0
+      ? 'Додайте перший запис ваги — і тут з’явиться графік динаміки.'
+      : 'Додайте ще один запис — і побачите графік динаміки.'}</div>`;
+    return;
+  }
+  const W=640, H=240, L=46, R=18, T=16, B=30;
+  const xs = ws.map(e=>new Date(e.d+'T00:00:00').getTime());
+  const ysv = ws.map(e=>e.w);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  let y0 = Math.min(...ysv), y1 = Math.max(...ysv);
+  const pad = Math.max(0.5,(y1-y0)*0.15); y0-=pad; y1+=pad;
+  const X = t => L + (x1===x0 ? (W-L-R)/2 : (t-x0)/(x1-x0)*(W-L-R));
+  const Y = v => T + (1-(v-y0)/(y1-y0))*(H-T-B);
+  /* сітка: 4 горизонтальні лінії */
+  let g='';
+  for(let i=0;i<=3;i++){
+    const v = y0 + (y1-y0)*i/3, y = Y(v);
+    g += `<line class="grid" x1="${L}" y1="${y}" x2="${W-R}" y2="${y}"/>
+          <text class="lbl" x="${L-6}" y="${y+3.5}" text-anchor="end">${fmtW(v)}</text>`;
+  }
+  /* підписи дат: перший, останній, середина */
+  const idxs = ws.length>2 ? [0, Math.floor((ws.length-1)/2), ws.length-1] : [0, ws.length-1];
+  for(const i of new Set(idxs))
+    g += `<text class="lbl" x="${X(xs[i])}" y="${H-8}" text-anchor="middle">${fmtD(ws[i].d)}</text>`;
+  const ptsStr = ws.map((e,i)=>`${X(xs[i])},${Y(e.w)}`).join(' ');
+  let dots='';
+  ws.forEach((e,i)=>{
+    dots += `<circle cx="${X(xs[i])}" cy="${Y(e.w)}" r="4.5" fill="var(--accent)" stroke="#fff" stroke-width="2">
+      <title>${fmtD(e.d)}: ${fmtW(e.w)} кг</title></circle>`;
+  });
+  const lastX = X(xs[xs.length-1]), lastY = Y(ysv[ysv.length-1]);
+  const anchor = lastX > W-70 ? 'end' : 'start';
+  const dl = `<text class="dlab" x="${lastX + (anchor==='end'?-9:9)}" y="${lastY-9}" text-anchor="${anchor}">${fmtW(ysv[ysv.length-1])} кг</text>`;
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Графік динаміки ваги">
+    ${g}
+    <line class="axis" x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}"/>
+    <polyline points="${ptsStr}" fill="none" stroke="var(--accent)" stroke-width="2"
+      stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}${dl}
+  </svg>`;
 }
 
 /* ============ ДРУК ============ */
@@ -750,7 +925,7 @@ function buildPrintView(){
 function saveToFile(){
   const custom = PRODUCTS.filter(p=>p.custom);
   const data = JSON.stringify({v:1, profile:state.profile, settings:state.settings,
-    days:state.days, customProducts:custom}, null, 1);
+    days:state.days, weights:state.weights, customProducts:custom}, null, 1);
   const blob = new Blob([data], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -768,6 +943,7 @@ function loadFromFile(file){
       Object.assign(state.profile, data.profile||{});
       Object.assign(state.settings, data.settings||{});
       if(Array.isArray(data.days)) state.days = data.days;
+      if(Array.isArray(data.weights)) state.weights = data.weights;
       /* замінюємо посилання на невідомі продукти */
       for(const day of state.days) for(const meal of day) meal.forEach((c,ci)=>{
         if(!prodById(c.prodId)){
@@ -880,9 +1056,44 @@ byId('btnAddProd').addEventListener('click', ()=>{
   alert(`Продукт «${n}» додано. Тепер він доступний у списках своєї категорії.`);
 });
 
+/* ---- вага: додати / видалити ---- */
+byId('btnAddW').addEventListener('click', ()=>{
+  const d = byId('wDate').value;
+  const w = parseFloat(String(byId('wKg').value).replace(',','.'));
+  if(!d || !w || w<30 || w>300){ alert('Вкажіть дату та вагу (30–300 кг).'); return; }
+  const ex = state.weights.find(e=>e.d===d);
+  if(ex) ex.w = w; else state.weights.push({d, w});
+  byId('wKg').value='';
+  renderWeight(); saveLocal();
+});
+byId('wList').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  state.weights.splice(+b.dataset.i, 1);
+  renderWeight(); saveLocal();
+});
+
+/* ---- новий клієнт ---- */
+byId('btnNewClient').addEventListener('click', ()=>{
+  if(!confirm('Очистити всі дані (анкету, меню, записи ваги) й почати з чистої анкети?\n' +
+    'Порада: перед цим можна зберегти поточну програму у файл.')) return;
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  for(let i=PRODUCTS.length-1;i>=0;i--) if(PRODUCTS[i].custom) PRODUCTS.splice(i,1);
+  Object.assign(state, DEFAULT_STATE());
+  genWeek(); syncFormFromState(); renderAll();
+});
+
 /* ============ СТАРТ ============ */
-genWeek();
+const restored = loadLocal();
+ensureDays();
+if(restored) syncFormFromState();
 renderAll();
+/* дата за замовчуванням — сьогодні (локальний час) */
+{ const t = new Date();
+  byId('wDate').value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; }
+/* PWA: працює, коли сайт відкрито за https-посиланням */
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
 </script>
 </body>
 </html>
