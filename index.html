@@ -12,12 +12,39 @@
 <style>
   :root{
     color-scheme: light;
-    --page:#f9f9f7; --surface:#fcfcfb;
+    --page:#f9f9f7; --surface:#fcfcfb; --field:#ffffff; --track:#f0efec;
     --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
     --hairline:#e1e0d9; --border:rgba(11,11,11,0.10);
-    --accent:#2a78d6; --accent-dark:#1c5cab;
+    --accent:#2a78d6; --accent-dark:#1c5cab; --accent-soft:#eef4fc;
     --s-prot:#2a78d6; --s-fat:#eb6834; --s-carb:#1baf7a;
     --good:#0ca30c; --good-text:#006300; --warn:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --warn-text:#8a5b00;
+    --shadow:rgba(11,11,11,0.06); --axis:#c3c2b7;
+  }
+  /* темна тема: ті самі ролі, кроки підібрані під темну поверхню */
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --field:#232322; --track:#2c2c2a;
+    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+    --hairline:#2c2c2a; --border:rgba(255,255,255,0.10);
+    --accent:#3987e5; --accent-dark:#86b6ef; --accent-soft:#1f2a38;
+    --s-prot:#3987e5; --s-fat:#d95926; --s-carb:#199e70;
+    --good:#0ca30c; --good-text:#0ca30c; --warn:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --warn-text:#fab219;
+    --shadow:rgba(0,0,0,0.4); --axis:#383835;
+  }
+  @media(prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page:#0d0d0d; --surface:#1a1a19; --field:#232322; --track:#2c2c2a;
+      --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+      --hairline:#2c2c2a; --border:rgba(255,255,255,0.10);
+      --accent:#3987e5; --accent-dark:#86b6ef; --accent-soft:#1f2a38;
+      --s-prot:#3987e5; --s-fat:#d95926; --s-carb:#199e70;
+      --good:#0ca30c; --good-text:#0ca30c; --warn:#fab219; --serious:#ec835a; --critical:#d03b3b;
+      --warn-text:#fab219;
+      --shadow:rgba(0,0,0,0.4); --axis:#383835;
+    }
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--page);color:var(--ink);
@@ -34,17 +61,25 @@
     border-radius:999px;padding:6px 13px 6px 10px;
     font-size:12.5px;font-weight:600;color:var(--ink-2);
     text-decoration:none;white-space:nowrap;
-    box-shadow:0 1px 2px rgba(11,11,11,0.06);
+    box-shadow:0 1px 2px var(--shadow);
     transition:border-color .15s,color .15s;
   }
   .dev-badge:hover{border-color:var(--accent);color:var(--accent-dark)}
   .dev-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:0 0 auto}
   .dev-badge b{color:var(--ink);font-weight:700}
+  .hdr-tools{position:absolute;top:28px;right:16px;z-index:6;display:flex;align-items:center;gap:8px}
+  .hdr-tools .dev-badge{position:static}
+  .theme-btn{width:34px;height:34px;flex:0 0 auto;border-radius:50%;cursor:pointer;
+    border:1px solid var(--border);background:var(--surface);color:var(--ink-2);
+    font-size:15px;line-height:1;display:grid;place-items:center;
+    box-shadow:0 1px 2px var(--shadow);transition:border-color .15s,color .15s}
+  .theme-btn:hover{border-color:var(--accent);color:var(--accent-dark)}
   @media(max-width:640px){
-    header.app h1{padding-right:0}
-    .dev-badge{position:static;display:inline-flex;margin-top:12px}
+    header.app h1{padding-right:52px}
+    .hdr-tools{position:static;margin-top:12px}
+    .theme-btn{position:absolute;top:24px;right:16px}
   }
-  @media print{ .dev-badge{display:none} }
+  @media print{ .dev-badge,.hdr-tools{display:none} }
 
   section.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
     padding:20px 22px;margin-top:18px}
@@ -64,7 +99,7 @@
   label.f{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--ink-2)}
   input[type=text],input[type=number],select{
     font:inherit;padding:8px 10px;border:1px solid var(--hairline);border-radius:9px;
-    background:#fff;color:var(--ink);width:100%}
+    background:var(--field);color:var(--ink);width:100%}
   input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
   .seg{display:flex;border:1px solid var(--hairline);border-radius:10px;overflow:hidden}
   .seg button{flex:1;padding:9px 6px;border:0;background:transparent;font:inherit;font-size:14px;
@@ -74,15 +109,35 @@
   .goalgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
   @media(max-width:640px){.goalgrid{grid-template-columns:1fr}}
   .goal{border:1px solid var(--hairline);border-radius:12px;padding:12px 14px;cursor:pointer;
-    background:#fff;text-align:left;font:inherit}
+    background:var(--field);text-align:left;font:inherit}
   .goal.on{border-color:var(--accent);outline:2px solid var(--accent)}
   .goal b{display:block;margin-bottom:2px}
   .goal span{font-size:12.5px;color:var(--muted)}
 
+  /* --- блок результату --- */
+  .result{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;
+    padding:6px 0 20px;border-bottom:1px solid var(--hairline);margin-bottom:18px}
+  @media(max-width:700px){.result{grid-template-columns:1fr;gap:18px}}
+  .hero .kcal{font-size:56px;font-weight:700;line-height:1;letter-spacing:-0.02em;color:var(--ink)}
+  @media(max-width:480px){.hero .kcal{font-size:44px}}
+  .hero .unit{font-size:15px;font-weight:600;color:var(--ink-2);margin-left:6px;letter-spacing:0}
+  .hero .cap{font-size:13px;font-weight:600;color:var(--accent-dark);text-transform:uppercase;
+    letter-spacing:0.06em;margin-bottom:8px}
+  .hero .expl{margin-top:8px;font-size:13.5px;color:var(--ink-2);max-width:300px}
+  .split .shead{display:flex;justify-content:space-between;align-items:baseline;
+    font-size:13px;color:var(--ink-2);margin-bottom:7px}
+  .sbar{display:flex;height:34px;border-radius:8px;overflow:hidden;gap:2px;background:var(--track)}
+  .sbar div{display:grid;place-items:center;font-size:12.5px;font-weight:700;color:#fff;
+    min-width:0;overflow:hidden;white-space:nowrap}
+  .slegend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:13px}
+  .slegend span{display:inline-flex;align-items:center;gap:7px;color:var(--ink-2)}
+  .slegend i{width:9px;height:9px;border-radius:2px;font-style:normal;flex:0 0 auto}
+  .slegend b{color:var(--ink)}
+
   /* --- stat tiles --- */
   .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
   @media(max-width:760px){.tiles{grid-template-columns:1fr 1fr}}
-  .tile{border:1px solid var(--border);border-radius:12px;padding:14px 16px;background:#fff}
+  .tile{border:1px solid var(--border);border-radius:12px;padding:14px 16px;background:var(--field)}
   .tile .lbl{font-size:12.5px;font-weight:600;color:var(--ink-2);display:flex;align-items:center;gap:7px}
   .tile .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
   .tile .val{font-size:27px;font-weight:700;margin-top:3px;letter-spacing:-0.01em}
@@ -102,12 +157,12 @@
   .daytabs button:last-child{border-right:0}
   .daytabs button.on{background:var(--accent);color:#fff;font-weight:600}
   .btn{font:inherit;font-weight:600;padding:9px 14px;border-radius:10px;cursor:pointer;
-    border:1px solid var(--hairline);background:#fff;color:var(--ink)}
+    border:1px solid var(--hairline);background:var(--field);color:var(--ink)}
   .btn:hover{border-color:var(--accent);color:var(--accent-dark)}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.primary:hover{background:var(--accent-dark);color:#fff}
 
-  .daysum{border:1px solid var(--border);border-radius:12px;background:#fff;
+  .daysum{border:1px solid var(--border);border-radius:12px;background:var(--field);
     padding:14px 16px;margin-bottom:14px}
   .daysum .top{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:10px}
   .daysum .kcal{font-size:22px;font-weight:700}
@@ -115,27 +170,38 @@
   .badge{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;
     border-radius:999px;padding:3px 10px;border:1px solid}
   .badge.ok{color:var(--good-text);border-color:var(--good)}
-  .badge.warn{color:#8a5b00;border-color:var(--warn)}
+  .badge.warn{color:var(--warn-text);border-color:var(--warn)}
   .badge.bad{color:var(--critical);border-color:var(--critical)}
   .macros{display:grid;gap:7px}
   .m-row{display:grid;grid-template-columns:110px 1fr 150px;gap:10px;align-items:center;font-size:13px}
   @media(max-width:560px){.m-row{grid-template-columns:84px 1fr 118px}}
   .m-name{font-weight:600;color:var(--ink-2);display:flex;align-items:center;gap:7px}
-  .m-bar{height:10px;border-radius:5px;background:#f0efec;overflow:hidden}
+  .m-bar{height:10px;border-radius:5px;background:var(--track);overflow:hidden}
   .m-fill{height:100%;border-radius:5px 0 0 5px}
   .m-val{text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
 
-  .meal{border:1px solid var(--border);border-radius:12px;background:#fff;margin-bottom:14px;overflow:hidden}
+  .meal{border:1px solid var(--border);border-radius:12px;background:var(--field);margin-bottom:14px;overflow:hidden}
   .meal-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;
-    padding:12px 16px;border-bottom:1px solid var(--hairline);background:#fdfdfc}
+    padding:12px 16px;border-bottom:1px solid var(--hairline);background:var(--surface)}
   .meal-head h3{margin:0;font-size:16px}
   .meal-head .mk{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
   .comp{display:grid;grid-template-columns:120px 1fr 120px 90px 34px;gap:10px;align-items:center;
     padding:9px 16px;border-bottom:1px solid var(--hairline)}
   .comp:last-child{border-bottom:0}
   @media(max-width:700px){
-    .comp{grid-template-columns:1fr 100px 76px 30px}
-    .comp .cat{grid-column:1 / -1;padding-top:2px}
+    /* на телефоні кожен компонент — окрема картка, а не щільний ряд */
+    .comp{grid-template-columns:1fr auto;grid-template-areas:"cat ck" "sel sel" "g rst";
+      gap:7px 10px;padding:12px 14px}
+    .comp .cat{grid-area:cat;padding:0;font-size:12px;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted)}
+    .comp .ck{grid-area:ck;font-weight:600;color:var(--ink-2)}
+    .comp select{grid-area:sel;font-size:15px;padding:10px 10px}
+    .comp .gwrap{grid-area:g;display:flex;align-items:center;gap:8px}
+    .comp .gwrap input{flex:1;font-size:15px;padding:10px;text-align:left}
+    .comp .reset-g{grid-area:rst;align-self:center;font-size:18px;padding:6px 4px}
+    .meal-head{padding:13px 14px}
+    .meal-head .mk{font-size:12.5px}
+    section.card{padding:18px 14px}
+    .toolbar .btn{flex:1 1 auto}
   }
   .comp .cat{font-size:12.5px;font-weight:600;color:var(--ink-2)}
   .comp select{min-width:0}
@@ -162,7 +228,7 @@
   .addgrid{display:grid;grid-template-columns:2fr 1.4fr repeat(4,1fr) auto;gap:10px;align-items:end;margin-top:12px}
   @media(max-width:820px){.addgrid{grid-template-columns:1fr 1fr;}}
 
-  .notice{background:#fff;border:1px solid var(--hairline);border-left:4px solid var(--warn);
+  .notice{background:var(--field);border:1px solid var(--hairline);border-left:4px solid var(--warn);
     border-radius:10px;padding:10px 14px;font-size:13.5px;color:var(--ink-2);margin-top:12px}
 
   /* --- прогрес (вага) --- */
@@ -171,22 +237,22 @@
   .wform input{width:150px}
   .wsum{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;margin-bottom:10px;font-size:14px;color:var(--ink-2)}
   .wsum b{font-size:20px;color:var(--ink)}
-  .wchart{border:1px solid var(--border);border-radius:12px;background:#fff;padding:12px 8px 4px;overflow:hidden}
+  .wchart{border:1px solid var(--border);border-radius:12px;background:var(--field);padding:12px 8px 4px;overflow:hidden}
   .wchart svg{display:block;width:100%;height:auto}
-  .wchart .axis{stroke:#c3c2b7;stroke-width:1}
-  .wchart .grid{stroke:#e1e0d9;stroke-width:1}
+  .wchart .axis{stroke:var(--axis);stroke-width:1}
+  .wchart .grid{stroke:var(--hairline);stroke-width:1}
   .wchart .lbl{fill:var(--muted);font-size:11px;font-family:inherit}
   .wchart .dlab{fill:var(--ink);font-size:12px;font-weight:600;font-family:inherit}
   .wlist{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
   .wlist li{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--hairline);
-    border-radius:999px;padding:4px 6px 4px 12px;font-size:13px;background:#fff;font-variant-numeric:tabular-nums}
-  .wlist button{border:0;background:#f0efec;border-radius:50%;width:20px;height:20px;line-height:1;
+    border-radius:999px;padding:4px 6px 4px 12px;font-size:13px;background:var(--field);font-variant-numeric:tabular-nums}
+  .wlist button{border:0;background:var(--track);border-radius:50%;width:20px;height:20px;line-height:1;
     cursor:pointer;color:var(--ink-2);font-size:12px}
   .wlist button:hover{background:var(--critical);color:#fff}
   .wempty{color:var(--muted);font-size:14px;padding:24px 12px;text-align:center}
 
   /* --- контакти --- */
-  .cta{margin-top:18px;background:linear-gradient(135deg,#eef4fc,#fcfcfb);
+  .cta{margin-top:18px;background:linear-gradient(135deg,var(--accent-soft),var(--surface));
     border:1px solid var(--border);border-radius:14px;padding:22px;display:flex;
     flex-wrap:wrap;gap:16px;align-items:center}
   .cta .ava{width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;
@@ -197,30 +263,74 @@
   .cta .btns{display:flex;flex-wrap:wrap;gap:10px}
   .cta a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:7px}
 
-  /* --- print --- */
+  /* --- друк / PDF: завжди світлий, фірмова верстка --- */
   #printView{display:none}
   @media print{
-    body *{visibility:hidden}
-    body{background:#fff}
-    #printView,#printView *{visibility:visible}
-    #printView{display:block;position:absolute;left:0;top:0;width:100%;padding:24px;color:#0b0b0b}
-    #printView h1{font-size:22px;margin:0 0 2px}
-    #printView .sub{color:#52514e;font-size:13px;margin-bottom:14px}
-    #printView table{width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:12.5px}
-    #printView th,#printView td{border:1px solid #c3c2b7;padding:5px 8px;text-align:left;vertical-align:top}
-    #printView th{background:#f0efec}
+    @page{ margin:14mm 12mm; }
+    html,body{background:#fff !important;margin:0;padding:0}
+    /* ховаємо інтерфейс повністю — інакше лишаються порожні сторінки */
+    body > *:not(#printView){display:none !important}
+    #printView{display:block;width:100%;
+      color:#0b0b0b;font-size:11.5px;line-height:1.4;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+    /* шапка документа */
+    #printView .ph{display:flex;justify-content:space-between;align-items:flex-start;
+      gap:16px;padding-bottom:10px;border-bottom:2px solid #2a78d6;margin-bottom:14px}
+    #printView .ph h1{font-size:21px;margin:0 0 3px;letter-spacing:-0.01em}
+    #printView .ph .meta{color:#52514e;font-size:11.5px}
+    #printView .ph .by{text-align:right;font-size:11px;color:#52514e;white-space:nowrap}
+    #printView .ph .by b{display:block;font-size:13px;color:#0b0b0b}
+
+    /* норми — картки */
+    #printView .norms{display:flex;gap:8px;margin-bottom:6px}
+    #printView .norm{flex:1;border:1px solid #e1e0d9;border-radius:7px;padding:8px 10px}
+    #printView .norm .nl{font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:#52514e}
+    #printView .norm .nv{font-size:17px;font-weight:700;margin-top:1px}
+    #printView .norm.acc{background:#eef4fc;border-color:#2a78d6}
+    #printView .split{display:flex;height:9px;border-radius:5px;overflow:hidden;gap:2px;margin:8px 0 4px}
+    #printView .note{color:#52514e;font-size:10.5px;margin-bottom:14px}
+
+    /* дні */
+    #printView .day{page-break-inside:avoid;margin-bottom:12px}
+    #printView .dh{display:flex;justify-content:space-between;align-items:baseline;
+      background:#f0efec;border-radius:6px 6px 0 0;padding:6px 10px;border:1px solid #e1e0d9;border-bottom:0}
+    #printView .dh h2{font-size:13.5px;margin:0}
+    #printView .dh span{font-size:11px;color:#52514e;font-variant-numeric:tabular-nums}
+    #printView table{width:100%;border-collapse:collapse;font-size:11px}
+    #printView th,#printView td{border:1px solid #e1e0d9;padding:4px 9px;text-align:left;vertical-align:top}
+    #printView thead th{background:#fcfcfb;font-size:10px;text-transform:uppercase;
+      letter-spacing:0.04em;color:#52514e;font-weight:600}
+    #printView td.meal{width:96px;font-weight:600;background:#fcfcfb}
     #printView td.n,#printView th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-    #printView h2{font-size:16px;margin:14px 0 4px;page-break-after:avoid}
-    #printView .day{page-break-inside:avoid}
-    #printView .targets{display:flex;gap:18px;font-size:13.5px;margin-bottom:8px;flex-wrap:wrap}
-    #printView .targets b{font-size:15px}
+    #printView td.n{width:58px}
+
+    /* покупки */
+    #printView h3{font-size:14px;margin:16px 0 8px;padding-top:10px;
+      border-top:1px solid #e1e0d9;page-break-after:avoid}
+    #printView .shopcols{column-count:2;column-gap:22px}
+    #printView .shopcat{break-inside:avoid;margin-bottom:10px}
+    #printView .shopcat b{display:block;font-size:11px;text-transform:uppercase;
+      letter-spacing:0.04em;color:#52514e;margin-bottom:3px}
+    #printView .shopcat div{display:flex;justify-content:space-between;gap:10px;
+      border-bottom:1px dotted #c3c2b7;padding:2px 0}
+    #printView .shopcat span:last-child{font-variant-numeric:tabular-nums;font-weight:600}
+
+    /* підвал */
+    #printView .foot{margin-top:16px;padding-top:10px;border-top:2px solid #2a78d6;
+      display:flex;justify-content:space-between;gap:16px;font-size:10.5px;color:#52514e;
+      page-break-inside:avoid}
+    #printView .foot b{color:#0b0b0b}
   }
 </style>
 </head>
 <body>
 <header class="app">
-  <a class="dev-badge" href="https://t.me/samchenko_i" target="_blank" rel="noopener"
-     title="Написати в Telegram"><span class="dot"></span>developed by <b>Ihor Samchenko</b></a>
+  <div class="hdr-tools">
+    <a class="dev-badge" href="https://t.me/samchenko_i" target="_blank" rel="noopener"
+       title="Написати в Telegram"><span class="dot"></span>developed by <b>Ihor Samchenko</b></a>
+    <button class="theme-btn" id="btnTheme" title="Світла / темна тема" aria-label="Перемкнути тему">🌙</button>
+  </div>
   <h1>Конструктор програми харчування</h1>
   <p>Індивідуальний розрахунок калорійності та БЖВ і побудова тижневого меню з рівноцінних продуктів —
      обирайте будь-який продукт зі списку, грами перерахуються автоматично.</p>
@@ -276,9 +386,21 @@
 <section class="card" id="step2">
   <div class="step-tag"><span class="num">2</span> Розрахунок</div>
   <h2>Денна норма калорій та БЖВ</h2>
+  <div class="result">
+    <div class="hero">
+      <div class="cap">Ваша денна норма</div>
+      <div><span class="kcal" id="tKcal">—</span><span class="unit">ккал</span></div>
+      <div class="expl" id="tExpl"></div>
+    </div>
+    <div class="split">
+      <div class="shead"><span>Розподіл калорій між нутрієнтами</span></div>
+      <div class="sbar" id="sBar"></div>
+      <div class="slegend" id="sLegend"></div>
+    </div>
+  </div>
   <div class="tiles">
     <div class="tile"><div class="lbl">Калорійність</div>
-      <div class="val" id="tKcal">—</div><div class="sub" id="tKcalSub">ккал на день</div></div>
+      <div class="val" id="tKcal2">—</div><div class="sub" id="tKcalSub">ккал на день</div></div>
     <div class="tile"><div class="lbl"><span class="dot" style="background:var(--s-prot)"></span>Білки</div>
       <div class="val" id="tProt">—</div><div class="sub" id="tProtSub"></div></div>
     <div class="tile"><div class="lbl"><span class="dot" style="background:var(--s-fat)"></span>Жири</div>
@@ -718,7 +840,30 @@ const fmt = n => Math.round(n).toLocaleString('uk-UA');
 function renderTargets(){
   const t = calcTargets();
   byId('tKcal').textContent = fmt(t.kcal);
+  byId('tKcal2').textContent = fmt(t.kcal);
   byId('tKcalSub').textContent = `BMR ${fmt(t.bmr)} · Витрати ${fmt(t.tdee)} ккал`;
+  /* пояснення людською мовою */
+  const diff = t.kcal - t.tdee;
+  const explByGoal = {
+    loss:  `Це на ${fmt(Math.abs(diff))} ккал менше за ваші добові витрати — темп, за якого вага знижується поступово, без втрати м’язів.`,
+    maintain: `Стільки ви витрачаєте за добу — раціон утримує вагу та форму на місці.`,
+    gain:  `Це на ${fmt(Math.abs(diff))} ккал більше за ваші добові витрати — помірний профіцит для росту м’язів без зайвого жиру.`
+  };
+  byId('tExpl').textContent = explByGoal[state.profile.goal];
+  /* розподіл калорій між нутрієнтами — стовпчик частин цілого */
+  const parts = [
+    {k:'Білки',    kcal:t.prot*4, g:t.prot, col:'var(--s-prot)'},
+    {k:'Жири',     kcal:t.fat*9,  g:t.fat,  col:'var(--s-fat)'},
+    {k:'Вуглеводи',kcal:t.carb*4, g:t.carb, col:'var(--s-carb)'}
+  ];
+  const sum = parts.reduce((a,p)=>a+p.kcal,0) || 1;
+  byId('sBar').innerHTML = parts.map(p=>{
+    const pc = p.kcal/sum*100;
+    /* підпис усередині — лише якщо сегмент достатньо широкий */
+    return `<div style="flex:${pc};background:${p.col}" title="${p.k}: ${Math.round(pc)}%">${pc>=12?Math.round(pc)+'%':''}</div>`;
+  }).join('');
+  byId('sLegend').innerHTML = parts.map(p=>
+    `<span><i style="background:${p.col}"></i>${p.k} — <b>${p.g} г</b></span>`).join('');
   byId('tProt').textContent = t.prot+' г';
   byId('tProtSub').textContent = `${fmt(t.prot*4)} ккал · ${Math.round(t.prot*4/t.kcal*100)}%`;
   byId('tFat').textContent = t.fat+' г';
@@ -870,7 +1015,7 @@ function renderWeight(){
   const ptsStr = ws.map((e,i)=>`${X(xs[i])},${Y(e.w)}`).join(' ');
   let dots='';
   ws.forEach((e,i)=>{
-    dots += `<circle cx="${X(xs[i])}" cy="${Y(e.w)}" r="4.5" fill="var(--accent)" stroke="#fff" stroke-width="2">
+    dots += `<circle cx="${X(xs[i])}" cy="${Y(e.w)}" r="4.5" fill="var(--accent)" stroke="var(--field)" stroke-width="2">
       <title>${fmtD(e.d)}: ${fmtW(e.w)} кг</title></circle>`;
   });
   const lastX = X(xs[xs.length-1]), lastY = Y(ysv[ysv.length-1]);
@@ -890,34 +1035,75 @@ function buildPrintView(){
   const t = calcTargets();
   const pr = state.profile;
   const goals = {loss:'схуднення', maintain:'підтримка ваги', gain:'набір м’язової маси'};
-  let html = `<h1>Програма харчування${pr.name?` — ${pr.name}`:''}</h1>
-    <div class="sub">Ціль: ${goals[pr.goal]} · ${pr.sex==='m'?'чоловік':'жінка'}, ${pr.age} р., ${pr.height} см, ${pr.weight} кг ·
-      складено ${new Date().toLocaleDateString('uk-UA')}</div>
-    <div class="targets">
-      <span>Калорійність: <b>${fmt(t.kcal)} ккал</b></span>
-      <span>Білки: <b>${t.prot} г</b></span>
-      <span>Жири: <b>${t.fat} г</b></span>
-      <span>Вуглеводи: <b>${t.carb} г</b></span>
-    </div>`;
+  const esc = s => String(s).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+  const pk = t.prot*4, fk = t.fat*9, ck = t.carb*4, sk = (pk+fk+ck)||1;
+
+  let html = `
+  <div class="ph">
+    <div>
+      <h1>Програма харчування${pr.name?` — ${esc(pr.name)}`:''}</h1>
+      <div class="meta">Ціль: ${goals[pr.goal]} · ${pr.sex==='m'?'чоловік':'жінка'}, ${pr.age} р.,
+        ${pr.height} см, ${pr.weight} кг · складено ${new Date().toLocaleDateString('uk-UA')}</div>
+    </div>
+    <div class="by">склав<b>Ihor Samchenko</b>t.me/samchenko_i</div>
+  </div>
+
+  <div class="norms">
+    <div class="norm acc"><div class="nl">Калорійність</div><div class="nv">${fmt(t.kcal)} ккал</div></div>
+    <div class="norm"><div class="nl">Білки</div><div class="nv">${t.prot} г</div></div>
+    <div class="norm"><div class="nl">Жири</div><div class="nv">${t.fat} г</div></div>
+    <div class="norm"><div class="nl">Вуглеводи</div><div class="nv">${t.carb} г</div></div>
+  </div>
+  <div class="split">
+    <div style="flex:${pk};background:#2a78d6"></div>
+    <div style="flex:${fk};background:#eb6834"></div>
+    <div style="flex:${ck};background:#1baf7a"></div>
+  </div>
+  <div class="note">Розподіл калорій: білки ${Math.round(pk/sk*100)}% · жири ${Math.round(fk/sk*100)}% ·
+    вуглеводи ${Math.round(ck/sk*100)}%</div>`;
+
   for(let di=0; di<7; di++){
     const d = calcDay(di);
-    html += `<div class="day"><h2>${DAY_NAMES[di]} — ${fmt(d.tot.k)} ккал
-        (Б ${fmt(d.tot.p)} / Ж ${fmt(d.tot.f)} / В ${fmt(d.tot.c)} г)</h2>
-      <table><tr><th>Прийом</th><th>Продукт</th><th class="n">Грами</th><th class="n">Ккал</th></tr>`;
+    html += `<div class="day">
+      <div class="dh"><h2>${DAY_NAMES[di]}</h2>
+        <span>${fmt(d.tot.k)} ккал · Б ${fmt(d.tot.p)} / Ж ${fmt(d.tot.f)} / В ${fmt(d.tot.c)} г</span></div>
+      <table><thead><tr><th>Прийом</th><th>Продукт</th><th class="n">Порція</th><th class="n">Ккал</th></tr></thead><tbody>`;
     for(const m of d.meals){
       m.items.forEach((it,ix)=>{
-        html += `<tr>${ix===0?`<td rowspan="${m.items.length}"><b>${m.def.name}</b><br>${fmt(m.tot.k)} ккал</td>`:''}
-          <td>${it.p.n}${it.p.dry?' (суха вага)':''}</td>
+        html += `<tr>${ix===0?`<td class="meal" rowspan="${m.items.length}">${m.def.name}<br>
+            <span style="font-weight:400;color:#52514e">${fmt(m.tot.k)} ккал</span></td>`:''}
+          <td>${esc(it.p.n)}${it.p.dry?' <span style="color:#52514e">(суха вага)</span>':''}</td>
           <td class="n">${it.g} г</td><td class="n">${fmt(it.g*it.p.k/100)}</td></tr>`;
       });
     }
-    html += `</table></div>`;
+    html += `</tbody></table></div>`;
   }
-  html += `<h2>Список покупок на тиждень</h2>${byId('shopList').innerHTML
-    .replaceAll('<div>','<div style="display:inline-block;vertical-align:top;width:48%;font-size:13px">')}`;
-  html += `<p style="font-size:11px;color:#52514e;margin-top:18px">Взаємозамінність: продукти в межах однієї категорії можна
-    міняти місцями, зберігаючи вказану калорійність порції. Пийте 30–35 мл води на кг ваги.
-    Програма має рекомендаційний характер і не замінює консультацію лікаря.</p>`;
+
+  /* список покупок */
+  const agg = new Map();
+  for(let di=0; di<7; di++){
+    const d = calcDay(di);
+    for(const m of d.meals) for(const it of m.items)
+      agg.set(it.p.i, (agg.get(it.p.i)||0) + it.g);
+  }
+  const cats = Object.keys(CATS).sort((a,b)=>CATS[a].order-CATS[b].order);
+  html += `<h3>Список покупок на тиждень</h3><div class="shopcols">` + cats.map(c=>{
+    const items = [...agg.entries()].map(([id,g])=>({p:prodById(id),g}))
+      .filter(x=>x.p && x.p.c===c).sort((a,b)=>b.g-a.g);
+    if(!items.length) return '';
+    return `<div class="shopcat"><b>${CATS[c].name}</b>` + items.map(x=>
+      `<div><span>${esc(x.p.n)}${x.p.dry?' (суха вага)':''}</span><span>${
+        x.g>=1000 ? (x.g/1000).toFixed(1).replace('.',',')+' кг' : Math.round(x.g)+' г'}</span></div>`
+    ).join('') + `</div>`;
+  }).join('') + `</div>`;
+
+  html += `<div class="foot">
+    <div style="flex:1">Продукти в межах однієї категорії взаємозамінні — можна міняти місцями,
+      зберігаючи вказану порцію. Пийте 30–35 мл води на кг ваги.<br>
+      Програма має рекомендаційний характер і не замінює консультацію лікаря.</div>
+    <div style="text-align:right;white-space:nowrap">Питання та супровід:<br>
+      <b>Telegram: @samchenko_i</b><br>igsamchenko@gmail.com</div>
+  </div>`;
   byId('printView').innerHTML = html;
 }
 
@@ -1080,6 +1266,35 @@ byId('btnNewClient').addEventListener('click', ()=>{
   for(let i=PRODUCTS.length-1;i>=0;i--) if(PRODUCTS[i].custom) PRODUCTS.splice(i,1);
   Object.assign(state, DEFAULT_STATE());
   genWeek(); syncFormFromState(); renderAll();
+});
+
+/* ---- тема ---- */
+const THEME_KEY = 'nutri_theme';
+function currentTheme(){
+  const set = document.documentElement.getAttribute('data-theme');
+  if(set) return set;
+  return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+function applyTheme(mode){
+  if(mode) document.documentElement.setAttribute('data-theme', mode);
+  const dark = currentTheme()==='dark';
+  byId('btnTheme').textContent = dark ? '☀️' : '🌙';
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', dark ? '#1a1a19' : '#2a78d6');
+}
+byId('btnTheme').addEventListener('click', ()=>{
+  const next = currentTheme()==='dark' ? 'light' : 'dark';
+  applyTheme(next);
+  try{ localStorage.setItem(THEME_KEY, next); }catch(e){}
+  renderWeight();  /* графік перемальовується під нові кольори */
+});
+try{
+  const saved = localStorage.getItem(THEME_KEY);
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+}catch(e){}
+applyTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{
+  if(!document.documentElement.getAttribute('data-theme')) applyTheme();
 });
 
 /* ============ СТАРТ ============ */
