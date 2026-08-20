@@ -457,7 +457,8 @@
   <h2>Тижневе меню</h2>
   <p class="hint" style="margin-top:-8px">Продукти в кожному списку — рівноцінні за калорійністю:
     змінюйте будь-який, а грами перерахуються автоматично. Грами можна відредагувати вручну
-    (кнопка ↺ повертає авторозрахунок).</p>
+    (кнопка ↺ повертає авторозрахунок). У кінці кожного списку є група «Готові страви» —
+    борщ, вареники, деруни тощо; їхні калорії приблизні (≈), бо залежать від рецепта.</p>
   <div class="toolbar">
     <div class="daytabs" id="dayTabs"></div>
     <span style="flex:1"></span>
@@ -490,6 +491,7 @@
           <option value="dairy">Молочні</option><option value="fat">Жири та горіхи</option>
           <option value="veg">Овочі</option><option value="fruit">Фрукти та ягоди</option>
           <option value="sweet">Смаколики</option>
+          <option value="dish">Готові страви</option>
         </select></label>
       <label class="f">Ккал/100 г<input type="number" id="npK" min="1" max="950"></label>
       <label class="f">Білки<input type="number" id="npP" min="0" max="100" step="0.1"></label>
@@ -543,7 +545,8 @@ const CATS = {
   fat:    {name:'Жири та горіхи', order:4, short:'Жири'},
   veg:    {name:'Овочі та зелень',order:5, short:'Овочі'},
   fruit:  {name:'Фрукти та ягоди',order:6, short:'Фрукти'},
-  sweet:  {name:'Смаколики',      order:7, short:'Смаколик'}
+  sweet:  {name:'Смаколики',      order:7, short:'Смаколик'},
+  dish:   {name:'Готові страви',  order:8, short:'Страва'}
 };
 const PRODUCTS = [
 /* --- білкові --- */
@@ -569,6 +572,24 @@ const PRODUCTS = [
 {i:'p20',c:'protein',n:'Творог 5%',k:121,p:17,f:5,cb:1.8,brk:1},
 {i:'p21',c:'protein',n:'Творог знежирений',k:71,p:16.5,f:0.2,cb:1.3,brk:1},
 {i:'p22',c:'protein',n:'Тофу',k:76,p:8,f:4.8,cb:1.9},
+{i:'p23',c:'protein',n:'Оселедець солоний',k:217,p:19,f:15,cb:0},
+{i:'p24',c:'protein',n:'Короп',k:112,p:16,f:5.3,cb:0},
+{i:'p25',c:'protein',n:'Товстолобик',k:86,p:19,f:0.9,cb:0},
+{i:'p26',c:'protein',n:'Щука',k:84,p:18.4,f:1.1,cb:0},
+{i:'p27',c:'protein',n:'Сом',k:143,p:17,f:8.5,cb:0},
+{i:'p28',c:'protein',n:'Горбуша',k:142,p:21,f:6,cb:0},
+{i:'p29',c:'protein',n:'Шпроти в олії',k:363,p:17,f:32,cb:0.4},
+{i:'p30',c:'protein',n:'Печінка яловича',k:127,p:20,f:3.6,cb:4},
+{i:'p31',c:'protein',n:'Серця курячі',k:159,p:16,f:10,cb:0.8},
+{i:'p32',c:'protein',n:'Шлуночки курячі',k:114,p:18,f:4.2,cb:0.6},
+{i:'p33',c:'protein',n:'Фарш яловичий',k:200,p:18,f:14,cb:0},
+{i:'p34',c:'protein',n:'Фарш індичий',k:161,p:20,f:9,cb:0},
+{i:'p35',c:'protein',n:'Шинка куряча',k:151,p:16,f:9,cb:1.5},
+{i:'p36',c:'protein',n:'Буженина запечена',k:233,p:16,f:19,cb:1},
+{i:'p37',c:'protein',n:'Ковбаса домашня смажена',k:340,p:15,f:31,cb:1},
+{i:'p38',c:'protein',n:'Сосиски молочні',k:266,p:11,f:24,cb:1.6},
+{i:'p39',c:'protein',n:'Тушонка яловича',k:214,p:15,f:17,cb:0},
+{i:'p40',c:'protein',n:'Яйця перепелині',k:168,p:11.9,f:13,cb:0.6,brk:1},
 /* --- гарніри та крупи --- */
 {i:'c01',c:'carb',n:'Гречка',k:343,p:12.6,f:3.3,cb:62,dry:1},
 {i:'c02',c:'carb',n:'Рис білий',k:344,p:6.7,f:0.7,cb:78,dry:1},
@@ -589,6 +610,15 @@ const PRODUCTS = [
 {i:'c17',c:'carb',n:'Сочевиця',k:331,p:25,f:1.1,cb:53,dry:1},
 {i:'c18',c:'carb',n:'Нут',k:364,p:19,f:6,cb:61,dry:1},
 {i:'c19',c:'carb',n:'Квасоля',k:333,p:21,f:2,cb:47,dry:1},
+{i:'c20',c:'carb',n:'Пшенична крупа (арнаутка)',k:329,p:11.5,f:1.3,cb:68,dry:1},
+{i:'c21',c:'carb',n:'Кукурудзяна крупа (мамалига)',k:328,p:8.3,f:1.2,cb:71,dry:1},
+{i:'c22',c:'carb',n:'Ячна крупа',k:324,p:10,f:1.3,cb:66,dry:1},
+{i:'c23',c:'carb',n:'Манна крупа',k:333,p:10.3,f:1,cb:70,dry:1,brk:1},
+{i:'c24',c:'carb',n:'Горох лущений',k:298,p:23,f:1.6,cb:49,dry:1},
+{i:'c25',c:'carb',n:'Хліб «Дарницький» житній',k:206,p:6.6,f:1.1,cb:41,brk:1},
+{i:'c26',c:'carb',n:'Батон пшеничний',k:264,p:7.5,f:2.9,cb:51,brk:1},
+{i:'c27',c:'carb',n:'Галети',k:392,p:9.7,f:10,cb:66},
+{i:'c28',c:'carb',n:'Гарбузова каша на воді',k:63,p:1.5,f:0.8,cb:12,brk:1},
 /* --- молочні --- */
 {i:'d01',c:'dairy',n:'Кефір 2,5%',k:53,p:2.9,f:2.5,cb:4},
 {i:'d02',c:'dairy',n:'Йогурт грецький 2%',k:66,p:8,f:2,cb:4.7,brk:1},
@@ -597,6 +627,12 @@ const PRODUCTS = [
 {i:'d05',c:'dairy',n:'Молоко 2,5%',k:54,p:2.8,f:2.5,cb:4.7,brk:1},
 {i:'d06',c:'dairy',n:'Сир кисломолочний зерновий 4%',k:105,p:12,f:4.3,cb:3,brk:1},
 {i:'d07',c:'dairy',n:'Айран',k:27,p:1.1,f:1.5,cb:2.3},
+{i:'d08',c:'dairy',n:'Сметана 15%',k:162,p:2.6,f:15,cb:3.6,add:1},
+{i:'d09',c:'dairy',n:'Сметана 20%',k:206,p:2.8,f:20,cb:3.4,add:1},
+{i:'d10',c:'dairy',n:'Вершки 10%',k:118,p:3,f:10,cb:4,add:1},
+{i:'d11',c:'dairy',n:'Простокваша',k:58,p:2.9,f:3.2,cb:4.1},
+{i:'d12',c:'dairy',n:'Молоко козяче',k:68,p:3,f:4.2,cb:4.5,brk:1},
+{i:'d13',c:'dairy',n:'Творожна маса з родзинками',k:343,p:7,f:23,cb:29,brk:1,add:1},
 /* --- жири та горіхи --- */
 {i:'f01',c:'fat',n:'Олія оливкова',k:898,p:0,f:99.8,cb:0,oil:1},
 {i:'f02',c:'fat',n:'Олія соняшникова',k:899,p:0,f:99.9,cb:0,oil:1},
@@ -612,6 +648,18 @@ const PRODUCTS = [
 {i:'f12',c:'fat',n:'Авокадо',k:160,p:2,f:15,cb:9,brk:1},
 {i:'f13',c:'fat',n:'Сир твердий',k:356,p:25,f:27,cb:0,brk:1},
 {i:'f14',c:'fat',n:'Оливки',k:115,p:0.8,f:11,cb:6},
+{i:'f15',c:'fat',n:'Сало солоне',k:797,p:2.4,f:89,cb:0},
+{i:'f16',c:'fat',n:'Смалець',k:896,p:0,f:99.6,cb:0,oil:1},
+{i:'f17',c:'fat',n:'Олія лляна',k:898,p:0,f:99.8,cb:0,oil:1},
+{i:'f18',c:'fat',n:'Олія гарбузова',k:896,p:0,f:99.5,cb:0,oil:1},
+{i:'f19',c:'fat',n:'Насіння соняшника',k:601,p:21,f:53,cb:10},
+{i:'f20',c:'fat',n:'Кунжут',k:565,p:19,f:49,cb:12},
+{i:'f21',c:'fat',n:'Арахіс',k:567,p:26,f:49,cb:16},
+{i:'f22',c:'fat',n:'Майонез',k:627,p:1,f:67,cb:3.7,oil:1},
+{i:'f23',c:'fat',n:'Бринза',k:260,p:17,f:20,cb:2},
+{i:'f24',c:'fat',n:'Сир адигейський',k:240,p:19,f:18,cb:1.5},
+{i:'f25',c:'fat',n:'Сир сулугуні',k:286,p:20,f:22,cb:0.4},
+{i:'f26',c:'fat',n:'Сирок плавлений',k:257,p:13,f:22,cb:2},
 /* --- овочі та зелень --- */
 {i:'v01',c:'veg',n:'Огірок',k:15,p:0.7,f:0.1,cb:2.8},
 {i:'v02',c:'veg',n:'Помідор',k:20,p:1.1,f:0.2,cb:3.7},
@@ -631,6 +679,22 @@ const PRODUCTS = [
 {i:'v16',c:'veg',n:'Редис',k:20,p:1.2,f:0.1,cb:3.4},
 {i:'v17',c:'veg',n:'Квашена капуста',k:19,p:1.8,f:0.1,cb:3},
 {i:'v18',c:'veg',n:'Овочевий салат з олією',k:60,p:1,f:4.5,cb:4},
+{i:'v19',c:'veg',n:'Гарбуз',k:22,p:1,f:0.1,cb:4.4},
+{i:'v20',c:'veg',n:'Цибуля ріпчаста',k:41,p:1.4,f:0.2,cb:8.2},
+{i:'v21',c:'veg',n:'Цибуля зелена',k:19,p:1.3,f:0.1,cb:3.2},
+{i:'v22',c:'veg',n:'Часник',k:143,p:6.5,f:0.5,cb:30,season:1},
+{i:'v23',c:'veg',n:'Кріп і петрушка',k:40,p:3.2,f:0.6,cb:5,season:1},
+{i:'v24',c:'veg',n:'Селера коренева',k:34,p:1.3,f:0.3,cb:6.5},
+{i:'v25',c:'veg',n:'Редька чорна',k:36,p:1.9,f:0.2,cb:6.7},
+{i:'v26',c:'veg',n:'Патисон',k:19,p:0.6,f:0.1,cb:4.1},
+{i:'v27',c:'veg',n:'Огірки солоні',k:11,p:0.8,f:0.1,cb:1.7},
+{i:'v28',c:'veg',n:'Горошок зелений',k:73,p:5,f:0.2,cb:13},
+{i:'v29',c:'veg',n:'Гриби білі',k:34,p:3.7,f:1.7,cb:1.1},
+{i:'v30',c:'veg',n:'Лисички',k:38,p:1.5,f:1.1,cb:6.9},
+{i:'v31',c:'veg',n:'Опеньки',k:22,p:2.2,f:1.2,cb:0.5},
+{i:'v32',c:'veg',n:'Гриби мариновані',k:24,p:2.2,f:0.4,cb:2.6},
+{i:'v33',c:'veg',n:'Кабачкова ікра',k:97,p:1.2,f:7,cb:7.4},
+{i:'v34',c:'veg',n:'Томатна паста',k:82,p:4.3,f:0.5,cb:19,season:1},
 /* --- фрукти та ягоди --- */
 {i:'r01',c:'fruit',n:'Яблуко',k:47,p:0.4,f:0.4,cb:9.8,brk:1},
 {i:'r02',c:'fruit',n:'Банан',k:89,p:1.5,f:0.2,cb:21,brk:1},
@@ -651,6 +715,19 @@ const PRODUCTS = [
 {i:'r17',c:'fruit',n:'Хурма',k:67,p:0.5,f:0.4,cb:15.3},
 {i:'r18',c:'fruit',n:'Курага',k:215,p:5.2,f:0.3,cb:51},
 {i:'r19',c:'fruit',n:'Чорнослив',k:231,p:2.3,f:0.7,cb:57.5},
+{i:'r20',c:'fruit',n:'Вишня',k:52,p:0.8,f:0.5,cb:10.6,brk:1},
+{i:'r21',c:'fruit',n:'Черешня',k:63,p:1.1,f:0.4,cb:12.2,brk:1},
+{i:'r22',c:'fruit',n:'Смородина чорна',k:44,p:1,f:0.4,cb:7.3,brk:1},
+{i:'r23',c:'fruit',n:'Смородина червона',k:43,p:0.6,f:0.2,cb:7.7,brk:1},
+{i:'r24',c:'fruit',n:'Аґрус',k:43,p:0.7,f:0.2,cb:9.1,brk:1},
+{i:'r25',c:'fruit',n:'Ожина',k:34,p:1.5,f:0.5,cb:4.4,brk:1},
+{i:'r26',c:'fruit',n:'Журавлина',k:28,p:0.5,f:0.2,cb:3.7,brk:1},
+{i:'r27',c:'fruit',n:'Обліпиха',k:82,p:1.2,f:5.4,cb:5.7},
+{i:'r28',c:'fruit',n:'Калина',k:26,p:0,f:0,cb:6.5},
+{i:'r29',c:'fruit',n:'Айва',k:48,p:0.6,f:0.5,cb:9.6},
+{i:'r30',c:'fruit',n:'Родзинки',k:281,p:2.9,f:0.6,cb:66},
+{i:'r31',c:'fruit',n:'Фініки',k:277,p:2,f:0.5,cb:69},
+{i:'r32',c:'fruit',n:'Інжир сушений',k:257,p:3.1,f:0.8,cb:58},
 /* --- смаколики (гнучка дієта) --- */
 {i:'s01',c:'sweet',n:'Чорний шоколад 70%',k:546,p:7.9,f:38,cb:46},
 {i:'s02',c:'sweet',n:'Молочний шоколад',k:550,p:7,f:30,cb:59},
@@ -666,7 +743,37 @@ const PRODUCTS = [
 {i:'s12',c:'sweet',n:'Цукерки шоколадні',k:540,p:5,f:32,cb:57},
 {i:'s13',c:'sweet',n:'Вафлі',k:460,p:4,f:20,cb:66},
 {i:'s14',c:'sweet',n:'Сушені банани (чипси)',k:519,p:2.3,f:34,cb:50},
-{i:'s15',c:'sweet',n:'Чипси картопляні',k:520,p:6,f:34,cb:50}
+{i:'s15',c:'sweet',n:'Чипси картопляні',k:520,p:6,f:34,cb:50},
+{i:'s16',c:'sweet',n:'Сирок глазурований',k:407,p:8.5,f:26,cb:32},
+{i:'s17',c:'sweet',n:'Згущене молоко',k:320,p:7.2,f:8.5,cb:56},
+{i:'s18',c:'sweet',n:'Варення вишневе',k:256,p:0.5,f:0.2,cb:63},
+{i:'s19',c:'sweet',n:'Повидло яблучне',k:250,p:0.4,f:0.2,cb:62},
+{i:'s20',c:'sweet',n:'Пряники',k:364,p:5,f:3,cb:77},
+{i:'s21',c:'sweet',n:'Сушки',k:339,p:11,f:1.3,cb:73},
+{i:'s22',c:'sweet',n:'Бублик з маком',k:336,p:10,f:4,cb:65},
+{i:'s23',c:'sweet',n:'Печиво «Марія»',k:400,p:7.5,f:8.5,cb:74},
+{i:'s24',c:'sweet',n:'Ірис',k:387,p:3,f:7.7,cb:76},
+{i:'s25',c:'sweet',n:'Торт «Київський»',k:435,p:6,f:22,cb:53},
+{i:'s26',c:'sweet',n:'Медовик',k:380,p:4.5,f:20,cb:45},
+/* --- готові страви (КБЖВ приблизні, залежать від рецепта) --- */
+{i:'m01',c:'dish',n:'Борщ з яловичиною',k:58,p:3.2,f:2.8,cb:5},
+{i:'m02',c:'dish',n:'Борщ пісний',k:43,p:1.2,f:2.1,cb:5.2},
+{i:'m03',c:'dish',n:'Вареники з картоплею',k:180,p:4.5,f:3.5,cb:33},
+{i:'m04',c:'dish',n:'Вареники з сиром',k:212,p:9,f:6,cb:30},
+{i:'m05',c:'dish',n:'Вареники з вишнею',k:165,p:3.8,f:1.5,cb:34},
+{i:'m06',c:'dish',n:'Деруни',k:198,p:3.5,f:11,cb:22},
+{i:'m07',c:'dish',n:'Голубці з м’ясом',k:124,p:6.5,f:6.5,cb:9.5},
+{i:'m08',c:'dish',n:'Сирники',k:220,p:13,f:9,cb:22,brk:1},
+{i:'m09',c:'dish',n:'Гречаники',k:180,p:11,f:9,cb:13},
+{i:'m10',c:'dish',n:'Котлета куряча парова',k:150,p:16,f:7,cb:6},
+{i:'m11',c:'dish',n:'Плов з куркою',k:165,p:8,f:5.5,cb:21},
+{i:'m12',c:'dish',n:'Печеня в горщику',k:120,p:7.5,f:5,cb:11},
+{i:'m13',c:'dish',n:'Овочеве рагу',k:75,p:1.8,f:3.8,cb:8.5},
+{i:'m14',c:'dish',n:'Млинці на молоці',k:190,p:6,f:6,cb:27,brk:1},
+{i:'m15',c:'dish',n:'Запіканка сирна',k:190,p:14,f:6,cb:20,brk:1},
+{i:'m16',c:'dish',n:'Салат «Вінегрет»',k:96,p:1.5,f:6,cb:9},
+{i:'m17',c:'dish',n:'Юшка рибна',k:48,p:5.5,f:1.6,cb:2.8},
+{i:'m18',c:'dish',n:'Суп курячий з локшиною',k:62,p:4.5,f:2,cb:6.5}
 ];
 
 /* ============ СТРУКТУРА ПРИЙОМІВ ЇЖІ ============ */
@@ -705,12 +812,15 @@ function getPlan(){
 /* межі грамів на порцію (реалістичні розміри порцій) */
 function gramBounds(p){
   switch(p.c){
-    case 'veg':   return [80,350];
+    case 'veg':   return p.season ? [5,40] : [80,350];
     case 'fruit': return p.k>150 ? [15,60] : [80,350];   /* сухофрукти — малі порції */
-    case 'dairy': return [80,400];
-    case 'fat':   return p.k>=400 ? [5,60] : [20,120];   /* авокадо/оливки — більші */
+    case 'dairy': return p.add ? [15,80] : (p.k>=100 ? [40,200] : [80,400]);
+    case 'fat':   return p.k>=400 ? [5,60]              /* олії, горіхи, насіння */
+                       : p.k>=200 ? [10,80]             /* тверді сири, бринза */
+                       : [20,150];                      /* авокадо, оливки */
     case 'protein':return [50,300];
     case 'sweet': return p.k>=400 ? [15,100] : [30,250];
+    case 'dish':  return p.k<100 ? [150,450] : [80,350];
     case 'carb':  return p.k>=250 ? [20,150] : [60,400]; /* сухі крупи vs варене/хліб */
     default:      return [10,500];
   }
@@ -767,7 +877,7 @@ function loadLocal(){
 const byId = id => document.getElementById(id);
 const prodById = id => PRODUCTS.find(p=>p.i===id);
 const pool = (cat, brkOnly) => {
-  let arr = PRODUCTS.filter(p=>p.c===cat);
+  let arr = PRODUCTS.filter(p=>p.c===cat && !p.season);
   if(brkOnly){ const b = arr.filter(p=>p.brk); if(b.length>=3) arr = b; }
   return arr;
 };
@@ -971,16 +1081,20 @@ function renderDay(){
         <span class="mk">${fmt(m.tot.k)} ккал (ціль ~${fmt(m.mealKcal)}) ·
           Б ${fmt(m.tot.p)} / Ж ${fmt(m.tot.f)} / В ${fmt(m.tot.c)} г</span></div>
       ${m.items.map((it,ci)=>{
-        const opts = PRODUCTS.filter(p=>p.c===it.p.c)
-          .map(p=>`<option value="${p.i}" ${p.i===it.p.i?'selected':''}>${p.n}</option>`).join('');
+        const baseCat = it.tpl.cat;
+        const optTags = list => list.map(p=>
+          `<option value="${p.i}" ${p.i===it.p.i?'selected':''}>${p.n}</option>`).join('');
+        const dishes = PRODUCTS.filter(p=>p.c==='dish');
+        const opts = optTags(PRODUCTS.filter(p=>p.c===baseCat))
+          + (dishes.length ? `<optgroup label="Готові страви (≈)">${optTags(dishes)}</optgroup>` : '');
         const unit = it.p.dry ? 'г сух.' : 'г';
         const custom = it.mc.customG!=null;
         return `<div class="comp ${custom?'custom':''}">
-          <span class="cat" title="${CATS[it.p.c].name}">${CATS[it.p.c].short||CATS[it.p.c].name}</span>
+          <span class="cat" title="${CATS[it.tpl.cat].name}">${CATS[it.tpl.cat].short||CATS[it.tpl.cat].name}</span>
           <select data-m="${mi}" data-c="${ci}" class="selProd" aria-label="Продукт">${opts}</select>
           <span class="gwrap"><input type="number" class="inpG" data-m="${mi}" data-c="${ci}"
              value="${it.g}" min="0" max="900" step="5" aria-label="Грами"><span class="un">${unit}</span></span>
-          <span class="ck">${fmt(it.g*it.p.k/100)} ккал</span>
+          <span class="ck">${it.p.c==='dish'?'≈ ':''}${fmt(it.g*it.p.k/100)} ккал</span>
           <button type="button" class="reset-g" data-m="${mi}" data-c="${ci}"
              title="Повернути авторозрахунок" ${custom?'':'style="visibility:hidden"'}>↺</button>
         </div>`;
@@ -1122,8 +1236,9 @@ function buildPrintView(){
       m.items.forEach((it,ix)=>{
         html += `<tr>${ix===0?`<td class="meal" rowspan="${m.items.length}">${m.def.name}<br>
             <span style="font-weight:400;color:#52514e">${fmt(m.tot.k)} ккал</span></td>`:''}
-          <td>${esc(it.p.n)}${it.p.dry?' <span style="color:#52514e">(суха вага)</span>':''}</td>
-          <td class="n">${it.g} г</td><td class="n">${fmt(it.g*it.p.k/100)}</td></tr>`;
+          <td>${esc(it.p.n)}${it.p.dry?' <span style="color:#52514e">(суха вага)</span>':''}${
+            it.p.c==='dish'?' <span style="color:#52514e">(≈)</span>':''}</td>
+          <td class="n">${it.g} г</td><td class="n">${it.p.c==='dish'?'≈':''}${fmt(it.g*it.p.k/100)}</td></tr>`;
       });
     }
     html += `</tbody></table></div>`;
