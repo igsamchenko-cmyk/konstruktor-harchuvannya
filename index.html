@@ -439,7 +439,14 @@
           <button type="button" data-v="5">5</button>
         </div>
       </label>
+      <label class="f">Смаколики (гнучка дієта 80/20)
+        <span class="range-wrap"><input type="range" id="sSweet" min="0" max="20" value="10" step="5">
+        <output id="sSweetOut">10%</output></span>
+      </label>
     </div>
+    <p class="hint" style="margin-top:12px">Смаколики — це запланований десерт у межах денної норми:
+      частка калорій виділяється на солодке/улюблене, а основні прийоми пропорційно зменшуються.
+      Це знижує ризик зривів. 0% — вимкнути слот повністю.</p>
   </details>
 </section>
 
@@ -481,6 +488,7 @@
           <option value="protein">Білкові</option><option value="carb">Гарніри та крупи</option>
           <option value="dairy">Молочні</option><option value="fat">Жири та горіхи</option>
           <option value="veg">Овочі</option><option value="fruit">Фрукти та ягоди</option>
+          <option value="sweet">Смаколики</option>
         </select></label>
       <label class="f">Ккал/100 г<input type="number" id="npK" min="1" max="950"></label>
       <label class="f">Білки<input type="number" id="npP" min="0" max="100" step="0.1"></label>
@@ -533,7 +541,8 @@ const CATS = {
   dairy:  {name:'Молочні',        order:3},
   fat:    {name:'Жири та горіхи', order:4},
   veg:    {name:'Овочі та зелень',order:5},
-  fruit:  {name:'Фрукти та ягоди',order:6}
+  fruit:  {name:'Фрукти та ягоди',order:6},
+  sweet:  {name:'Смаколики',      order:7}
 };
 const PRODUCTS = [
 /* --- білкові --- */
@@ -640,7 +649,23 @@ const PRODUCTS = [
 {i:'r16',c:'fruit',n:'Диня',k:33,p:0.6,f:0.3,cb:7.4},
 {i:'r17',c:'fruit',n:'Хурма',k:67,p:0.5,f:0.4,cb:15.3},
 {i:'r18',c:'fruit',n:'Курага',k:215,p:5.2,f:0.3,cb:51},
-{i:'r19',c:'fruit',n:'Чорнослив',k:231,p:2.3,f:0.7,cb:57.5}
+{i:'r19',c:'fruit',n:'Чорнослив',k:231,p:2.3,f:0.7,cb:57.5},
+/* --- смаколики (гнучка дієта) --- */
+{i:'s01',c:'sweet',n:'Чорний шоколад 70%',k:546,p:7.9,f:38,cb:46},
+{i:'s02',c:'sweet',n:'Молочний шоколад',k:550,p:7,f:30,cb:59},
+{i:'s03',c:'sweet',n:'Зефір',k:326,p:0.8,f:0.1,cb:79},
+{i:'s04',c:'sweet',n:'Мармелад',k:321,p:0.1,f:0,cb:79},
+{i:'s05',c:'sweet',n:'Пастила',k:310,p:0.5,f:0,cb:80},
+{i:'s06',c:'sweet',n:'Мед',k:329,p:0.8,f:0,cb:81},
+{i:'s07',c:'sweet',n:'Халва соняшникова',k:523,p:12,f:30,cb:54},
+{i:'s08',c:'sweet',n:'Печиво вівсяне',k:437,p:6.5,f:14,cb:71},
+{i:'s09',c:'sweet',n:'Морозиво пломбір',k:227,p:3.7,f:15,cb:20},
+{i:'s10',c:'sweet',n:'Круасан',k:406,p:8,f:21,cb:46},
+{i:'s11',c:'sweet',n:'Чізкейк',k:321,p:5.5,f:22,cb:25},
+{i:'s12',c:'sweet',n:'Цукерки шоколадні',k:540,p:5,f:32,cb:57},
+{i:'s13',c:'sweet',n:'Вафлі',k:460,p:4,f:20,cb:66},
+{i:'s14',c:'sweet',n:'Сушені банани (чипси)',k:519,p:2.3,f:34,cb:50},
+{i:'s15',c:'sweet',n:'Чипси картопляні',k:520,p:6,f:34,cb:50}
 ];
 
 /* ============ СТРУКТУРА ПРИЙОМІВ ЇЖІ ============ */
@@ -664,8 +689,18 @@ const MEAL_COMPS = {
   s1:[ {cat:'dairy', sh:0.45}, {cat:'fruit',  sh:0.30}, {cat:'fat',sh:0.25} ],
   s2:[ {cat:'dairy', sh:0.55}, {cat:'fruit',  sh:0.45} ],
   l: [ {cat:'protein',sh:0.35},{cat:'carb',   sh:0.35}, {cat:'veg',sh:0.13}, {cat:'fat',sh:0.17} ],
-  d: [ {cat:'protein',sh:0.45},{cat:'carb',   sh:0.18}, {cat:'veg',sh:0.22}, {cat:'fat',sh:0.15} ]
+  d: [ {cat:'protein',sh:0.45},{cat:'carb',   sh:0.18}, {cat:'veg',sh:0.22}, {cat:'fat',sh:0.15} ],
+  sw:[ {cat:'sweet', sh:1} ]
 };
+/* план прийомів з урахуванням смаколика: його частка "відкушується"
+   пропорційно від усіх основних прийомів (гнучка дієта 80/20) */
+function getPlan(){
+  const base = MEAL_PLANS[state.settings.meals];
+  const s = (state.settings.sweetPct||0)/100;
+  if(!s) return base;
+  return base.map(m=>({...m, share:m.share*(1-s)}))
+             .concat([{id:'sw', name:'Смаколик', share:s}]);
+}
 /* межі грамів на порцію (реалістичні розміри порцій) */
 function gramBounds(p){
   switch(p.c){
@@ -674,6 +709,7 @@ function gramBounds(p){
     case 'dairy': return [80,400];
     case 'fat':   return p.k>=400 ? [5,60] : [20,120];   /* авокадо/оливки — більші */
     case 'protein':return [50,300];
+    case 'sweet': return p.k>=400 ? [15,100] : [30,250];
     case 'carb':  return p.k>=250 ? [20,150] : [60,400]; /* сухі крупи vs варене/хліб */
     default:      return [10,500];
   }
@@ -684,7 +720,7 @@ const DAY_NAMES = ['Понеділок','Вівторок','Середа','Че�
 const DAY_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
 const DEFAULT_STATE = () => ({
   profile:{ name:'', sex:'f', age:30, height:168, weight:70, activity:1.375, goal:'loss' },
-  settings:{ deficit:17, surplus:12, proteinPerKg:1.8, fatPct:27, meals:4 },
+  settings:{ deficit:17, surplus:12, proteinPerKg:1.8, fatPct:27, meals:4, sweetPct:10 },
   activeDay:0,
   days:[],          /* days[7] = [ meal -> [ {prodId, customG|null} ] ] */
   weights:[]        /* [{d:'2026-08-19', w:70.5}] */
@@ -790,7 +826,7 @@ function MEAL_COMPS_ACTIVE(mealId){ return MEAL_COMPS[mealId]; }
 /* повний розрахунок дня: повертає структуру для рендеру */
 function calcDay(dayIdx){
   const t = calcTargets();
-  const plan = MEAL_PLANS[state.settings.meals];
+  const plan = getPlan();
   const day = state.days[dayIdx];
   const meals = plan.map((m,mi)=>{
     const mealKcal = t.kcal*m.share;
@@ -818,7 +854,7 @@ function newComp(mealId, tplIdx, prevProdId){
   return { mealId, prodId: rnd(ps).i, customG:null };
 }
 function genDay(dayIdx, prevDay){
-  const plan = MEAL_PLANS[state.settings.meals];
+  const plan = getPlan();
   return plan.map((m,mi)=> MEAL_COMPS[m.id].map((_,ci)=>{
     const prev = prevDay && prevDay[mi] && prevDay[mi][ci] ? prevDay[mi][ci].prodId : null;
     return newComp(m.id, ci, prev);
@@ -828,8 +864,20 @@ function genWeek(){
   state.days = [];
   for(let d=0;d<7;d++) state.days.push(genDay(d, d>0?state.days[d-1]:null));
 }
+/* додає/прибирає слот "Смаколик" без втрати вручну зібраного меню */
+function syncSweetSlot(){
+  const want = (state.settings.sweetPct||0) > 0;
+  for(const day of state.days){
+    if(!Array.isArray(day)) continue;
+    const last = day[day.length-1];
+    const has = last && last[0] && last[0].mealId==='sw';
+    if(want && !has) day.push([newComp('sw',0,null)]);
+    if(!want && has) day.pop();
+  }
+}
 function ensureDays(){
-  const plan = MEAL_PLANS[state.settings.meals];
+  syncSweetSlot();
+  const plan = getPlan();
   const valid = state.days.length===7 && state.days.every(day=>
     day.length===plan.length && day.every((meal,mi)=>meal.length===MEAL_COMPS[plan[mi].id].length));
   if(!valid) genWeek();
@@ -873,7 +921,8 @@ function renderTargets(){
   const goals = {loss:`дефіцит ${state.settings.deficit}%`, maintain:'підтримка',
                  gain:`профіцит ${state.settings.surplus}%`};
   byId('tFormulaNote').textContent =
-    `Формула Міффліна–Сан Жеора · ціль: ${goals[state.profile.goal]} · білок ${state.settings.proteinPerKg} г/кг · жири ${state.settings.fatPct}%`;
+    `Формула Міффліна–Сан Жеора · ціль: ${goals[state.profile.goal]} · білок ${state.settings.proteinPerKg} г/кг · жири ${state.settings.fatPct}%` +
+    (state.settings.sweetPct ? ` · смаколики ${state.settings.sweetPct}%` : '');
   byId('lowKcalWarn').style.display = t.clamped ? '' : 'none';
 }
 
@@ -1155,6 +1204,8 @@ function syncFormFromState(){
   byId('sSurplus').value = s.surplus; byId('sSurplusOut').textContent = s.surplus+'%';
   byId('sProtein').value = s.proteinPerKg; byId('sProteinOut').textContent = s.proteinPerKg;
   byId('sFatPct').value = s.fatPct; byId('sFatPctOut').textContent = s.fatPct+'%';
+  const sw = s.sweetPct||0;
+  byId('sSweet').value = sw; byId('sSweetOut').textContent = sw ? sw+'%' : 'вимк.';
 }
 
 /* ============ ПОДІЇ ============ */
@@ -1188,6 +1239,12 @@ bindRange('sSurplus','sSurplusOut','surplus','%');
 bindRange('sProtein','sProteinOut','proteinPerKg','');
 bindRange('sFatPct','sFatPctOut','fatPct','%');
 bindSeg('sMeals', v=>{ state.settings.meals = +v; genWeek(); renderAll(); });
+byId('sSweet').addEventListener('input', e=>{
+  state.settings.sweetPct = +e.target.value;
+  byId('sSweetOut').textContent = state.settings.sweetPct ? state.settings.sweetPct+'%' : 'вимк.';
+  syncSweetSlot();          /* меню не перегенеровується — слот лише додається/зникає */
+  renderAll();
+});
 
 byId('dayTabs').addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
