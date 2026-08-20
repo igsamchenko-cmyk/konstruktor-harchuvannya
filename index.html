@@ -457,8 +457,9 @@
   <h2>Тижневе меню</h2>
   <p class="hint" style="margin-top:-8px">Продукти в кожному списку — рівноцінні за калорійністю:
     змінюйте будь-який, а грами перерахуються автоматично. Грами можна відредагувати вручну
-    (кнопка ↺ повертає авторозрахунок). У кінці кожного списку є група «Готові страви» —
-    борщ, вареники, деруни тощо; їхні калорії приблизні (≈), бо залежать від рецепта.</p>
+    (кнопка ↺ повертає авторозрахунок). У кінці кожного списку є група «Страви» —
+    борщ і рагу серед овочів, вареники й деруни серед гарнірів, голубці й сирники серед білкових;
+    їхні калорії приблизні (≈), бо залежать від рецепта.</p>
   <div class="toolbar">
     <div class="daytabs" id="dayTabs"></div>
     <span style="flex:1"></span>
@@ -491,7 +492,6 @@
           <option value="dairy">Молочні</option><option value="fat">Жири та горіхи</option>
           <option value="veg">Овочі</option><option value="fruit">Фрукти та ягоди</option>
           <option value="sweet">Смаколики</option>
-          <option value="dish">Готові страви</option>
         </select></label>
       <label class="f">Ккал/100 г<input type="number" id="npK" min="1" max="950"></label>
       <label class="f">Білки<input type="number" id="npP" min="0" max="100" step="0.1"></label>
@@ -546,7 +546,7 @@ const CATS = {
   veg:    {name:'Овочі та зелень',order:5, short:'Овочі'},
   fruit:  {name:'Фрукти та ягоди',order:6, short:'Фрукти'},
   sweet:  {name:'Смаколики',      order:7, short:'Смаколик'},
-  dish:   {name:'Готові страви',  order:8, short:'Страва'}
+  dish:   {name:'Готові страви (приготувати)', order:8, short:'Страва'}
 };
 const PRODUCTS = [
 /* --- білкові --- */
@@ -755,25 +755,25 @@ const PRODUCTS = [
 {i:'s24',c:'sweet',n:'Ірис',k:387,p:3,f:7.7,cb:76},
 {i:'s25',c:'sweet',n:'Торт «Київський»',k:435,p:6,f:22,cb:53},
 {i:'s26',c:'sweet',n:'Медовик',k:380,p:4.5,f:20,cb:45},
-/* --- готові страви (КБЖВ приблизні, залежать від рецепта) --- */
-{i:'m01',c:'dish',n:'Борщ з яловичиною',k:58,p:3.2,f:2.8,cb:5},
-{i:'m02',c:'dish',n:'Борщ пісний',k:43,p:1.2,f:2.1,cb:5.2},
-{i:'m03',c:'dish',n:'Вареники з картоплею',k:180,p:4.5,f:3.5,cb:33},
-{i:'m04',c:'dish',n:'Вареники з сиром',k:212,p:9,f:6,cb:30},
-{i:'m05',c:'dish',n:'Вареники з вишнею',k:165,p:3.8,f:1.5,cb:34},
-{i:'m06',c:'dish',n:'Деруни',k:198,p:3.5,f:11,cb:22},
-{i:'m07',c:'dish',n:'Голубці з м’ясом',k:124,p:6.5,f:6.5,cb:9.5},
-{i:'m08',c:'dish',n:'Сирники',k:220,p:13,f:9,cb:22,brk:1},
-{i:'m09',c:'dish',n:'Гречаники',k:180,p:11,f:9,cb:13},
-{i:'m10',c:'dish',n:'Котлета куряча парова',k:150,p:16,f:7,cb:6},
-{i:'m11',c:'dish',n:'Плов з куркою',k:165,p:8,f:5.5,cb:21},
-{i:'m12',c:'dish',n:'Печеня в горщику',k:120,p:7.5,f:5,cb:11},
-{i:'m13',c:'dish',n:'Овочеве рагу',k:75,p:1.8,f:3.8,cb:8.5},
-{i:'m14',c:'dish',n:'Млинці на молоці',k:190,p:6,f:6,cb:27,brk:1},
-{i:'m15',c:'dish',n:'Запіканка сирна',k:190,p:14,f:6,cb:20,brk:1},
-{i:'m16',c:'dish',n:'Салат «Вінегрет»',k:96,p:1.5,f:6,cb:9},
-{i:'m17',c:'dish',n:'Юшка рибна',k:48,p:5.5,f:1.6,cb:2.8},
-{i:'m18',c:'dish',n:'Суп курячий з локшиною',k:62,p:4.5,f:2,cb:6.5}
+/* --- готові страви: живуть у своїх категоріях, позначені dish:1 (КБЖВ приблизні) --- */
+{i:'m01',c:'veg',n:'Борщ з яловичиною',k:58,p:3.2,f:2.8,cb:5,dish:1},
+{i:'m02',c:'veg',n:'Борщ пісний',k:43,p:1.2,f:2.1,cb:5.2,dish:1},
+{i:'m03',c:'carb',n:'Вареники з картоплею',k:180,p:4.5,f:3.5,cb:33,dish:1},
+{i:'m04',c:'carb',n:'Вареники з сиром',k:212,p:9,f:6,cb:30,dish:1},
+{i:'m05',c:'carb',n:'Вареники з вишнею',k:165,p:3.8,f:1.5,cb:34,dish:1},
+{i:'m06',c:'carb',n:'Деруни',k:198,p:3.5,f:11,cb:22,dish:1},
+{i:'m07',c:'protein',n:'Голубці з м’ясом',k:124,p:6.5,f:6.5,cb:9.5,dish:1},
+{i:'m08',c:'protein',n:'Сирники',k:220,p:13,f:9,cb:22,brk:1,dish:1},
+{i:'m09',c:'protein',n:'Гречаники',k:180,p:11,f:9,cb:13,dish:1},
+{i:'m10',c:'protein',n:'Котлета куряча парова',k:150,p:16,f:7,cb:6,dish:1},
+{i:'m11',c:'carb',n:'Плов з куркою',k:165,p:8,f:5.5,cb:21,dish:1},
+{i:'m12',c:'protein',n:'Печеня в горщику',k:120,p:7.5,f:5,cb:11,dish:1},
+{i:'m13',c:'veg',n:'Овочеве рагу',k:75,p:1.8,f:3.8,cb:8.5,dish:1},
+{i:'m14',c:'carb',n:'Млинці на молоці',k:190,p:6,f:6,cb:27,brk:1,dish:1},
+{i:'m15',c:'protein',n:'Запіканка сирна',k:190,p:14,f:6,cb:20,brk:1,dish:1},
+{i:'m16',c:'veg',n:'Салат «Вінегрет»',k:96,p:1.5,f:6,cb:9,dish:1},
+{i:'m17',c:'protein',n:'Юшка рибна',k:48,p:5.5,f:1.6,cb:2.8,dish:1},
+{i:'m18',c:'protein',n:'Суп курячий з локшиною',k:62,p:4.5,f:2,cb:6.5,dish:1}
 ];
 
 /* ============ СТРУКТУРА ПРИЙОМІВ ЇЖІ ============ */
@@ -811,6 +811,7 @@ function getPlan(){
 }
 /* межі грамів на порцію (реалістичні розміри порцій) */
 function gramBounds(p){
+  if(p.dish) return p.k<100 ? [150,450] : [80,350];  /* супи vs другі страви */
   switch(p.c){
     case 'veg':   return p.season ? [5,40] : [80,350];
     case 'fruit': return p.k>150 ? [15,60] : [80,350];   /* сухофрукти — малі порції */
@@ -820,7 +821,6 @@ function gramBounds(p){
                        : [20,150];                      /* авокадо, оливки */
     case 'protein':return [50,300];
     case 'sweet': return p.k>=400 ? [15,100] : [30,250];
-    case 'dish':  return p.k<100 ? [150,450] : [80,350];
     case 'carb':  return p.k>=250 ? [20,150] : [60,400]; /* сухі крупи vs варене/хліб */
     default:      return [10,500];
   }
@@ -877,7 +877,7 @@ function loadLocal(){
 const byId = id => document.getElementById(id);
 const prodById = id => PRODUCTS.find(p=>p.i===id);
 const pool = (cat, brkOnly) => {
-  let arr = PRODUCTS.filter(p=>p.c===cat && !p.season);
+  let arr = PRODUCTS.filter(p=>p.c===cat && !p.season && !p.dish);
   if(brkOnly){ const b = arr.filter(p=>p.brk); if(b.length>=3) arr = b; }
   return arr;
 };
@@ -1084,9 +1084,10 @@ function renderDay(){
         const baseCat = it.tpl.cat;
         const optTags = list => list.map(p=>
           `<option value="${p.i}" ${p.i===it.p.i?'selected':''}>${p.n}</option>`).join('');
-        const dishes = PRODUCTS.filter(p=>p.c==='dish');
-        const opts = optTags(PRODUCTS.filter(p=>p.c===baseCat))
-          + (dishes.length ? `<optgroup label="Готові страви (≈)">${optTags(dishes)}</optgroup>` : '');
+        const own = PRODUCTS.filter(p=>p.c===baseCat);
+        const dishes = own.filter(p=>p.dish);
+        const opts = optTags(own.filter(p=>!p.dish))
+          + (dishes.length ? `<optgroup label="Страви (≈)">${optTags(dishes)}</optgroup>` : '');
         const unit = it.p.dry ? 'г сух.' : 'г';
         const custom = it.mc.customG!=null;
         return `<div class="comp ${custom?'custom':''}">
@@ -1094,7 +1095,7 @@ function renderDay(){
           <select data-m="${mi}" data-c="${ci}" class="selProd" aria-label="Продукт">${opts}</select>
           <span class="gwrap"><input type="number" class="inpG" data-m="${mi}" data-c="${ci}"
              value="${it.g}" min="0" max="900" step="5" aria-label="Грами"><span class="un">${unit}</span></span>
-          <span class="ck">${it.p.c==='dish'?'≈ ':''}${fmt(it.g*it.p.k/100)} ккал</span>
+          <span class="ck">${it.p.dish?'≈ ':''}${fmt(it.g*it.p.k/100)} ккал</span>
           <button type="button" class="reset-g" data-m="${mi}" data-c="${ci}"
              title="Повернути авторозрахунок" ${custom?'':'style="visibility:hidden"'}>↺</button>
         </div>`;
@@ -1115,7 +1116,7 @@ function renderShop(){
   byId('shopList').innerHTML = cats.map(c=>{
     const items = [...agg.entries()]
       .map(([id,g])=>({p:prodById(id),g}))
-      .filter(x=>x.p && x.p.c===c)
+      .filter(x=>x.p && (x.p.dish ? c==='dish' : x.p.c===c))
       .sort((a,b)=>b.g-a.g);
     if(!items.length) return '';
     return `<div><h4>${CATS[c].name}</h4><ul>${items.map(x=>
@@ -1237,8 +1238,8 @@ function buildPrintView(){
         html += `<tr>${ix===0?`<td class="meal" rowspan="${m.items.length}">${m.def.name}<br>
             <span style="font-weight:400;color:#52514e">${fmt(m.tot.k)} ккал</span></td>`:''}
           <td>${esc(it.p.n)}${it.p.dry?' <span style="color:#52514e">(суха вага)</span>':''}${
-            it.p.c==='dish'?' <span style="color:#52514e">(≈)</span>':''}</td>
-          <td class="n">${it.g} г</td><td class="n">${it.p.c==='dish'?'≈':''}${fmt(it.g*it.p.k/100)}</td></tr>`;
+            it.p.dish?' <span style="color:#52514e">(≈)</span>':''}</td>
+          <td class="n">${it.g} г</td><td class="n">${it.p.dish?'≈':''}${fmt(it.g*it.p.k/100)}</td></tr>`;
       });
     }
     html += `</tbody></table></div>`;
@@ -1254,7 +1255,7 @@ function buildPrintView(){
   const cats = Object.keys(CATS).sort((a,b)=>CATS[a].order-CATS[b].order);
   html += `<h3>Список покупок на тиждень</h3><div class="shopcols">` + cats.map(c=>{
     const items = [...agg.entries()].map(([id,g])=>({p:prodById(id),g}))
-      .filter(x=>x.p && x.p.c===c).sort((a,b)=>b.g-a.g);
+      .filter(x=>x.p && (x.p.dish ? c==='dish' : x.p.c===c)).sort((a,b)=>b.g-a.g);
     if(!items.length) return '';
     return `<div class="shopcat"><b>${CATS[c].name}</b>` + items.map(x=>
       `<div><span>${esc(x.p.n)}${x.p.dry?' (суха вага)':''}</span><span>${

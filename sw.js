@@ -1,7 +1,7 @@
 /* Service worker: офлайн-робота додатку.
-   При оновленні index.html підвищуйте номер версії кешу (v6 → v7), щоб
+   При оновленні index.html підвищуйте номер версії кешу (v7 → v8), щоб
    користувачі отримали свіжу версію. */
-const CACHE = 'nutri-konstruktor-v6';
+const CACHE = 'nutri-konstruktor-v7';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
