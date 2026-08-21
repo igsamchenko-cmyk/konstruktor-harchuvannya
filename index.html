@@ -179,11 +179,16 @@
   .m-bar{height:10px;border-radius:5px;background:var(--track);overflow:hidden}
   .m-fill{height:100%;border-radius:5px 0 0 5px}
   .m-val{text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+  .m-val b{font-weight:700}
+  .m-val.near{color:var(--warn-text)}
+  .m-val.off{color:var(--critical)}
 
   .meal{border:1px solid var(--frame);border-radius:12px;background:var(--field);margin-bottom:14px;overflow:hidden}
   .meal-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;
     padding:12px 16px;border-bottom:1px solid var(--frame);background:var(--accent-soft)}
   .meal-head h3{margin:0;font-size:16px}
+  .meal-head .mt{color:var(--muted);font-weight:400;font-size:13px}
+  .gwrap .un b{color:var(--ink-2);font-weight:600}
   .meal-head .mk{font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
   .comp{display:grid;grid-template-columns:96px 1fr 148px 92px 34px;gap:10px;align-items:center;
     padding:10px 16px;border-bottom:1px solid var(--hairline)}
@@ -228,6 +233,25 @@
   details.addprod summary{cursor:pointer;font-weight:600;color:var(--accent-dark);font-size:14px}
   .addgrid{display:grid;grid-template-columns:2fr 1.4fr repeat(4,1fr) auto;gap:10px;align-items:end;margin-top:12px}
   @media(max-width:820px){.addgrid{grid-template-columns:1fr 1fr;}}
+
+  /* --- виключення продуктів --- */
+  details.excl{margin-top:16px;border-top:1px solid var(--hairline);padding-top:12px}
+  details.excl summary{cursor:pointer;font-weight:600;color:var(--accent-dark);font-size:14px}
+  .presets{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 10px}
+  .preset{font:inherit;font-size:13px;font-weight:600;padding:7px 12px;border-radius:999px;
+    cursor:pointer;border:1px solid var(--hairline);background:var(--field);color:var(--ink-2)}
+  .preset.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .exsearch{position:relative;max-width:420px}
+  .exmatches{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .exmatches button{font:inherit;font-size:13px;padding:5px 10px;border-radius:999px;cursor:pointer;
+    border:1px dashed var(--frame);background:var(--field);color:var(--ink)}
+  .exmatches button:hover{border-color:var(--accent);color:var(--accent-dark)}
+  .exlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .exlist span{display:inline-flex;align-items:center;gap:6px;font-size:13px;background:var(--track);
+    border-radius:999px;padding:4px 6px 4px 11px}
+  .exlist button{border:0;background:var(--field);border-radius:50%;width:18px;height:18px;
+    line-height:1;cursor:pointer;color:var(--ink-2);font-size:11px}
+  .exlist button:hover{background:var(--critical);color:#fff}
 
   .notice{background:var(--field);border:1px solid var(--hairline);border-left:4px solid var(--warn);
     border-radius:10px;padding:10px 14px;font-size:13.5px;color:var(--ink-2);margin-top:12px}
@@ -381,6 +405,22 @@
       <button type="button" class="goal" data-v="gain"><b>Набір м'язової маси</b><span>помірний профіцит</span></button>
     </div>
   </div>
+  <details class="excl" id="exclBlock">
+    <summary>Виключення продуктів (алергії та вподобання) <span id="exCount"></span></summary>
+    <div class="presets" id="exPresets">
+      <button type="button" class="preset" data-set="vegetarian">🌱 Вегетаріанське</button>
+      <button type="button" class="preset" data-set="lactose">🥛 Без лактози</button>
+      <button type="button" class="preset" data-set="fish">🐟 Без риби</button>
+      <button type="button" class="preset" data-set="gluten">🌾 Без глютену</button>
+    </div>
+    <div class="exsearch">
+      <input type="text" id="exSearch" placeholder="Знайти продукт, щоб виключити (напр., гриби)">
+      <div class="exmatches" id="exMatches"></div>
+    </div>
+    <div class="exlist" id="exList"></div>
+    <p class="hint" style="margin-top:10px">Виключені продукти не з'являться ні в згенерованому меню,
+      ні у випадаючих списках.</p>
+  </details>
 </section>
 
 <!-- ======== КРОК 2 ======== -->
@@ -392,6 +432,7 @@
       <div class="cap">Ваша денна норма</div>
       <div><span class="kcal" id="tKcal">—</span><span class="unit">ккал</span></div>
       <div class="expl" id="tExpl"></div>
+      <div class="expl" id="tWater" style="margin-top:6px">💧</div>
     </div>
     <div class="split">
       <div class="shead"><span>Розподіл калорій між нутрієнтами</span></div>
@@ -479,6 +520,7 @@
   <div class="actions">
     <button class="btn primary" id="btnPrint">🖨 Роздрукувати / Зберегти в PDF</button>
     <button class="btn" id="btnSave">💾 Зберегти програму у файл</button>
+    <button class="btn" id="btnShare">🔗 Поділитися посиланням</button>
     <button class="btn" id="btnLoad">📂 Завантажити програму з файлу</button>
     <input type="file" id="fileInput" accept=".json" style="display:none">
   </div>
@@ -567,10 +609,10 @@ const PRODUCTS = [
 {i:'p15',c:'protein',n:'Тунець у власному соку',k:96,p:21,f:1,cb:0},
 {i:'p16',c:'protein',n:'Креветки',k:87,p:18,f:1,cb:0.8},
 {i:'p17',c:'protein',n:'Кальмар',k:74,p:16,f:1,cb:0.3},
-{i:'p18',c:'protein',n:'Яйця курячі',k:155,p:12.7,f:11,cb:0.7,brk:1},
+{i:'p18',c:'protein',n:'Яйця курячі',k:155,p:12.7,f:11,cb:0.7,brk:1,u:55,un:'шт.'},
 {i:'p19',c:'protein',n:'Яєчні білки',k:48,p:11,f:0.2,cb:0.7,brk:1},
-{i:'p20',c:'protein',n:'Творог 5%',k:121,p:17,f:5,cb:1.8,brk:1},
-{i:'p21',c:'protein',n:'Творог знежирений',k:71,p:16.5,f:0.2,cb:1.3,brk:1},
+{i:'p20',c:'protein',n:'Сир кисломолочний 5%',k:121,p:17,f:5,cb:1.8,brk:1},
+{i:'p21',c:'protein',n:'Сир кисломолочний знежирений',k:71,p:16.5,f:0.2,cb:1.3,brk:1},
 {i:'p22',c:'protein',n:'Тофу',k:76,p:8,f:4.8,cb:1.9},
 {i:'p23',c:'protein',n:'Оселедець солоний',k:217,p:19,f:15,cb:0},
 {i:'p24',c:'protein',n:'Короп',k:112,p:16,f:5.3,cb:0},
@@ -589,7 +631,7 @@ const PRODUCTS = [
 {i:'p37',c:'protein',n:'Ковбаса домашня смажена',k:340,p:15,f:31,cb:1},
 {i:'p38',c:'protein',n:'Сосиски молочні',k:266,p:11,f:24,cb:1.6},
 {i:'p39',c:'protein',n:'Тушонка яловича',k:214,p:15,f:17,cb:0},
-{i:'p40',c:'protein',n:'Яйця перепелині',k:168,p:11.9,f:13,cb:0.6,brk:1},
+{i:'p40',c:'protein',n:'Яйця перепелині',k:168,p:11.9,f:13,cb:0.6,brk:1,u:11,un:'шт.'},
 /* --- гарніри та крупи --- */
 {i:'c01',c:'carb',n:'Гречка',k:343,p:12.6,f:3.3,cb:62,dry:1},
 {i:'c02',c:'carb',n:'Рис білий',k:344,p:6.7,f:0.7,cb:78,dry:1},
@@ -603,8 +645,8 @@ const PRODUCTS = [
 {i:'c10',c:'carb',n:'Макарони з тв. сортів',k:350,p:12,f:1.5,cb:70,dry:1},
 {i:'c11',c:'carb',n:'Картопля варена',k:82,p:2,f:0.4,cb:17},
 {i:'c12',c:'carb',n:'Батат запечений',k:90,p:2,f:0.2,cb:21},
-{i:'c13',c:'carb',n:'Хліб цільнозерновий',k:230,p:8.5,f:3,cb:41,brk:1},
-{i:'c14',c:'carb',n:'Хлібці житні',k:330,p:11,f:2.7,cb:58,brk:1},
+{i:'c13',c:'carb',n:'Хліб цільнозерновий',k:230,p:8.5,f:3,cb:41,brk:1,u:35,un:'скиб.'},
+{i:'c14',c:'carb',n:'Хлібці житні',k:330,p:11,f:2.7,cb:58,brk:1,u:10,un:'шт.'},
 {i:'c15',c:'carb',n:'Лаваш тонкий',k:275,p:9,f:1,cb:56},
 {i:'c16',c:'carb',n:'Кукурудза варена',k:96,p:3.4,f:1.5,cb:19},
 {i:'c17',c:'carb',n:'Сочевиця',k:331,p:25,f:1.1,cb:53,dry:1},
@@ -615,9 +657,9 @@ const PRODUCTS = [
 {i:'c22',c:'carb',n:'Ячна крупа',k:324,p:10,f:1.3,cb:66,dry:1},
 {i:'c23',c:'carb',n:'Манна крупа',k:333,p:10.3,f:1,cb:70,dry:1,brk:1},
 {i:'c24',c:'carb',n:'Горох лущений',k:298,p:23,f:1.6,cb:49,dry:1},
-{i:'c25',c:'carb',n:'Хліб «Дарницький» житній',k:206,p:6.6,f:1.1,cb:41,brk:1},
-{i:'c26',c:'carb',n:'Батон пшеничний',k:264,p:7.5,f:2.9,cb:51,brk:1},
-{i:'c27',c:'carb',n:'Галети',k:392,p:9.7,f:10,cb:66},
+{i:'c25',c:'carb',n:'Хліб «Дарницький» житній',k:206,p:6.6,f:1.1,cb:41,brk:1,u:35,un:'скиб.'},
+{i:'c26',c:'carb',n:'Батон пшеничний',k:264,p:7.5,f:2.9,cb:51,brk:1,u:25,un:'скиб.'},
+{i:'c27',c:'carb',n:'Галети',k:392,p:9.7,f:10,cb:66,u:13,un:'шт.'},
 {i:'c28',c:'carb',n:'Гарбузова каша на воді',k:63,p:1.5,f:0.8,cb:12,brk:1},
 /* --- молочні --- */
 {i:'d01',c:'dairy',n:'Кефір 2,5%',k:53,p:2.9,f:2.5,cb:4},
@@ -627,33 +669,33 @@ const PRODUCTS = [
 {i:'d05',c:'dairy',n:'Молоко 2,5%',k:54,p:2.8,f:2.5,cb:4.7,brk:1},
 {i:'d06',c:'dairy',n:'Сир кисломолочний зерновий 4%',k:105,p:12,f:4.3,cb:3,brk:1},
 {i:'d07',c:'dairy',n:'Айран',k:27,p:1.1,f:1.5,cb:2.3},
-{i:'d08',c:'dairy',n:'Сметана 15%',k:162,p:2.6,f:15,cb:3.6,add:1},
-{i:'d09',c:'dairy',n:'Сметана 20%',k:206,p:2.8,f:20,cb:3.4,add:1},
+{i:'d08',c:'dairy',n:'Сметана 15%',k:162,p:2.6,f:15,cb:3.6,add:1,u:20,un:'ст. л.'},
+{i:'d09',c:'dairy',n:'Сметана 20%',k:206,p:2.8,f:20,cb:3.4,add:1,u:20,un:'ст. л.'},
 {i:'d10',c:'dairy',n:'Вершки 10%',k:118,p:3,f:10,cb:4,add:1},
 {i:'d11',c:'dairy',n:'Простокваша',k:58,p:2.9,f:3.2,cb:4.1},
 {i:'d12',c:'dairy',n:'Молоко козяче',k:68,p:3,f:4.2,cb:4.5,brk:1},
-{i:'d13',c:'dairy',n:'Творожна маса з родзинками',k:343,p:7,f:23,cb:29,brk:1,add:1},
+{i:'d13',c:'dairy',n:'Сиркова маса з родзинками',k:343,p:7,f:23,cb:29,brk:1,add:1,u:50,un:'шт.'},
 /* --- жири та горіхи --- */
-{i:'f01',c:'fat',n:'Олія оливкова',k:898,p:0,f:99.8,cb:0,oil:1},
-{i:'f02',c:'fat',n:'Олія соняшникова',k:899,p:0,f:99.9,cb:0,oil:1},
+{i:'f01',c:'fat',n:'Олія оливкова',k:898,p:0,f:99.8,cb:0,oil:1,u:13,un:'ст. л.'},
+{i:'f02',c:'fat',n:'Олія соняшникова',k:899,p:0,f:99.9,cb:0,oil:1,u:13,un:'ст. л.'},
 {i:'f03',c:'fat',n:'Масло вершкове 82%',k:744,p:0.5,f:82,cb:0.8,oil:1},
 {i:'f04',c:'fat',n:'Горіхи волоські',k:654,p:15,f:65,cb:7},
 {i:'f05',c:'fat',n:'Мигдаль',k:609,p:18.6,f:53.7,cb:13},
 {i:'f06',c:'fat',n:'Кеш’ю',k:600,p:18,f:44,cb:27},
 {i:'f07',c:'fat',n:'Фундук',k:651,p:15,f:61,cb:9},
-{i:'f08',c:'fat',n:'Арахісова паста без цукру',k:588,p:25,f:50,cb:12,brk:1},
-{i:'f09',c:'fat',n:'Насіння гарбуза',k:559,p:24,f:46,cb:14},
-{i:'f10',c:'fat',n:'Насіння чіа',k:486,p:17,f:31,cb:8,brk:1},
-{i:'f11',c:'fat',n:'Насіння льону',k:534,p:18,f:42,cb:12,brk:1},
+{i:'f08',c:'fat',n:'Арахісова паста без цукру',k:588,p:25,f:50,cb:12,brk:1,u:16,un:'ст. л.'},
+{i:'f09',c:'fat',n:'Насіння гарбуза',k:559,p:24,f:46,cb:14,u:10,un:'ст. л.'},
+{i:'f10',c:'fat',n:'Насіння чіа',k:486,p:17,f:31,cb:8,brk:1,u:10,un:'ст. л.'},
+{i:'f11',c:'fat',n:'Насіння льону',k:534,p:18,f:42,cb:12,brk:1,u:10,un:'ст. л.'},
 {i:'f12',c:'fat',n:'Авокадо',k:160,p:2,f:15,cb:9,brk:1},
 {i:'f13',c:'fat',n:'Сир твердий',k:356,p:25,f:27,cb:0,brk:1},
 {i:'f14',c:'fat',n:'Оливки',k:115,p:0.8,f:11,cb:6},
 {i:'f15',c:'fat',n:'Сало солоне',k:797,p:2.4,f:89,cb:0},
 {i:'f16',c:'fat',n:'Смалець',k:896,p:0,f:99.6,cb:0,oil:1},
-{i:'f17',c:'fat',n:'Олія лляна',k:898,p:0,f:99.8,cb:0,oil:1},
-{i:'f18',c:'fat',n:'Олія гарбузова',k:896,p:0,f:99.5,cb:0,oil:1},
-{i:'f19',c:'fat',n:'Насіння соняшника',k:601,p:21,f:53,cb:10},
-{i:'f20',c:'fat',n:'Кунжут',k:565,p:19,f:49,cb:12},
+{i:'f17',c:'fat',n:'Олія лляна',k:898,p:0,f:99.8,cb:0,oil:1,u:13,un:'ст. л.'},
+{i:'f18',c:'fat',n:'Олія гарбузова',k:896,p:0,f:99.5,cb:0,oil:1,u:13,un:'ст. л.'},
+{i:'f19',c:'fat',n:'Насіння соняшника',k:601,p:21,f:53,cb:10,u:10,un:'ст. л.'},
+{i:'f20',c:'fat',n:'Кунжут',k:565,p:19,f:49,cb:12,u:10,un:'ст. л.'},
 {i:'f21',c:'fat',n:'Арахіс',k:567,p:26,f:49,cb:16},
 {i:'f22',c:'fat',n:'Майонез',k:627,p:1,f:67,cb:3.7,oil:1},
 {i:'f23',c:'fat',n:'Бринза',k:260,p:17,f:20,cb:2},
@@ -731,12 +773,12 @@ const PRODUCTS = [
 /* --- смаколики (гнучка дієта) --- */
 {i:'s01',c:'sweet',n:'Чорний шоколад 70%',k:546,p:7.9,f:38,cb:46},
 {i:'s02',c:'sweet',n:'Молочний шоколад',k:550,p:7,f:30,cb:59},
-{i:'s03',c:'sweet',n:'Зефір',k:326,p:0.8,f:0.1,cb:79},
+{i:'s03',c:'sweet',n:'Зефір',k:326,p:0.8,f:0.1,cb:79,u:33,un:'шт.'},
 {i:'s04',c:'sweet',n:'Мармелад',k:321,p:0.1,f:0,cb:79},
 {i:'s05',c:'sweet',n:'Пастила',k:310,p:0.5,f:0,cb:80},
-{i:'s06',c:'sweet',n:'Мед',k:329,p:0.8,f:0,cb:81},
+{i:'s06',c:'sweet',n:'Мед',k:329,p:0.8,f:0,cb:81,u:21,un:'ст. л.'},
 {i:'s07',c:'sweet',n:'Халва соняшникова',k:523,p:12,f:30,cb:54},
-{i:'s08',c:'sweet',n:'Печиво вівсяне',k:437,p:6.5,f:14,cb:71},
+{i:'s08',c:'sweet',n:'Печиво вівсяне',k:437,p:6.5,f:14,cb:71,u:18,un:'шт.'},
 {i:'s09',c:'sweet',n:'Морозиво пломбір',k:227,p:3.7,f:15,cb:20},
 {i:'s10',c:'sweet',n:'Круасан',k:406,p:8,f:21,cb:46},
 {i:'s11',c:'sweet',n:'Чізкейк',k:321,p:5.5,f:22,cb:25},
@@ -744,14 +786,14 @@ const PRODUCTS = [
 {i:'s13',c:'sweet',n:'Вафлі',k:460,p:4,f:20,cb:66},
 {i:'s14',c:'sweet',n:'Сушені банани (чипси)',k:519,p:2.3,f:34,cb:50},
 {i:'s15',c:'sweet',n:'Чипси картопляні',k:520,p:6,f:34,cb:50},
-{i:'s16',c:'sweet',n:'Сирок глазурований',k:407,p:8.5,f:26,cb:32},
+{i:'s16',c:'sweet',n:'Сирок глазурований',k:407,p:8.5,f:26,cb:32,u:45,un:'шт.'},
 {i:'s17',c:'sweet',n:'Згущене молоко',k:320,p:7.2,f:8.5,cb:56},
 {i:'s18',c:'sweet',n:'Варення вишневе',k:256,p:0.5,f:0.2,cb:63},
 {i:'s19',c:'sweet',n:'Повидло яблучне',k:250,p:0.4,f:0.2,cb:62},
-{i:'s20',c:'sweet',n:'Пряники',k:364,p:5,f:3,cb:77},
-{i:'s21',c:'sweet',n:'Сушки',k:339,p:11,f:1.3,cb:73},
+{i:'s20',c:'sweet',n:'Пряники',k:364,p:5,f:3,cb:77,u:20,un:'шт.'},
+{i:'s21',c:'sweet',n:'Сушки',k:339,p:11,f:1.3,cb:73,u:10,un:'шт.'},
 {i:'s22',c:'sweet',n:'Бублик з маком',k:336,p:10,f:4,cb:65},
-{i:'s23',c:'sweet',n:'Печиво «Марія»',k:400,p:7.5,f:8.5,cb:74},
+{i:'s23',c:'sweet',n:'Печиво «Марія»',k:400,p:7.5,f:8.5,cb:74,u:7,un:'шт.'},
 {i:'s24',c:'sweet',n:'Ірис',k:387,p:3,f:7.7,cb:76},
 {i:'s25',c:'sweet',n:'Торт «Київський»',k:435,p:6,f:22,cb:53},
 {i:'s26',c:'sweet',n:'Медовик',k:380,p:4.5,f:20,cb:45},
@@ -810,15 +852,20 @@ function getPlan(){
              .concat([{id:'sw', name:'Смаколик', share:s}]);
 }
 /* межі грамів на порцію (реалістичні розміри порцій) */
+let PORTION_SCALE = 1;   /* росте для висококалорійних програм */
 function gramBounds(p){
+  const [lo,hi] = rawBounds(p);
+  return [lo, Math.round(hi*PORTION_SCALE)];
+}
+function rawBounds(p){
   if(p.dish) return p.k<100 ? [150,450] : [80,350];  /* супи vs другі страви */
   switch(p.c){
     case 'veg':   return p.season ? [5,40] : [80,350];
     case 'fruit': return p.k>150 ? [15,60] : [80,350];   /* сухофрукти — малі порції */
     case 'dairy': return p.add ? [15,80] : (p.k>=100 ? [40,200] : [80,400]);
-    case 'fat':   return p.k>=400 ? [5,60]              /* олії, горіхи, насіння */
-                       : p.k>=200 ? [10,80]             /* тверді сири, бринза */
-                       : [20,150];                      /* авокадо, оливки */
+    case 'fat':   return p.k>=400 ? [7,60]              /* олії, горіхи, насіння */
+                       : p.k>=200 ? [15,80]             /* тверді сири, бринза */
+                       : [25,150];                      /* авокадо, оливки */
     case 'protein':return [50,300];
     case 'sweet': return p.k>=400 ? [15,100] : [30,250];
     case 'carb':  return p.k>=250 ? [20,150] : [60,400]; /* сухі крупи vs варене/хліб */
@@ -826,12 +873,25 @@ function gramBounds(p){
   }
 }
 
+/* ============ ВИКЛЮЧЕННЯ: НАБОРИ ПРЕСЕТІВ ============ */
+const PRESETS = {
+  fish: ['p09','p10','p11','p12','p13','p14','p15','p16','p17','p23','p24','p25','p26','p27','p28','p29','m17'],
+  vegetarian: ['p01','p02','p03','p04','p05','p06','p07','p08','p09','p10','p11','p12','p13','p14','p15','p16','p17',
+    'p23','p24','p25','p26','p27','p28','p29','p30','p31','p32','p33','p34','p35','p36','p37','p38','p39',
+    'm01','m07','m09','m10','m11','m12','m17','m18','f15','f16'],
+  lactose: ['d01','d02','d03','d04','d05','d06','d07','d08','d09','d10','d11','d12','d13','p20','p21',
+    'f03','f13','f23','f24','f25','f26','s02','s09','s11','s16','s17','s24','s25','s26','m04','m08','m14','m15'],
+  gluten: ['c04','c05','c08','c09','c10','c13','c14','c15','c20','c22','c23','c25','c26','c27',
+    's08','s10','s13','s20','s21','s22','s23','s25','s26','m03','m04','m05','m06','m14','m18']
+};
+const excludedSet = () => new Set(state.settings.excluded||[]);
+
 /* ============ СТАН ============ */
 const DAY_NAMES = ['Понеділок','Вівторок','Середа','Четвер','П’ятниця','Субота','Неділя'];
 const DAY_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
 const DEFAULT_STATE = () => ({
   profile:{ name:'', sex:'f', age:30, height:168, weight:70, activity:1.375, goal:'loss' },
-  settings:{ deficit:17, surplus:12, proteinPerKg:1.8, fatPct:27, meals:4, sweetPct:10 },
+  settings:{ deficit:17, surplus:12, proteinPerKg:1.8, fatPct:27, meals:4, sweetPct:10, excluded:[] },
   activeDay:0,
   days:[],          /* days[7] = [ meal -> [ {prodId, customG|null} ] ] */
   weights:[]        /* [{d:'2026-08-19', w:70.5}] */
@@ -876,8 +936,13 @@ function loadLocal(){
 
 const byId = id => document.getElementById(id);
 const prodById = id => PRODUCTS.find(p=>p.i===id);
+const POOL_FALLBACK = {dairy:['fruit'], protein:['dairy'], fruit:['veg'], carb:['veg'], fat:['protein'], sweet:['fruit'], veg:[]};
 const pool = (cat, brkOnly) => {
-  let arr = PRODUCTS.filter(p=>p.c===cat && !p.season && !p.dish);
+  const ex = excludedSet();
+  const base = c => PRODUCTS.filter(p=>p.c===c && !p.season && !p.dish && !ex.has(p.i));
+  let arr = base(cat);
+  if(!arr.length) for(const fc of (POOL_FALLBACK[cat]||[])){ arr = base(fc); if(arr.length) break; }
+  if(!arr.length) arr = PRODUCTS.filter(p=>p.c===cat && !p.season && !p.dish); /* останній рятунок */
   if(brkOnly){ const b = arr.filter(p=>p.brk); if(b.length>=3) arr = b; }
   return arr;
 };
@@ -902,55 +967,146 @@ function calcTargets(){
            prot, fat, carb, clamped };
 }
 
-/* автоматичний розрахунок грамів для одного прийому */
-function calcMealGrams(mealComps, mealKcal){
-  const items = mealComps.map((mc,idx)=>{
-    const tpl = MEAL_COMPS_ACTIVE(mc.mealId)[idx];
-    const p = prodById(mc.prodId);
-    return { mc, tpl, p, g:0, atBound:false };
-  });
-  /* перший прохід */
-  for(const it of items){
-    if(it.mc.customG!=null){ it.g = it.mc.customG; it.atBound = true; continue; }
-    const [lo,hi] = gramBounds(it.p);
-    let g = mealKcal*it.tpl.sh / it.p.k * 100;
-    if(g<lo){g=lo;it.atBound=true} else if(g>hi){g=hi;it.atBound=true}
-    it.g = g;
-  }
-  /* коригувальний прохід: розкидаємо залишок по вільних компонентах */
-  const sumK = items.reduce((s,it)=>s+it.g*it.p.k/100,0);
-  const free = items.filter(it=>!it.atBound);
-  if(free.length){
-    const resid = mealKcal - sumK;
-    const shSum = free.reduce((s,it)=>s+it.tpl.sh,0);
-    for(const it of free){
-      const [lo,hi] = gramBounds(it.p);
-      let g = it.g + resid*(it.tpl.sh/shSum)/it.p.k*100;
-      it.g = Math.min(hi, Math.max(lo, g));
-    }
-  }
-  for(const it of items) it.g = Math.max(5, Math.round(it.g/5)*5);
-  return items;
+/* побутова міра: "115 г" → "≈ 2 шт." */
+function unitApprox(p, g){
+  if(!p.u) return '';
+  const n = Math.round(g/p.u*2)/2;
+  if(n < 0.5) return '';
+  return `≈ ${String(n).replace('.',',')} ${p.un}`;
 }
-function MEAL_COMPS_ACTIVE(mealId){ return MEAL_COMPS[mealId]; }
+/* орієнтовний час прийомів */
+function mealTimes(){
+  const t = {3:['8:00','13:00','18:30'],
+             4:['8:00','11:00','14:00','18:30'],
+             5:['8:00','11:00','14:00','16:30','19:00']}[state.settings.meals];
+  return (state.settings.sweetPct||0) > 0 ? t.concat(['будь-коли']) : t;
+}
+
+/* ============ РОЗПОДІЛ ГРАМІВ ПІД КАЛОРІЇ ТА БЖВ ============
+   Грами підбираються так, щоб день збігався з ціллю одночасно за калоріями,
+   білками, жирами й вуглеводами (а не лише за калорійністю).
+   Метод: координатний спуск — для кожного компонента точно рахуємо оптимальні
+   грами при фіксованих інших, і так кілька проходів. Ручні грами не чіпаємо. */
+const OPT_W = {k:3.0, p:2.6, f:2.6, c:1.6};  /* ваги цілей дня */
+const OPT_WM = 0.9;    /* тримати калорійність кожного прийому близько до частки */
+const OPT_LAM = 0.10;  /* тяжіння до стартових грамів — зберігає структуру прийому */
+
+function optimizeDay(meals, t){
+  const T = {k:Math.max(1,t.kcal), p:Math.max(1,t.prot), f:Math.max(1,t.fat), c:Math.max(1,t.carb)};
+  const all = meals.flatMap(m=>m.items);
+  const free = all.filter(it=>!it.fixed);
+  if(!free.length) return;
+
+  /* поточні суми дня */
+  let K=0,P=0,F=0,C=0;
+  for(const it of all){ const q=it.g/100;
+    K+=it.p.k*q; P+=it.p.p*q; F+=it.p.f*q; C+=it.p.cb*q; }
+  /* поточні суми прийомів */
+  const MK = meals.map(m=>m.items.reduce((a,it)=>a+it.g*it.p.k/100,0));
+
+  for(let sweep=0; sweep<24; sweep++){
+    let moved = 0;
+    for(let mi=0; mi<meals.length; mi++){
+      const m = meals[mi], mt = Math.max(1, m.mealKcal);
+      for(const it of m.items){
+        if(it.fixed) continue;
+        const a = {k:it.p.k/100, p:it.p.p/100, f:it.p.f/100, c:it.p.cb/100};
+        /* суми без цього компонента */
+        const eK=K-it.g*a.k, eP=P-it.g*a.p, eF=F-it.g*a.f, eC=C-it.g*a.c;
+        const eM=MK[mi]-it.g*a.k;
+        let num = OPT_W.k*a.k*(T.k-eK)/(T.k*T.k)
+                + OPT_W.p*a.p*(T.p-eP)/(T.p*T.p)
+                + OPT_W.f*a.f*(T.f-eF)/(T.f*T.f)
+                + OPT_W.c*a.c*(T.c-eC)/(T.c*T.c)
+                + OPT_WM*a.k*(mt-eM)/(mt*mt)
+                + OPT_LAM/it.g0;
+        let den = OPT_W.k*a.k*a.k/(T.k*T.k)
+                + OPT_W.p*a.p*a.p/(T.p*T.p)
+                + OPT_W.f*a.f*a.f/(T.f*T.f)
+                + OPT_W.c*a.c*a.c/(T.c*T.c)
+                + OPT_WM*a.k*a.k/(mt*mt)
+                + OPT_LAM/(it.g0*it.g0);
+        if(!(den>0)) continue;
+        let g = num/den;
+        if(!isFinite(g)) continue;
+        g = Math.min(it.hi, Math.max(it.lo, g));
+        const d = g-it.g;
+        if(Math.abs(d)>0.01){
+          moved = 1;
+          K+=d*a.k; P+=d*a.p; F+=d*a.f; C+=d*a.c; MK[mi]+=d*a.k;
+          it.g = g;
+        }
+      }
+    }
+    if(!moved) break;
+  }
+}
+
+/* наскільки день влучив у цілі (менше — краще) */
+function dayScore(tot, t){
+  const rel = (got,want,w) => { const d=(got-Math.max(1,want))/Math.max(1,want); return w*d*d; };
+  return rel(tot.k,t.kcal,3) + rel(tot.p,t.prot,2.6) + rel(tot.f,t.fat,2.6) + rel(tot.c,t.carb,1.6);
+}
+
+/* побудова дня з набору компонентів (без звернення до state) */
+/* Частки компонентів усередині прийому підлаштовуються під цільовий розподіл БЖВ.
+   Базова структура природно дає ~30% білка / 27% жирів / 43% вуглеводів від калорій;
+   якщо ціль інша (напр., набір маси — більше вуглеводів), частки масштабуються. */
+const BASE_SPLIT = {p:0.30, f:0.27, c:0.43};
+function adaptShares(mealId, t){
+  const base = MEAL_COMPS[mealId] || [];
+  if(!base.length) return base;
+  const K = Math.max(1, t.kcal);
+  const clamp = x => Math.min(1.9, Math.max(0.45, x));
+  const fP = clamp((t.prot*4/K)/BASE_SPLIT.p);
+  const fF = clamp((t.fat*9/K)/BASE_SPLIT.f);
+  const fC = clamp((t.carb*4/K)/BASE_SPLIT.c);
+  const w = {protein:fP, dairy:(fP+fC)/2, fat:fF, carb:fC, fruit:(fC+1)/2, veg:1, sweet:1};
+  const raw = base.map(x=>x.sh*(w[x.cat]||1));
+  const sum = raw.reduce((a,b)=>a+b,0) || 1;
+  return base.map((x,i)=>({cat:x.cat, sh:raw[i]/sum}));
+}
+
+function buildDay(dayComps, t){
+  PORTION_SCALE = Math.min(1.8, Math.max(1, t.kcal/2000));
+  const plan = getPlan();
+  const meals = plan.map((m,mi)=>{
+    const mealKcal = t.kcal*m.share;
+    const comps = dayComps[mi] || [];
+    const adapted = adaptShares(comps.length ? comps[0].mealId : m.id, t);
+    const items = comps.map((mc,idx)=>{
+      const tpl = adapted[idx] || (MEAL_COMPS[mc.mealId] && MEAL_COMPS[mc.mealId][idx]) || {cat:'carb', sh:1};
+      const p = prodById(mc.prodId) || PRODUCTS[0];
+      const [lo,hi] = gramBounds(p);
+      const fixed = mc.customG!=null;
+      let g = fixed ? mc.customG
+                    : Math.min(hi, Math.max(lo, mealKcal*tpl.sh/p.k*100));
+      return { mc, tpl, p, lo, hi, fixed, g0:Math.max(1,g), g };
+    });
+    return { def:m, mealKcal, items };
+  });
+
+  optimizeDay(meals, t);
+
+  /* округлення: дрібні калорійні продукти — до 1 г, решта — до 5 г */
+  for(const m of meals) for(const it of m.items){
+    if(it.fixed) continue;
+    const step = it.p.k>=300 ? 1 : 5;
+    it.g = Math.min(it.hi, Math.max(it.lo, Math.round(it.g/step)*step));
+  }
+  for(const m of meals){
+    m.tot = m.items.reduce((a,it)=>{ const q=it.g/100;
+      a.k+=it.p.k*q; a.p+=it.p.p*q; a.f+=it.p.f*q; a.c+=it.p.cb*q; return a;
+    },{k:0,p:0,f:0,c:0});
+  }
+  const tot = meals.reduce((a,m)=>{a.k+=m.tot.k;a.p+=m.tot.p;a.f+=m.tot.f;a.c+=m.tot.c;return a},
+    {k:0,p:0,f:0,c:0});
+  return { targets:t, meals, tot };
+}
 
 /* повний розрахунок дня: повертає структуру для рендеру */
 function calcDay(dayIdx){
-  const t = calcTargets();
-  const plan = getPlan();
-  const day = state.days[dayIdx];
-  const meals = plan.map((m,mi)=>{
-    const mealKcal = t.kcal*m.share;
-    const comps = day[mi];
-    const items = calcMealGrams(comps, mealKcal);
-    const tot = items.reduce((a,it)=>{
-      const f = it.g/100;
-      a.k+=it.p.k*f; a.p+=it.p.p*f; a.f+=it.p.f*f; a.c+=it.p.cb*f; return a;
-    },{k:0,p:0,f:0,c:0});
-    return { def:m, mealKcal, items, tot };
-  });
-  const tot = meals.reduce((a,m)=>{a.k+=m.tot.k;a.p+=m.tot.p;a.f+=m.tot.f;a.c+=m.tot.c;return a},{k:0,p:0,f:0,c:0});
-  return { targets:t, meals, tot };
+  return buildDay(state.days[dayIdx] || [], calcTargets());
 }
 
 /* ============ ГЕНЕРАЦІЯ МЕНЮ ============ */
@@ -964,12 +1120,24 @@ function newComp(mealId, tplIdx, prevProdId){
   if(prevProdId && ps.length>1) ps = ps.filter(p=>p.i!==prevProdId);
   return { mealId, prodId: rnd(ps).i, customG:null };
 }
-function genDay(dayIdx, prevDay){
+function randomDay(prevDay){
   const plan = getPlan();
   return plan.map((m,mi)=> MEAL_COMPS[m.id].map((_,ci)=>{
     const prev = prevDay && prevDay[mi] && prevDay[mi][ci] ? prevDay[mi][ci].prodId : null;
     return newComp(m.id, ci, prev);
   }));
+}
+/* генеруємо кілька варіантів дня і лишаємо той, що найкраще лягає в БЖВ */
+function genDay(dayIdx, prevDay){
+  const t = calcTargets();
+  let best = null, bestScore = Infinity;
+  for(let i=0;i<20;i++){
+    const cand = randomDay(prevDay);
+    const sc = dayScore(buildDay(cand, t).tot, t);
+    if(sc < bestScore){ bestScore = sc; best = cand; }
+    if(bestScore < 0.002) break;         /* достатньо точно — далі не шукаємо */
+  }
+  return best;
 }
 function genWeek(){
   state.days = [];
@@ -1009,6 +1177,8 @@ function renderTargets(){
     gain:  `Це на ${fmt(Math.abs(diff))} ккал більше за ваші добові витрати — помірний профіцит для росту м’язів без зайвого жиру.`
   };
   byId('tExpl').textContent = explByGoal[state.profile.goal];
+  const w = state.profile.weight;
+  byId('tWater').textContent = `💧 Вода: ${(w*30/1000).toFixed(1).replace('.',',')}–${(w*35/1000).toFixed(1).replace('.',',')} л на день (30–35 мл/кг)`;
   /* розподіл калорій між нутрієнтами — стовпчик частин цілого */
   const parts = [
     {k:'Білки',    kcal:t.prot*4, g:t.prot, col:'var(--s-prot)'},
@@ -1042,22 +1212,34 @@ function renderDayTabs(){
     `<button type="button" data-d="${i}" class="${i===state.activeDay?'on':''}">${d}</button>`).join('');
 }
 
+function devPct(got, target){ return target>0 ? (got-target)/target*100 : 0; }
+function devText(d){ return `${d>0?'+':'−'}${Math.abs(d).toFixed(0)}%`; }
+
 function macroRow(name, colorVar, got, target, unit){
   const pct = target>0 ? Math.min(130, got/target*100) : 0;
+  const d = devPct(got,target), a = Math.abs(d);
+  const cls = a>10 ? ' off' : (a>5 ? ' near' : '');
+  const mark = a>5 ? ` <b>${devText(d)}</b>` : '';
   return `<div class="m-row">
     <div class="m-name"><span class="dot" style="width:9px;height:9px;border-radius:50%;background:var(${colorVar})"></span>${name}</div>
     <div class="m-bar"><div class="m-fill" style="width:${Math.min(100,pct)}%;background:var(${colorVar})"></div></div>
-    <div class="m-val">${fmt(got)} / ${fmt(target)} ${unit}</div>
+    <div class="m-val${cls}">${fmt(got)} / ${fmt(target)} ${unit}${mark}</div>
   </div>`;
 }
-function devBadge(got, target){
-  const dev = target>0 ? (got-target)/target*100 : 0;
-  const a = Math.abs(dev);
-  const sign = dev>0?'+':'−';
-  const txt = `${sign}${Math.abs(dev).toFixed(0)}% від цілі`;
-  if(a<=5)  return `<span class="badge ok">✓ У межах норми (${txt})</span>`;
-  if(a<=10) return `<span class="badge warn">△ Невелике відхилення: ${txt}</span>`;
-  return `<span class="badge bad">✕ Значне відхилення: ${txt}</span>`;
+
+/* підсумковий бейдж дивиться на ВСІ чотири цілі, а не лише на калорії */
+function devBadge(tot, t){
+  const rows = [
+    {n:'калорії',   d:devPct(tot.k, t.kcal)},
+    {n:'білок',     d:devPct(tot.p, t.prot)},
+    {n:'жири',      d:devPct(tot.f, t.fat)},
+    {n:'вуглеводи', d:devPct(tot.c, t.carb)}
+  ];
+  const worst = rows.reduce((a,b)=>Math.abs(b.d)>Math.abs(a.d)?b:a);
+  const a = Math.abs(worst.d);
+  if(a<=5)  return `<span class="badge ok">✓ Калорії та БЖВ у нормі</span>`;
+  if(a<=10) return `<span class="badge warn">△ Невелике відхилення: ${worst.n} ${devText(worst.d)}</span>`;
+  return `<span class="badge bad">✕ Значне відхилення: ${worst.n} ${devText(worst.d)}</span>`;
 }
 
 function renderDay(){
@@ -1067,7 +1249,7 @@ function renderDay(){
     <div class="top">
       <span class="kcal">${fmt(d.tot.k)} ккал</span>
       <span class="target">ціль ${fmt(t.kcal)} ккал · ${DAY_NAMES[state.activeDay]}</span>
-      ${devBadge(d.tot.k, t.kcal)}
+      ${devBadge(d.tot, t)}
     </div>
     <div class="macros">
       ${macroRow('Білки','--s-prot',d.tot.p,t.prot,'г')}
@@ -1077,14 +1259,15 @@ function renderDay(){
 
   byId('mealsWrap').innerHTML = d.meals.map((m,mi)=>`
     <div class="meal">
-      <div class="meal-head"><h3>${m.def.name}</h3>
+      <div class="meal-head"><h3>${m.def.name} <span class="mt">· ${mealTimes()[mi]||''}</span></h3>
         <span class="mk">${fmt(m.tot.k)} ккал (ціль ~${fmt(m.mealKcal)}) ·
           Б ${fmt(m.tot.p)} / Ж ${fmt(m.tot.f)} / В ${fmt(m.tot.c)} г</span></div>
       ${m.items.map((it,ci)=>{
         const baseCat = it.tpl.cat;
         const optTags = list => list.map(p=>
           `<option value="${p.i}" ${p.i===it.p.i?'selected':''}>${p.n}</option>`).join('');
-        const own = PRODUCTS.filter(p=>p.c===baseCat);
+        const ex = excludedSet();
+        const own = PRODUCTS.filter(p=>p.c===baseCat && (!ex.has(p.i) || p.i===it.p.i));
         const dishes = own.filter(p=>p.dish);
         const opts = optTags(own.filter(p=>!p.dish))
           + (dishes.length ? `<optgroup label="Страви (≈)">${optTags(dishes)}</optgroup>` : '');
@@ -1094,7 +1277,8 @@ function renderDay(){
           <span class="cat" title="${CATS[it.tpl.cat].name}">${CATS[it.tpl.cat].short||CATS[it.tpl.cat].name}</span>
           <select data-m="${mi}" data-c="${ci}" class="selProd" aria-label="Продукт">${opts}</select>
           <span class="gwrap"><input type="number" class="inpG" data-m="${mi}" data-c="${ci}"
-             value="${it.g}" min="0" max="900" step="5" aria-label="Грами"><span class="un">${unit}</span></span>
+             value="${it.g}" min="0" max="900" step="5" aria-label="Грами"><span class="un">${unit}${
+               unitApprox(it.p,it.g) ? '<br><b>'+unitApprox(it.p,it.g)+'</b>' : ''}</span></span>
           <span class="ck">${it.p.dish?'≈ ':''}${fmt(it.g*it.p.k/100)} ккал</span>
           <button type="button" class="reset-g" data-m="${mi}" data-c="${ci}"
              title="Повернути авторозрахунок" ${custom?'':'style="visibility:hidden"'}>↺</button>
@@ -1195,6 +1379,43 @@ function renderWeight(){
   </svg>`;
 }
 
+/* ============ ВИКЛЮЧЕННЯ: РЕНДЕР І ЛОГІКА ============ */
+function renderExcluded(){
+  const ex = [...excludedSet()];
+  byId('exCount').textContent = ex.length ? `— ${ex.length}` : '';
+  byId('exList').innerHTML = ex.map(id=>{
+    const p = prodById(id); if(!p) return '';
+    return `<span>${p.n}<button data-i="${id}" title="Повернути продукт">✕</button></span>`;
+  }).join('');
+  for(const b of byId('exPresets').querySelectorAll('.preset')){
+    const set = PRESETS[b.dataset.set];
+    b.classList.toggle('on', set.every(id=>excludedSet().has(id)));
+  }
+}
+/* виключені продукти в уже зібраному меню замінюємо на дозволені */
+function fixExcludedInDays(){
+  const ex = excludedSet();
+  for(const day of state.days) for(const meal of day) meal.forEach((c,ci)=>{
+    if(ex.has(c.prodId)){
+      const tpl = MEAL_COMPS[c.mealId][ci];
+      const ps = pool(tpl.cat, c.mealId==='b').filter(p=>p.i!==c.prodId);
+      if(ps.length){ c.prodId = rnd(ps).i; c.customG = null; }
+    }
+  });
+}
+function addExcluded(ids){
+  const ex = new Set(state.settings.excluded||[]);
+  for(const id of ids) ex.add(id);
+  state.settings.excluded = [...ex];
+  fixExcludedInDays(); renderExcluded(); renderAll();
+}
+function removeExcluded(ids){
+  const ex = new Set(state.settings.excluded||[]);
+  for(const id of ids) ex.delete(id);
+  state.settings.excluded = [...ex];
+  renderExcluded(); renderAll();
+}
+
 /* ============ ДРУК ============ */
 function buildPrintView(){
   const t = calcTargets();
@@ -1218,6 +1439,7 @@ function buildPrintView(){
     <div class="norm"><div class="nl">Білки</div><div class="nv">${t.prot} г</div></div>
     <div class="norm"><div class="nl">Жири</div><div class="nv">${t.fat} г</div></div>
     <div class="norm"><div class="nl">Вуглеводи</div><div class="nv">${t.carb} г</div></div>
+    <div class="norm"><div class="nl">Вода</div><div class="nv">${(pr.weight*30/1000).toFixed(1).replace('.',',')}–${(pr.weight*35/1000).toFixed(1).replace('.',',')} л</div></div>
   </div>
   <div class="split">
     <div style="flex:${pk};background:#2a78d6"></div>
@@ -1236,10 +1458,10 @@ function buildPrintView(){
     for(const m of d.meals){
       m.items.forEach((it,ix)=>{
         html += `<tr>${ix===0?`<td class="meal" rowspan="${m.items.length}">${m.def.name}<br>
-            <span style="font-weight:400;color:#52514e">${fmt(m.tot.k)} ккал</span></td>`:''}
+            <span style="font-weight:400;color:#52514e">${mealTimes()[d.meals.indexOf(m)]||''} · ${fmt(m.tot.k)} ккал</span></td>`:''}
           <td>${esc(it.p.n)}${it.p.dry?' <span style="color:#52514e">(суха вага)</span>':''}${
             it.p.dish?' <span style="color:#52514e">(≈)</span>':''}</td>
-          <td class="n">${it.g} г</td><td class="n">${it.p.dish?'≈':''}${fmt(it.g*it.p.k/100)}</td></tr>`;
+          <td class="n">${it.g} г${unitApprox(it.p,it.g)?` <span style="color:#52514e">(${unitApprox(it.p,it.g)})</span>`:''}</td><td class="n">${it.p.dish?'≈':''}${fmt(it.g*it.p.k/100)}</td></tr>`;
       });
     }
     html += `</tbody></table></div>`;
@@ -1325,6 +1547,43 @@ function syncFormFromState(){
   byId('sSweet').value = sw; byId('sSweetOut').textContent = sw ? sw+'%' : 'вимк.';
 }
 
+/* ============ ПОДІЛИТИСЯ ПОСИЛАННЯМ ============ */
+async function packStateToUrl(){
+  const payload = {v:2, p:state.profile, s:state.settings, d:state.days,
+    c:PRODUCTS.filter(p=>p.custom)};
+  const json = JSON.stringify(payload);
+  let bytes, mode;
+  if(typeof CompressionStream !== 'undefined'){
+    const buf = await new Response(new Blob([json]).stream()
+      .pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer();
+    bytes = new Uint8Array(buf); mode = 'c';
+  } else { bytes = new TextEncoder().encode(json); mode = 'r'; }
+  let bin=''; for(const x of bytes) bin += String.fromCharCode(x);
+  const b64 = btoa(bin).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
+  return `${location.origin}${location.pathname}#p=${mode}${b64}`;
+}
+async function unpackStateFromHash(){
+  const m = location.hash.match(/^#p=([cr])([A-Za-z0-9_-]+)$/);
+  if(!m) return false;
+  try{
+    const bin = atob(m[2].replaceAll('-','+').replaceAll('_','/'));
+    const bytes = Uint8Array.from(bin, ch=>ch.charCodeAt(0));
+    let json;
+    if(m[1]==='c'){
+      const buf = await new Response(new Blob([bytes]).stream()
+        .pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer();
+      json = new TextDecoder().decode(buf);
+    } else json = new TextDecoder().decode(bytes);
+    const data = JSON.parse(json);
+    if(Array.isArray(data.c)) for(const cp of data.c) if(!prodById(cp.i)) PRODUCTS.push(cp);
+    Object.assign(state.profile, data.p||{});
+    Object.assign(state.settings, data.s||{});
+    if(Array.isArray(data.d)) state.days = data.d;
+    history.replaceState(null,'',location.pathname+location.search);
+    return true;
+  }catch(e){ return false; }
+}
+
 /* ============ ПОДІЇ ============ */
 function bindSeg(id, cb){
   byId(id).addEventListener('click', e=>{
@@ -1363,6 +1622,31 @@ byId('sSweet').addEventListener('input', e=>{
   renderAll();
 });
 
+/* ---- виключення ---- */
+byId('exPresets').addEventListener('click', e=>{
+  const btn = e.target.closest('.preset'); if(!btn) return;
+  const set = PRESETS[btn.dataset.set];
+  const active = set.every(id=>excludedSet().has(id));
+  active ? removeExcluded(set) : addExcluded(set);
+});
+byId('exSearch').addEventListener('input', e=>{
+  const q = e.target.value.trim().toLowerCase();
+  const ex = excludedSet();
+  const found = q.length<2 ? [] :
+    PRODUCTS.filter(p=>!ex.has(p.i) && p.n.toLowerCase().includes(q)).slice(0,8);
+  byId('exMatches').innerHTML = found.map(p=>
+    `<button type="button" data-i="${p.i}">+ ${p.n}</button>`).join('');
+});
+byId('exMatches').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  addExcluded([b.dataset.i]);
+  byId('exSearch').value=''; byId('exMatches').innerHTML='';
+});
+byId('exList').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  removeExcluded([b.dataset.i]);
+});
+
 byId('dayTabs').addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
   state.activeDay = +b.dataset.d; renderDayTabs(); renderDay();
@@ -1399,6 +1683,14 @@ byId('mealsWrap').addEventListener('click', e=>{
 
 byId('btnPrint').addEventListener('click', ()=>{ buildPrintView(); window.print(); });
 byId('btnSave').addEventListener('click', saveToFile);
+byId('btnShare').addEventListener('click', async ()=>{
+  const url = await packStateToUrl();
+  try{
+    await navigator.clipboard.writeText(url);
+    alert('Посилання скопійовано!\n\nНадішліть його клієнту в Telegram чи Viber — ' +
+      'відкривши його, клієнт побачить цю програму зі всіма налаштуваннями.');
+  }catch(e){ prompt('Скопіюйте посилання вручну:', url); }
+});
 byId('btnLoad').addEventListener('click', ()=>byId('fileInput').click());
 byId('fileInput').addEventListener('change', e=>{
   if(e.target.files[0]) loadFromFile(e.target.files[0]);
@@ -1439,7 +1731,7 @@ byId('btnNewClient').addEventListener('click', ()=>{
   try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
   for(let i=PRODUCTS.length-1;i>=0;i--) if(PRODUCTS[i].custom) PRODUCTS.splice(i,1);
   Object.assign(state, DEFAULT_STATE());
-  genWeek(); syncFormFromState(); renderAll();
+  genWeek(); syncFormFromState(); renderExcluded(); renderAll();
 });
 
 /* ---- тема ---- */
@@ -1472,10 +1764,19 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{
 });
 
 /* ============ СТАРТ ============ */
-const restored = loadLocal();
+(async ()=>{
+const fromLink = await unpackStateFromHash();
+const restored = fromLink || loadLocal();
 ensureDays();
 if(restored) syncFormFromState();
+renderExcluded();
 renderAll();
+if(fromLink){
+  const nm = state.profile.name;
+  setTimeout(()=>alert(`Завантажено програму${nm?` для: ${nm}`:''} з посилання.\n`+
+    'Вона автоматично збережена на цьому пристрої.'), 300);
+}
+})();
 /* дата за замовчуванням — сьогодні (локальний час) */
 { const t = new Date();
   byId('wDate').value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; }
