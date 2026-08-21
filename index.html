@@ -387,16 +387,25 @@
     <label class="f">Вага, кг
       <input type="number" id="fWeight" min="35" max="250" value="70" step="0.5">
     </label>
-    <label class="f" style="grid-column:span 2">Рівень активності
-      <select id="fActivity">
-        <option value="1.2">Мінімальний — сидяча робота, без тренувань</option>
-        <option value="1.375" selected>Низький — 1–3 тренування на тиждень</option>
-        <option value="1.55">Середній — 3–5 тренувань на тиждень</option>
-        <option value="1.725">Високий — 6–7 тренувань на тиждень</option>
-        <option value="1.9">Дуже високий — фізична робота + спорт</option>
+    <label class="f" style="grid-column:span 2">Робота та побут (без тренувань)
+      <select id="fLifestyle">
+        <option value="0">Сидяча робота, мало руху — до 5 тис. кроків</option>
+        <option value="0.10">Сидяча робота, але активний побут — 5–8 тис. кроків</option>
+        <option value="0.20">Робота на ногах, багато ходьби — 8–12 тис. кроків</option>
+        <option value="0.30">Важка фізична праця — будівництво, вантажі, поле</option>
+      </select>
+    </label>
+    <label class="f" style="grid-column:span 2">Тренування
+      <select id="fTraining">
+        <option value="0">Немає</option>
+        <option value="0.175" selected>1–3 на тиждень</option>
+        <option value="0.35">3–5 на тиждень</option>
+        <option value="0.525">6–7 на тиждень</option>
+        <option value="0.70">Двічі на день / професійний спорт</option>
       </select>
     </label>
   </div>
+  <p class="hint" style="margin-top:10px" id="actNote"></p>
   <div style="margin-top:14px">
     <label class="f" style="margin-bottom:6px">Ціль</label>
     <div class="goalgrid" id="fGoal">
@@ -890,7 +899,7 @@ const excludedSet = () => new Set(state.settings.excluded||[]);
 const DAY_NAMES = ['Понеділок','Вівторок','Середа','Четвер','П’ятниця','Субота','Неділя'];
 const DAY_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
 const DEFAULT_STATE = () => ({
-  profile:{ name:'', sex:'f', age:30, height:168, weight:70, activity:1.375, goal:'loss' },
+  profile:{ name:'', sex:'f', age:30, height:168, weight:70, lifestyle:0, training:0.175, goal:'loss' },
   settings:{ deficit:17, surplus:12, proteinPerKg:1.8, fatPct:27, meals:4, sweetPct:10, excluded:[] },
   activeDay:0,
   days:[],          /* days[7] = [ meal -> [ {prodId, customG|null} ] ] */
@@ -949,10 +958,18 @@ const pool = (cat, brkOnly) => {
 const rnd = arr => arr[Math.floor(Math.random()*arr.length)];
 
 /* ============ РОЗРАХУНКИ ============ */
+/* Коефіцієнт активності = база (робота та побут) + внесок тренувань.
+   База 1.20 — сидяча робота; класичні значення таблиці Міффліна зберігаються
+   для офісного сценарію (сидяча + 3–5 тренувань = 1.55). Стеля 1.95. */
+function activityFactor(pr){
+  const life = pr.lifestyle!=null ? +pr.lifestyle : 0;
+  const tr   = pr.training!=null  ? +pr.training  : 0.175;
+  return Math.min(1.95, Math.round((1.20 + life + tr)*1000)/1000);
+}
 function calcTargets(){
   const pr = state.profile, s = state.settings;
   const bmr = 10*pr.weight + 6.25*pr.height - 5*pr.age + (pr.sex==='m' ? 5 : -161);
-  const tdee = bmr * pr.activity;
+  const tdee = bmr * activityFactor(pr);
   let kcal = tdee;
   if(pr.goal==='loss') kcal = tdee*(1-s.deficit/100);
   if(pr.goal==='gain') kcal = tdee*(1+s.surplus/100);
@@ -980,6 +997,22 @@ function mealTimes(){
              4:['8:00','11:00','14:00','18:30'],
              5:['8:00','11:00','14:00','16:30','19:00']}[state.settings.meals];
   return (state.settings.sweetPct||0) > 0 ? t.concat(['будь-коли']) : t;
+}
+
+/* Рідина. 30–35 мл/кг — це ЗАГАЛЬНА добова потреба, куди входить і вода з їжі
+   (приблизно чверть), і всі напої. «Випити» треба менше — і чай, кава, компот,
+   юшка теж рахуються. */
+function waterCalc(w){
+  const totalLo = w*30/1000, totalHi = w*35/1000;
+  const food = (totalLo+totalHi)/2 * 0.22;     /* ~22% надходить із їжею */
+  return {totalLo, totalHi, food, drinkLo: totalLo-food, drinkHi: totalHi-food};
+}
+const L = x => x.toFixed(1).replace('.',',');
+function waterHtml(w){
+  const q = waterCalc(w);
+  return `💧 <b>Випивати ${L(q.drinkLo)}–${L(q.drinkHi)} л рідини на день</b> — сюди входять вода, чай, ` +
+    `кава, компот, юшка.<br><span style="color:var(--muted)">Загальна потреба ${L(q.totalLo)}–${L(q.totalHi)} л ` +
+    `(30–35 мл/кг), ще ≈${L(q.food)} л організм отримує з їжі. У спеку та після тренувань — більше.</span>`;
 }
 
 /* ============ РОЗПОДІЛ ГРАМІВ ПІД КАЛОРІЇ ТА БЖВ ============
@@ -1177,8 +1210,7 @@ function renderTargets(){
     gain:  `Це на ${fmt(Math.abs(diff))} ккал більше за ваші добові витрати — помірний профіцит для росту м’язів без зайвого жиру.`
   };
   byId('tExpl').textContent = explByGoal[state.profile.goal];
-  const w = state.profile.weight;
-  byId('tWater').textContent = `💧 Вода: ${(w*30/1000).toFixed(1).replace('.',',')}–${(w*35/1000).toFixed(1).replace('.',',')} л на день (30–35 мл/кг)`;
+  byId('tWater').innerHTML = waterHtml(state.profile.weight);
   /* розподіл калорій між нутрієнтами — стовпчик частин цілого */
   const parts = [
     {k:'Білки',    kcal:t.prot*4, g:t.prot, col:'var(--s-prot)'},
@@ -1202,9 +1234,13 @@ function renderTargets(){
   const goals = {loss:`дефіцит ${state.settings.deficit}%`, maintain:'підтримка',
                  gain:`профіцит ${state.settings.surplus}%`};
   byId('tFormulaNote').textContent =
-    `Формула Міффліна–Сан Жеора · ціль: ${goals[state.profile.goal]} · білок ${state.settings.proteinPerKg} г/кг · жири ${state.settings.fatPct}%` +
+    `Формула Міффліна–Сан Жеора · активність ${activityFactor(state.profile).toFixed(2).replace('.',',')} · ціль: ${goals[state.profile.goal]} · білок ${state.settings.proteinPerKg} г/кг · жири ${state.settings.fatPct}%` +
     (state.settings.sweetPct ? ` · смаколики ${state.settings.sweetPct}%` : '');
   byId('lowKcalWarn').style.display = t.clamped ? '' : 'none';
+  const af = activityFactor(state.profile);
+  byId('actNote').textContent =
+    `Коефіцієнт активності: ${af.toFixed(2).replace('.',',')} — рахується окремо за побутовою активністю ` +
+    `та окремо за тренуваннями. Якщо у вас фізична робота, вкажіть її навіть без тренувань.`;
 }
 
 function renderDayTabs(){
@@ -1439,7 +1475,7 @@ function buildPrintView(){
     <div class="norm"><div class="nl">Білки</div><div class="nv">${t.prot} г</div></div>
     <div class="norm"><div class="nl">Жири</div><div class="nv">${t.fat} г</div></div>
     <div class="norm"><div class="nl">Вуглеводи</div><div class="nv">${t.carb} г</div></div>
-    <div class="norm"><div class="nl">Вода</div><div class="nv">${(pr.weight*30/1000).toFixed(1).replace('.',',')}–${(pr.weight*35/1000).toFixed(1).replace('.',',')} л</div></div>
+    <div class="norm"><div class="nl">Випивати</div><div class="nv">${L(waterCalc(pr.weight).drinkLo)}–${L(waterCalc(pr.weight).drinkHi)} л</div></div>
   </div>
   <div class="split">
     <div style="flex:${pk};background:#2a78d6"></div>
@@ -1487,7 +1523,9 @@ function buildPrintView(){
 
   html += `<div class="foot">
     <div style="flex:1">Продукти в межах однієї категорії взаємозамінні — можна міняти місцями,
-      зберігаючи вказану порцію. Пийте 30–35 мл води на кг ваги.<br>
+      зберігаючи вказану порцію.<br>
+      Рідина: <b>${L(waterCalc(pr.weight).drinkLo)}–${L(waterCalc(pr.weight).drinkHi)} л на день</b> — рахуються всі напої
+      (вода, чай, кава, компот, юшка); ще ≈${L(waterCalc(pr.weight).food)} л надходить із їжею.<br>
       Програма має рекомендаційний характер і не замінює консультацію лікаря.</div>
     <div style="text-align:right;white-space:nowrap">Питання та супровід:<br>
       <b>Telegram: @samchenko_i</b><br>igsamchenko@gmail.com</div>
@@ -1535,7 +1573,19 @@ function syncFormFromState(){
   const pr = state.profile, s = state.settings;
   byId('fName').value = pr.name; byId('fAge').value = pr.age;
   byId('fHeight').value = pr.height; byId('fWeight').value = pr.weight;
-  byId('fActivity').value = String(pr.activity);
+  /* міграція старих збережень: був один коефіцієнт activity.
+     Тригер — саме наявність pr.activity: поля lifestyle/training уже мають
+     значення за замовчуванням, тож перевіряти їх на null не можна. */
+  if(pr.activity != null){
+    const old = +pr.activity || 1.375;
+    pr.lifestyle = 0;
+    const steps = [0,0.175,0.35,0.525,0.70];
+    const want = Math.min(0.70, Math.max(0, old-1.20));
+    pr.training = steps.reduce((a,b)=>Math.abs(b-want)<Math.abs(a-want)?b:a);
+    delete pr.activity;
+  }
+  byId('fLifestyle').value = String(pr.lifestyle);
+  byId('fTraining').value = String(pr.training);
   for(const b of byId('fSex').querySelectorAll('button')) b.classList.toggle('on', b.dataset.v===pr.sex);
   for(const b of byId('fGoal').querySelectorAll('button')) b.classList.toggle('on', b.dataset.v===pr.goal);
   for(const b of byId('sMeals').querySelectorAll('button')) b.classList.toggle('on', b.dataset.v===String(s.meals));
@@ -1596,7 +1646,8 @@ byId('fName').addEventListener('input', e=>{ state.profile.name = e.target.value
 byId('fAge').addEventListener('input', e=>{ state.profile.age = +e.target.value||30; renderAll(); });
 byId('fHeight').addEventListener('input', e=>{ state.profile.height = +e.target.value||168; renderAll(); });
 byId('fWeight').addEventListener('input', e=>{ state.profile.weight = +e.target.value||70; renderAll(); });
-byId('fActivity').addEventListener('change', e=>{ state.profile.activity = +e.target.value; renderAll(); });
+byId('fLifestyle').addEventListener('change', e=>{ state.profile.lifestyle = +e.target.value; renderAll(); });
+byId('fTraining').addEventListener('change', e=>{ state.profile.training = +e.target.value; renderAll(); });
 bindSeg('fSex', v=>{ state.profile.sex = v; renderAll(); });
 byId('fGoal').addEventListener('click', e=>{
   const b = e.target.closest('.goal'); if(!b) return;
