@@ -1,8 +1,11 @@
 /* Service worker: офлайн-робота додатку.
-   При оновленні index.html підвищуйте номер версії кешу (v11 → v12), щоб
+   При оновленні index.html підвищуйте номер версії кешу (v12 → v13), щоб
    користувачі отримали свіжу версію. */
-const CACHE = 'nutri-konstruktor-v11';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const CACHE = 'nutri-konstruktor-v12';
+const ASSETS = [
+  './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png',
+  './training-constructor-preview.jpg'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

@@ -276,6 +276,52 @@
   .wlist button:hover{background:var(--critical);color:#fff}
   .wempty{color:var(--muted);font-size:14px;padding:24px 12px;text-align:center}
 
+  /* --- промо конструктора тренувань --- */
+  .training-promo{position:relative;margin-top:18px;display:grid;
+    grid-template-columns:minmax(280px,.95fr) minmax(0,1.05fr);overflow:hidden;
+    border:1px solid var(--border);border-radius:16px;
+    background:linear-gradient(135deg,var(--accent-soft),var(--surface) 58%,var(--field));
+    box-shadow:0 14px 38px var(--shadow)}
+  .training-promo::before{content:"";position:absolute;right:-90px;bottom:-120px;
+    width:300px;height:300px;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,var(--accent-soft),transparent 68%)}
+  .training-shot{position:relative;display:block;min-height:330px;overflow:hidden;background:#0b0e0d}
+  .training-shot img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 34%;
+    transition:transform .35s ease,filter .35s ease}
+  .training-shot::after{content:"";position:absolute;inset:35% 0 0;
+    background:linear-gradient(to bottom,transparent,rgba(4,7,6,.82));pointer-events:none}
+  .training-shot:hover img{transform:scale(1.025);filter:saturate(1.06)}
+  .training-shot-label{position:absolute;z-index:1;left:18px;right:18px;bottom:16px;color:#fff;
+    font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .training-copy{position:relative;z-index:1;padding:28px 28px 26px;align-self:center}
+  .training-kicker{display:inline-flex;align-items:center;gap:7px;margin-bottom:10px;color:var(--accent-dark);
+    font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  .training-kicker::before{content:"";width:22px;height:2px;border-radius:2px;background:var(--accent)}
+  .training-copy h2{margin:0 0 10px;font-size:clamp(23px,3vw,32px);line-height:1.12;letter-spacing:-.025em}
+  .training-copy>p{margin:0;color:var(--ink-2);font-size:14.5px;line-height:1.58}
+  .training-features{display:grid;gap:8px;margin:17px 0 0;padding:0;list-style:none}
+  .training-features li{position:relative;padding-left:20px;color:var(--ink);font-size:13.5px}
+  .training-features li::before{content:"✓";position:absolute;left:0;color:var(--accent-dark);font-weight:800}
+  .training-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+  .training-actions a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+  .training-actions .training-primary{border-color:transparent;color:#fff;
+    background:linear-gradient(135deg,#5e54c8,#2e9f8f);box-shadow:0 7px 18px rgba(63,89,168,.22)}
+  .training-actions .training-primary:hover{color:#fff;filter:brightness(1.06)}
+  .training-email{display:inline-block;margin-top:11px;color:var(--accent-dark);font-size:13px;font-weight:600}
+  @media(max-width:800px){
+    .training-promo{grid-template-columns:1fr}
+    .training-shot{min-height:230px;max-height:310px}
+    .training-copy{padding:24px 22px}
+  }
+  @media(max-width:480px){
+    .training-shot{min-height:195px}
+    .training-actions a.btn{width:100%}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .training-shot img{transition:none}
+    .training-shot:hover img{transform:none}
+  }
+
   /* --- контакти --- */
   .cta{margin-top:18px;background:linear-gradient(135deg,var(--accent-soft),var(--surface));
     border:1px solid var(--border);border-radius:14px;padding:22px;display:flex;
@@ -555,6 +601,34 @@
   <p class="hint" style="margin-top:14px">Програма має рекомендаційний характер і не замінює консультацію лікаря.
     При хронічних захворюваннях, вагітності чи РХП раціон погоджуйте з лікарем.</p>
 </section>
+
+<aside class="training-promo" aria-labelledby="trainingPromoTitle">
+  <a class="training-shot" href="https://igsamchenko-cmyk.github.io/gym-program-generator/"
+     target="_blank" rel="noopener noreferrer" aria-label="Відкрити конструктор тренувань">
+    <img src="./training-constructor-preview.jpg"
+      alt="Приклад персональної програми у конструкторі тренувань Ihor Samchenko"
+      width="1080" height="727" loading="lazy" decoding="async">
+    <span class="training-shot-label">Персональний макроцикл · вправи · техніка</span>
+  </a>
+  <div class="training-copy">
+    <div class="training-kicker">Доповніть результат тренуваннями</div>
+    <h2 id="trainingPromoTitle">Збережіть м’язи під час дефіциту калорій</h2>
+    <p id="trainingPromoText">Раціон створює дефіцит, а правильно підібрані силові допомагають
+      зберігати м’язову масу. Конструктор врахує ваш вік, досвід, обладнання та обмеження.</p>
+    <ul class="training-features">
+      <li>Підбір вправ під профіль і доступне обладнання</li>
+      <li>Прогресія навантаження, RIR і розвантаження</li>
+      <li>Заміни вправ та наочна техніка виконання</li>
+    </ul>
+    <div class="training-actions">
+      <a class="btn training-primary" href="https://igsamchenko-cmyk.github.io/gym-program-generator/"
+         target="_blank" rel="noopener noreferrer">🏋️ Скласти програму тренувань</a>
+      <a class="btn" href="https://t.me/samchenko_i" target="_blank" rel="noopener noreferrer">✈️ Узгодити з Ігорем</a>
+    </div>
+    <a class="training-email"
+      href="mailto:igsamchenko@gmail.com?subject=Харчування%20та%20програма%20тренувань">Або написати на e-mail</a>
+  </div>
+</aside>
 
 <!-- ======== КРОК 5 ======== -->
 <section class="card" id="step5">
@@ -907,6 +981,21 @@ const DEFAULT_STATE = () => ({
   weights:[]        /* [{d:'2026-08-19', w:70.5}] */
 });
 const state = DEFAULT_STATE();
+
+const TRAINING_PROMO_COPY = {
+  loss:{
+    title:'Збережіть м’язи під час дефіциту калорій',
+    text:'Раціон створює дефіцит, а правильно підібрані силові допомагають зберігати м’язову масу. Конструктор врахує ваш вік, досвід, обладнання та обмеження.'
+  },
+  maintain:{
+    title:'Доповніть збалансований раціон системними тренуваннями',
+    text:'Поєднайте розрахований раціон із програмою, яка підлаштовується під ваш вік, досвід, доступне обладнання та бажану частоту тренувань.'
+  },
+  gain:{
+    title:'Перетворіть профіцит калорій на м’язовий прогрес',
+    text:'Профіцит працює найкраще разом із послідовним силовим стимулом. Конструктор сформує програму з прогресією навантаження під ваш рівень і можливості.'
+  }
+};
 
 /* ---- автозбереження у браузері ---- */
 const STORAGE_KEY = 'nutri_konstruktor_v1';
@@ -1352,8 +1441,14 @@ function renderShop(){
   }).join('');
 }
 
+function renderTrainingPromo(){
+  const copy = TRAINING_PROMO_COPY[state.profile.goal] || TRAINING_PROMO_COPY.maintain;
+  byId('trainingPromoTitle').textContent = copy.title;
+  byId('trainingPromoText').textContent = copy.text;
+}
+
 function renderAll(){
-  renderTargets(); renderDayTabs(); renderDay(); renderShop(); renderWeight(); saveLocal();
+  renderTargets(); renderDayTabs(); renderDay(); renderShop(); renderWeight(); renderTrainingPromo(); saveLocal();
 }
 
 /* ============ ТРЕКІНГ ВАГИ ============ */
