@@ -290,7 +290,7 @@
     transition:transform .35s ease,filter .35s ease}
   .training-shot::after{content:"";position:absolute;inset:35% 0 0;
     background:linear-gradient(to bottom,transparent,rgba(4,7,6,.82));pointer-events:none}
-  .training-shot:hover img{transform:scale(1.025);filter:saturate(1.06)}
+  .training-promo:hover .training-shot img{transform:scale(1.015);filter:saturate(1.04)}
   .training-shot-label{position:absolute;z-index:1;left:18px;right:18px;bottom:16px;color:#fff;
     font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
   .training-copy{position:relative;z-index:1;padding:28px 28px 26px;align-self:center}
@@ -319,7 +319,7 @@
   }
   @media(prefers-reduced-motion:reduce){
     .training-shot img{transition:none}
-    .training-shot:hover img{transform:none}
+    .training-promo:hover .training-shot img{transform:none}
   }
 
   /* --- контакти --- */
@@ -603,30 +603,29 @@
 </section>
 
 <aside class="training-promo" aria-labelledby="trainingPromoTitle">
-  <a class="training-shot" href="https://igsamchenko-cmyk.github.io/gym-program-generator/"
-     target="_blank" rel="noopener noreferrer" aria-label="Відкрити конструктор тренувань">
+  <div class="training-shot" aria-label="Демонстрація конструктора тренувань">
     <img src="./training-constructor-preview.jpg"
       alt="Приклад персональної програми у конструкторі тренувань Ihor Samchenko"
       width="1080" height="727" loading="lazy" decoding="async">
-    <span class="training-shot-label">Персональний макроцикл · вправи · техніка</span>
-  </a>
+    <span class="training-shot-label">Приклад персональної програми · доступ за запитом</span>
+  </div>
   <div class="training-copy">
-    <div class="training-kicker">Доповніть результат тренуваннями</div>
+    <div class="training-kicker">Персональна програма за запитом</div>
     <h2 id="trainingPromoTitle">Збережіть м’язи під час дефіциту калорій</h2>
     <p id="trainingPromoText">Раціон створює дефіцит, а правильно підібрані силові допомагають
-      зберігати м’язову масу. Конструктор врахує ваш вік, досвід, обладнання та обмеження.</p>
+      зберігати м’язову масу. Після звернення Ігор підбере програму під ваш вік, досвід, обладнання та обмеження.</p>
     <ul class="training-features">
       <li>Підбір вправ під профіль і доступне обладнання</li>
       <li>Прогресія навантаження, RIR і розвантаження</li>
       <li>Заміни вправ та наочна техніка виконання</li>
     </ul>
     <div class="training-actions">
-      <a class="btn training-primary" href="https://igsamchenko-cmyk.github.io/gym-program-generator/"
-         target="_blank" rel="noopener noreferrer">🏋️ Скласти програму тренувань</a>
-      <a class="btn" href="https://t.me/samchenko_i" target="_blank" rel="noopener noreferrer">✈️ Узгодити з Ігорем</a>
+      <a class="btn training-primary" href="https://t.me/samchenko_i" target="_blank"
+         rel="noopener noreferrer">✈️ Запросити доступ у Telegram</a>
+      <a class="btn" href="mailto:igsamchenko@gmail.com?subject=Запит%20на%20програму%20тренувань">✉️ Запросити доступ поштою</a>
     </div>
     <a class="training-email"
-      href="mailto:igsamchenko@gmail.com?subject=Харчування%20та%20програма%20тренувань">Або написати на e-mail</a>
+      href="mailto:igsamchenko@gmail.com?subject=Консультація%20щодо%20харчування">Потрібна консультація щодо харчування?</a>
   </div>
 </aside>
 
@@ -985,15 +984,15 @@ const state = DEFAULT_STATE();
 const TRAINING_PROMO_COPY = {
   loss:{
     title:'Збережіть м’язи під час дефіциту калорій',
-    text:'Раціон створює дефіцит, а правильно підібрані силові допомагають зберігати м’язову масу. Конструктор врахує ваш вік, досвід, обладнання та обмеження.'
+    text:'Раціон створює дефіцит, а правильно підібрані силові допомагають зберігати м’язову масу. Після звернення Ігор підбере програму під ваш вік, досвід, обладнання та обмеження.'
   },
   maintain:{
     title:'Доповніть збалансований раціон системними тренуваннями',
-    text:'Поєднайте розрахований раціон із програмою, яка підлаштовується під ваш вік, досвід, доступне обладнання та бажану частоту тренувань.'
+    text:'Поєднайте розрахований раціон із персональною програмою. Після звернення Ігор врахує ваш вік, досвід, доступне обладнання та бажану частоту тренувань.'
   },
   gain:{
     title:'Перетворіть профіцит калорій на м’язовий прогрес',
-    text:'Профіцит працює найкраще разом із послідовним силовим стимулом. Конструктор сформує програму з прогресією навантаження під ваш рівень і можливості.'
+    text:'Профіцит працює найкраще разом із послідовним силовим стимулом. Після звернення Ігор сформує програму з прогресією навантаження під ваш рівень і можливості.'
   }
 };
 
