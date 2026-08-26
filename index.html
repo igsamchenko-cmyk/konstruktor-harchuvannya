@@ -95,8 +95,13 @@
   .grid.cols-3{grid-template-columns:repeat(3,1fr)}
   .grid.cols-4{grid-template-columns:repeat(4,1fr)}
   @media(max-width:760px){.grid.cols-3,.grid.cols-4{grid-template-columns:1fr 1fr}}
-  @media(max-width:480px){.grid.cols-3,.grid.cols-4{grid-template-columns:1fr}}
+  @media(max-width:480px){.grid.cols-3,.grid.cols-4{grid-template-columns:1fr}
+    .grid.cols-4>*{grid-column:1!important}}
   label.f{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--ink-2)}
+  .muscular-choice{display:flex;align-items:flex-start;gap:9px;min-height:38px;padding:9px 11px;
+    border:1px solid var(--hairline);border-radius:9px;background:var(--field);color:var(--ink);
+    font-size:13px;font-weight:500;line-height:1.35;cursor:pointer}
+  .muscular-choice input{width:18px;height:18px;margin:0;flex:0 0 auto;accent-color:var(--accent)}
   input[type=text],input[type=number],select{
     font:inherit;padding:8px 10px;border:1px solid var(--hairline);border-radius:9px;
     background:var(--field);color:var(--ink);width:100%}
@@ -346,6 +351,8 @@
   .chip b{font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
   .chip.warn{border-color:var(--warn);color:var(--warn-text)}
   .chip.bad{border-color:var(--critical);color:var(--critical)}
+  .chip.ok{border-color:var(--good);color:var(--good-text)}
+  .bmi-note{flex:1 0 100%;font-size:12.5px;line-height:1.5;color:var(--muted);padding:2px 1px 0}
 
   .fcast{margin-top:10px;font-size:13px;color:var(--ink-2);
     border-left:3px solid var(--accent);padding-left:11px}
@@ -495,6 +502,10 @@
     </label>
     <label class="f">Обхват талії, см <span class="opt">необов'язково</span>
       <input type="number" id="fWaist" min="50" max="200" step="1" placeholder="—">
+    </label>
+    <label class="f" style="grid-column:span 2">Склад тіла <span class="opt">оцінює спеціаліст</span>
+      <span class="muscular-choice"><input type="checkbox" id="fMuscular">
+        Виражена м’язова маса / атлетична статура</span>
     </label>
     <label class="f" style="grid-column:span 2">Рух протягом дня (робота та побут)
       <select id="fLifestyle">
@@ -1072,7 +1083,7 @@ const WEEK_MODES = {
   batch: {n:'Готую на 2 порції',h:'Вечеря повторюється як обід наступного дня — готуєте раз, їсте двічі.'}
 };
 const DEFAULT_STATE = () => ({
-  profile:{ name:'', sex:'f', age:30, height:168, weight:70, waist:null,
+  profile:{ name:'', sex:'f', age:30, height:168, weight:70, waist:null, muscular:false,
             lifestyle:0.08, training:0.10, goal:'loss' },
   settings:{ lossRate:0.35, gainRate:0.2, proteinPerKg:1.8, fatPct:27,
              meals:4, sweetPct:10, excluded:[], weekMode:'vary', times:[] },
@@ -1176,23 +1187,26 @@ function activityFactor(pr){
 const KCAL_PER_KG = 7700;   /* енергоємність 1 кг жирової тканини */
 
 function bmiOf(pr){ const h=(pr.height||168)/100; return pr.weight/(h*h); }
-function bmiLabel(b){
-  return b<18.5?'дефіцит маси' : b<25?'норма' : b<30?'надлишкова вага'
-       : b<35?'ожиріння I ст.' : b<40?'ожиріння II ст.' : 'ожиріння III ст.';
+function bmiLabel(b, pr){
+  if(pr && pr.muscular && b>=25) return 'може бути завищений через м’язи';
+  return b<18.5?'нижче референсу' : b<25?'у референсі'
+       : b<30?'вище референсу' : 'значно вище референсу';
 }
-/* Ризик за обхватом талії (IDF/WHO): жінки 80/88 см, чоловіки 94/102 см. */
+/* Співвідношення талії до зросту: <0,5 — нижчий ризик, 0,5–0,59 —
+   підвищений, >=0,6 — високий. Показник корисний і за високої м’язової маси. */
 function waistRisk(pr){
   const w = +pr.waist||0; if(!w) return null;
-  const lim = pr.sex==='m' ? [94,102] : [80,88];
-  if(w >= lim[1]) return {lvl:2, txt:'високий ризик метаболічних ускладнень'};
-  if(w >= lim[0]) return {lvl:1, txt:'підвищений ризик'};
-  return {lvl:0, txt:'у межах норми'};
+  const ratio = w/Math.max(1,+pr.height||168);
+  if(ratio >= 0.6) return {lvl:2, ratio, txt:'висока центральна концентрація жиру'};
+  if(ratio >= 0.5) return {lvl:1, ratio, txt:'співвідношення вище рекомендованого'};
+  return {lvl:0, ratio, txt:'співвідношення нижче 0,5'};
 }
 /* Розрахункова вага для норм білка та жирів.
    1,8 г/кг на 120 кг — це білок на жирову тканину, якій він не потрібен.
    Стандарт клінічної дієтології: adjusted body weight = вага за ІМТ 25
-   плюс чверть надлишку. Нижче ІМТ 25 беремо фактичну вагу. */
+   плюс чверть надлишку. За ІМТ нижче 25 або позначеної м'язової статури беремо фактичну вагу. */
 function calcWeight(pr){
+  if(pr.muscular) return pr.weight;
   const h=(pr.height||168)/100, ref=25*h*h;
   return pr.weight>ref ? ref + 0.25*(pr.weight-ref) : pr.weight;
 }
@@ -1261,6 +1275,7 @@ function migrateSettings(){
   s.gainRate = Math.min(0.4, Math.max(0.1, +s.gainRate||0.2));
   if(!s.weekMode) s.weekMode = 'vary';
   if(!Array.isArray(s.times)) s.times = [];
+  if(pr.muscular==null) pr.muscular = false;
   if(!state.ui) state.ui = {mode:'pro', locked:false};
   if(state.note==null) state.note = '';
   if(!state.done) state.done = {};
@@ -1587,14 +1602,21 @@ function renderTargets(){
     `в розділі «Прогрес» і за потреби скоригуйте дефіцит або профіцит.</span>`;
 }
 
-/* ІМТ, обхват талії та розрахункова вага — чипи під анкетою */
+/* ІМТ, талія до зросту та розрахункова вага — чипи під анкетою */
 function renderBmi(t){
   const pr = state.profile, b = t.bmi;
-  const cls = b<18.5||b>=30 ? ' bad' : (b>=25 ? ' warn' : '');
-  let html = `<span class="chip${cls}">ІМТ <b>${num1(b)}</b> ${bmiLabel(b)}</span>`;
+  const muscularHigh = !!pr.muscular && b>=25;
+  const cls = muscularHigh ? '' : (b<18.5||b>=30 ? ' bad' : (b>=25 ? ' warn' : ''));
+  let html = `<span class="chip${cls}">ІМТ <b>${num1(b)}</b> ${bmiLabel(b,pr)}</span>`;
   const wr = waistRisk(pr);
-  if(wr) html += `<span class="chip${wr.lvl===2?' bad':wr.lvl===1?' warn':''}">Талія <b>${pr.waist} см</b> ${wr.txt}</span>`;
+  if(wr) html += `<span class="chip${wr.lvl===2?' bad':wr.lvl===1?' warn':''}">Талія <b>${pr.waist} см</b> · до зросту <b>${num2(wr.ratio)}</b> — ${wr.txt}</span>`;
+  if(pr.muscular) html += `<span class="chip ok">М’язова статура <b>врахована</b></span>`;
   if(t.adjusted) html += `<span class="chip" title="Норми білка та жирів рахуються на скориговану вагу: вага за ІМТ 25 плюс чверть надлишку. Інакше білок рахувався б на жирову тканину.">Розрахункова вага <b>${num1(t.calcW)} кг</b></span>`;
+  if(muscularHigh){
+    html += `<div class="bmi-note">ІМТ не розрізняє м’язи та жир, тому ярлик надлишкової ваги не застосовується. Норми білка й жирів рахуються від фактичної ваги. ${wr&&wr.lvl>0?'Водночас співвідношення талії до зросту вище 0,5 — оцініть склад тіла та кардіометаболічні фактори окремо.':'Для контролю орієнтуйтесь на талію відносно зросту та, за можливості, вимір складу тіла.'}</div>`;
+  }else if(b>=25){
+    html += `<div class="bmi-note">ІМТ — скринінговий показник, а не діагноз: він не відрізняє жир від м’язів. Інтерпретуйте його разом із талією відносно зросту, анамнезом і, за можливості, складом тіла.</div>`;
+  }
   byId('bmiRow').innerHTML = html;
 }
 /* прогноз ваги за поточного темпу */
@@ -1878,8 +1900,8 @@ function buildPrintView(){
     <div>
       <h1>Програма харчування${pr.name?` — ${esc(pr.name)}`:''}</h1>
       <div class="meta">Ціль: ${goals[pr.goal]} · ${pr.sex==='m'?'чоловік':'жінка'}, ${pr.age} р.,
-        ${pr.height} см, ${pr.weight} кг · ІМТ ${num1(t.bmi)} (${bmiLabel(t.bmi)})${
-          pr.waist?` · талія ${pr.waist} см`:''} · складено ${new Date().toLocaleDateString('uk-UA')}</div>
+        ${pr.height} см, ${pr.weight} кг · ІМТ ${num1(t.bmi)} (${bmiLabel(t.bmi,pr)})${
+          pr.muscular?' · м’язова статура врахована':''}${pr.waist?` · талія/зріст ${num2(pr.waist/pr.height)}`:''} · складено ${new Date().toLocaleDateString('uk-UA')}</div>
     </div>
     <div class="by">склав<b>Ihor Samchenko</b>t.me/samchenko_i</div>
   </div>
@@ -2011,6 +2033,7 @@ function syncFormFromState(){
   byId('fName').value = pr.name; byId('fAge').value = pr.age;
   byId('fHeight').value = pr.height; byId('fWeight').value = pr.weight;
   byId('fWaist').value = pr.waist || '';
+  byId('fMuscular').checked = !!pr.muscular;
   byId('proNote').value = state.note || '';
   /* міграція старих збережень: був один коефіцієнт activity.
      Тригер — саме наявність pr.activity: поля lifestyle/training уже мають
@@ -2104,6 +2127,7 @@ byId('fAge').addEventListener('input', e=>{ state.profile.age = +e.target.value|
 byId('fHeight').addEventListener('input', e=>{ state.profile.height = +e.target.value||168; renderAll(); });
 byId('fWeight').addEventListener('input', e=>{ state.profile.weight = +e.target.value||70; renderAll(); });
 byId('fWaist').addEventListener('input', e=>{ state.profile.waist = +e.target.value||null; renderTargets(); saveLocal(); });
+byId('fMuscular').addEventListener('change', e=>{ state.profile.muscular = e.target.checked; renderAll(); });
 byId('proNote').addEventListener('input', e=>{ state.note = e.target.value; saveLocal(); });
 byId('fLifestyle').addEventListener('change', e=>{ state.profile.lifestyle = +e.target.value; renderAll(); });
 byId('fTraining').addEventListener('change', e=>{ state.profile.training = +e.target.value; renderAll(); });
