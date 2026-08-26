@@ -51,7 +51,7 @@
     font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.45}
   main{max-width:1080px;margin:0 auto;padding:16px 16px 64px}
   header.app{max-width:1080px;margin:0 auto;padding:28px 16px 4px;position:relative}
-  header.app h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-0.01em;padding-right:190px}
+  header.app h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-0.01em;padding-right:310px}
   header.app p{margin:6px 0 0;color:var(--ink-2);max-width:720px}
 
   .dev-badge{
@@ -69,15 +69,17 @@
   .dev-badge b{color:var(--ink);font-weight:700}
   .hdr-tools{position:absolute;top:28px;right:16px;z-index:6;display:flex;align-items:center;gap:8px}
   .hdr-tools .dev-badge{position:static}
-  .theme-btn{width:34px;height:34px;flex:0 0 auto;border-radius:50%;cursor:pointer;
+  .theme-btn,.lang-btn{height:34px;flex:0 0 auto;cursor:pointer;
     border:1px solid var(--border);background:var(--surface);color:var(--ink-2);
     font-size:15px;line-height:1;display:grid;place-items:center;
     box-shadow:0 1px 2px var(--shadow);transition:border-color .15s,color .15s}
-  .theme-btn:hover{border-color:var(--accent);color:var(--accent-dark)}
+  .theme-btn{width:34px;border-radius:50%}
+  .lang-btn{min-width:42px;padding:0 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.08em}
+  .theme-btn:hover,.lang-btn:hover{border-color:var(--accent);color:var(--accent-dark)}
   @media(max-width:640px){
-    header.app h1{padding-right:52px}
-    .hdr-tools{position:static;margin-top:12px}
-    .theme-btn{position:absolute;top:24px;right:16px}
+    header.app h1{padding-right:0}
+    .hdr-tools{position:static;margin-top:12px;flex-wrap:wrap}
+    .theme-btn,.lang-btn{position:static}
   }
   @media print{ .dev-badge,.hdr-tools{display:none} }
 
@@ -283,21 +285,37 @@
 
   /* --- промо конструктора тренувань --- */
   .training-promo{position:relative;margin-top:18px;display:grid;
-    grid-template-columns:minmax(280px,.95fr) minmax(0,1.05fr);overflow:hidden;
+    grid-template-columns:minmax(420px,1.15fr) minmax(320px,.85fr);overflow:hidden;
     border:1px solid var(--border);border-radius:16px;
     background:linear-gradient(135deg,var(--accent-soft),var(--surface) 58%,var(--field));
     box-shadow:0 14px 38px var(--shadow)}
   .training-promo::before{content:"";position:absolute;right:-90px;bottom:-120px;
     width:300px;height:300px;border-radius:50%;pointer-events:none;
     background:radial-gradient(circle,var(--accent-soft),transparent 68%)}
-  .training-shot{position:relative;display:block;min-height:330px;overflow:hidden;background:#0b0e0d}
-  .training-shot img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 34%;
+  .training-collage{position:relative;display:grid;grid-template-columns:1.2fr .8fr;
+    grid-template-rows:1fr 1fr;gap:8px;min-height:390px;padding:10px;
+    overflow:hidden;background:linear-gradient(145deg,#070a0a,#151a18)}
+  .training-frame{position:relative;min-width:0;overflow:hidden;border-radius:10px;
+    border:1px solid rgba(255,255,255,.14);background:#0b0e0d;margin:0}
+  .training-frame.overview{grid-row:1 / 3}
+  .training-frame img{display:block;width:100%;height:100%;object-fit:cover;
     transition:transform .35s ease,filter .35s ease}
-  .training-shot::after{content:"";position:absolute;inset:35% 0 0;
-    background:linear-gradient(to bottom,transparent,rgba(4,7,6,.82));pointer-events:none}
-  .training-promo:hover .training-shot img{transform:scale(1.015);filter:saturate(1.04)}
-  .training-shot-label{position:absolute;z-index:1;left:18px;right:18px;bottom:16px;color:#fff;
-    font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .training-frame.overview img{object-position:18% top}
+  .training-frame.detail img{transform:scale(1.55);object-position:52% 44%}
+  .training-frame.technique img{object-position:center}
+  .training-frame::after{content:"";position:absolute;inset:38% 0 0;
+    background:linear-gradient(to bottom,transparent,rgba(3,6,5,.9));pointer-events:none}
+  .training-frame figcaption{position:absolute;z-index:1;left:12px;right:10px;bottom:10px;
+    color:#fff;font-size:10px;font-weight:800;line-height:1.25;letter-spacing:.045em;text-transform:uppercase;
+    text-shadow:0 1px 5px #000}
+  .training-frame figcaption b{display:block;margin-top:3px;color:#74d9c8;font-size:9px;letter-spacing:.02em}
+  .training-promo:hover .training-frame.overview img{transform:scale(1.02);filter:saturate(1.06)}
+  .training-promo:hover .training-frame.detail img{transform:scale(1.59);filter:saturate(1.06)}
+  .training-promo:hover .training-frame.technique img{transform:scale(1.035);filter:saturate(1.06)}
+  .training-collage-badge{position:absolute;z-index:3;left:20px;top:20px;padding:7px 10px;
+    border-radius:999px;background:rgba(4,7,6,.82);border:1px solid rgba(255,255,255,.2);
+    color:#fff;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    backdrop-filter:blur(8px)}
   .training-copy{position:relative;z-index:1;padding:28px 28px 26px;align-self:center}
   .training-kicker{display:inline-flex;align-items:center;gap:7px;margin-bottom:10px;color:var(--accent-dark);
     font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
@@ -313,18 +331,27 @@
     background:linear-gradient(135deg,#5e54c8,#2e9f8f);box-shadow:0 7px 18px rgba(63,89,168,.22)}
   .training-actions .training-primary:hover{color:#fff;filter:brightness(1.06)}
   .training-email{display:inline-block;margin-top:11px;color:var(--accent-dark);font-size:13px;font-weight:600}
-  @media(max-width:800px){
+  @media(max-width:880px){
     .training-promo{grid-template-columns:1fr}
-    .training-shot{min-height:230px;max-height:310px}
+    .training-collage{min-height:370px}
     .training-copy{padding:24px 22px}
   }
-  @media(max-width:480px){
-    .training-shot{min-height:195px}
+  @media(max-width:520px){
+    .training-collage{grid-template-columns:1fr 1fr;grid-template-rows:240px 150px;min-height:0;padding:7px;gap:6px}
+    .training-frame.overview{grid-column:1 / 3;grid-row:1}
+    .training-frame.detail{grid-column:1;grid-row:2}
+    .training-frame.technique{grid-column:2;grid-row:2}
+    .training-collage-badge{left:14px;top:14px}
     .training-actions a.btn{width:100%}
   }
   @media(prefers-reduced-motion:reduce){
-    .training-shot img{transition:none}
-    .training-promo:hover .training-shot img{transform:none}
+    .training-frame img{transition:none}
+    .training-promo:hover .training-frame.overview img,
+    .training-promo:hover .training-frame.detail img,
+    .training-promo:hover .training-frame.technique img{filter:none}
+    .training-promo:hover .training-frame.overview img{transform:none}
+    .training-promo:hover .training-frame.detail img{transform:scale(1.55)}
+    .training-promo:hover .training-frame.technique img{transform:none}
   }
 
   /* --- контакти --- */
@@ -467,6 +494,7 @@
     <a class="dev-badge" href="https://t.me/samchenko_i" target="_blank" rel="noopener"
        title="Написати в Telegram"><span class="dot"></span>developed by <b>Ihor Samchenko</b></a>
     <button class="theme-btn" id="btnMode" title="Режим спеціаліста / клієнта" aria-label="Перемкнути режим">👤</button>
+    <button class="lang-btn" id="btnLang" title="Українська / English" aria-label="Switch language">EN</button>
     <button class="theme-btn" id="btnTheme" title="Світла / темна тема" aria-label="Перемкнути тему">🌙</button>
   </div>
   <h1 id="appTitle">Конструктор програми харчування</h1>
@@ -699,11 +727,26 @@
 </section>
 
 <aside class="training-promo" aria-labelledby="trainingPromoTitle">
-  <div class="training-shot" aria-label="Демонстрація конструктора тренувань">
-    <img src="./training-constructor-preview.jpg"
-      alt="Приклад персональної програми у конструкторі тренувань Ihor Samchenko"
-      width="1080" height="727" loading="lazy" decoding="async">
-    <span class="training-shot-label">Приклад персональної програми · доступ за запитом</span>
+  <div class="training-collage" aria-label="Колаж можливостей конструктора тренувань">
+    <span class="training-collage-badge">Реальний приклад · доступ за запитом</span>
+    <figure class="training-frame overview">
+      <img src="./training-constructor-preview.jpg"
+        alt="Персональний макроцикл і параметри програми тренувань"
+        width="1080" height="727" loading="lazy" decoding="async">
+      <figcaption>Програма під ваш профіль<b>Вік · досвід · ціль · обладнання</b></figcaption>
+    </figure>
+    <figure class="training-frame detail">
+      <img src="./training-constructor-preview.jpg"
+        alt="Прогресія обсягу, RIR і розвантаження"
+        width="1080" height="727" loading="lazy" decoding="async">
+      <figcaption>Продумана прогресія<b>Обсяг · RIR · розвантаження</b></figcaption>
+    </figure>
+    <figure class="training-frame technique">
+      <img src="./training-exercise-preview.webp"
+        alt="Наочна схема техніки жиму штанги лежачи"
+        width="1024" height="682" loading="lazy" decoding="async">
+      <figcaption>Техніка кожної вправи<b>Старт · фініш · напрям руху</b></figcaption>
+    </figure>
   </div>
   <div class="training-copy">
     <div class="training-kicker">Персональна програма за запитом</div>
@@ -1314,7 +1357,7 @@ function waterCalc(w){
   const food = (totalLo+totalHi)/2 * 0.22;     /* ~22% надходить із їжею */
   return {totalLo, totalHi, food, drinkLo: totalLo-food, drinkHi: totalHi-food};
 }
-const L = x => x.toFixed(1).replace('.',',');
+const L = x => x.toFixed(1).replace('.', window.nutriLanguage==='en'?'.':',');
 function waterHtml(w){
   const q = waterCalc(w);
   return `💧 <b>Випивати ${L(q.drinkLo)}–${L(q.drinkHi)} л рідини на день</b> — сюди входять вода, чай, ` +
@@ -1527,12 +1570,12 @@ function ensureDays(){
 }
 
 /* ============ РЕНДЕР ============ */
-const fmt = n => Math.round(n).toLocaleString('uk-UA');
+const fmt = n => Math.round(n).toLocaleString(window.nutriLanguage==='en'?'en-US':'uk-UA');
 const isClient = () => state.ui && state.ui.mode==='client';
-const num1 = x => (Math.round(x*10)/10).toFixed(1).replace('.',',');
+const num1 = x => (Math.round(x*10)/10).toFixed(1).replace('.',window.nutriLanguage==='en'?'.':',');
 /* темп: 0,35 лишається 0,35, а 0,40 стає 0,4 */
-const numR = x => x.toFixed(2).replace(/0$/,'').replace('.',',');
-const num2 = x => x.toFixed(2).replace('.',',');
+const numR = x => x.toFixed(2).replace(/0$/,'').replace('.',window.nutriLanguage==='en'?'.':',');
+const num2 = x => x.toFixed(2).replace('.',window.nutriLanguage==='en'?'.':',');
 function applyMode(){
   document.body.setAttribute('data-mode', isClient() ? 'client' : 'pro');
   byId('btnMode').textContent = isClient() ? '⚙️' : '👤';
@@ -1595,7 +1638,7 @@ function renderTargets(){
   byId('lowKcalWarn').style.display = t.clamped ? '' : 'none';
   const af = activityFactor(state.profile);
   byId('actNote').innerHTML =
-    `Коефіцієнт активності: <b>${af.toFixed(2).replace('.',',')}</b> — рух протягом дня і тренування рахуються окремо, ` +
+    `Коефіцієнт активності: <b>${af.toFixed(2).replace('.',window.nutriLanguage==='en'?'.':',')}</b> — рух протягом дня і тренування рахуються окремо, ` +
     `з реальних витрат (≈40 ккал на 1000 кроків, ≈350 ккал за тренування). Тому значення нижчі за звичні ` +
     `таблиці 1,375/1,55 — ті завищують внесок тренувань у 3–4 рази. ` +
     `<span style="color:var(--muted)">Це стартова оцінка: через 2–3 тижні звірте з фактичною динамікою ваги ` +
@@ -1784,8 +1827,8 @@ function renderAll(){
 }
 
 /* ============ ТРЕКІНГ ВАГИ ============ */
-const fmtW = w => (Math.round(w*10)/10).toLocaleString('uk-UA');
-const fmtD = iso => { const [y,m,d] = iso.split('-'); return `${d}.${m}`; };
+const fmtW = w => (Math.round(w*10)/10).toLocaleString(window.nutriLanguage==='en'?'en-US':'uk-UA');
+const fmtD = iso => { const [y,m,d] = iso.split('-'); return window.nutriLanguage==='en'?`${m}/${d}`:`${d}.${m}`; };
 function renderWeight(){
   const ws = [...state.weights].sort((a,b)=>a.d.localeCompare(b.d));
   /* підсумок */
@@ -1901,7 +1944,7 @@ function buildPrintView(){
       <h1>Програма харчування${pr.name?` — ${esc(pr.name)}`:''}</h1>
       <div class="meta">Ціль: ${goals[pr.goal]} · ${pr.sex==='m'?'чоловік':'жінка'}, ${pr.age} р.,
         ${pr.height} см, ${pr.weight} кг · ІМТ ${num1(t.bmi)} (${bmiLabel(t.bmi,pr)})${
-          pr.muscular?' · м’язова статура врахована':''}${pr.waist?` · талія/зріст ${num2(pr.waist/pr.height)}`:''} · складено ${new Date().toLocaleDateString('uk-UA')}</div>
+          pr.muscular?' · м’язова статура врахована':''}${pr.waist?` · талія/зріст ${num2(pr.waist/pr.height)}`:''} · складено ${new Date().toLocaleDateString(window.nutriLanguage==='en'?'en-US':'uk-UA')}</div>
     </div>
     <div class="by">склав<b>Ihor Samchenko</b>t.me/samchenko_i</div>
   </div>
@@ -2187,9 +2230,9 @@ byId('exSearch').addEventListener('input', e=>{
   const q = e.target.value.trim().toLowerCase();
   const ex = excludedSet();
   const found = q.length<2 ? [] :
-    PRODUCTS.filter(p=>!ex.has(p.i) && p.n.toLowerCase().includes(q)).slice(0,8);
+    PRODUCTS.filter(p=>!ex.has(p.i) && (p.n.toLowerCase().includes(q) || (window.nutriProductName?nutriProductName(p):p.n).toLowerCase().includes(q))).slice(0,8);
   byId('exMatches').innerHTML = found.map(p=>
-    `<button type="button" data-i="${p.i}">+ ${p.n}</button>`).join('');
+    `<button type="button" data-i="${p.i}">+ ${window.nutriProductName?nutriProductName(p):p.n}</button>`).join('');
 });
 byId('exMatches').addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
@@ -2361,5 +2404,10 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
 </script>
+<script src="./i18n-ui.js"></script>
+<script src="./i18n-foods-1.js"></script>
+<script src="./i18n-foods-2.js"></script>
+<script src="./i18n-recipes.js"></script>
+<script src="./i18n.js"></script>
 </body>
 </html>
