@@ -172,6 +172,9 @@
   details.adv{margin-top:16px;border-top:1px solid var(--hairline);padding-top:12px}
   details.adv summary{cursor:pointer;font-weight:600;color:var(--accent-dark);font-size:14px}
   details.adv .grid{margin-top:14px}
+  .adv-intro{margin:9px 0 0;max-width:820px}
+  .adv-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:14px}
+  .goal-setting[hidden],.goal-maintain-note[hidden]{display:none !important}
   .range-wrap{display:flex;align-items:center;gap:10px}
   .range-wrap input[type=range]{flex:1;accent-color:var(--accent)}
   .range-wrap output{min-width:56px;text-align:right;font-weight:700;color:var(--ink)}
@@ -658,25 +661,21 @@
     Значення піднято до мінімуму — за потреби зменшіть дефіцит у налаштуваннях.
   </div>
   <div class="notice" id="macroWarn" style="display:none"></div>
-  <details class="adv pro-only">
-    <summary>Розширені налаштування (для спеціаліста)</summary>
+  <details class="adv" id="personalSettings">
+    <summary>Налаштуйте план під себе</summary>
+    <p class="hint adv-intro">Оберіть комфортний режим харчування. Після зміни параметрів
+      калорійність, порції та список покупок перерахуються автоматично.</p>
     <div class="grid cols-3">
-      <label class="f">Темп схуднення, кг/тиждень
+      <label class="f goal-setting" id="lossRateField">Темп схуднення, кг/тиждень
         <span class="range-wrap"><input type="range" id="sLossRate" min="0.2" max="1" value="0.35" step="0.05">
         <output id="sLossRateOut">0,35</output></span>
       </label>
-      <label class="f">Темп набору, кг/тиждень
+      <label class="f goal-setting" id="gainRateField">Темп набору, кг/тиждень
         <span class="range-wrap"><input type="range" id="sGainRate" min="0.1" max="0.4" value="0.2" step="0.05">
         <output id="sGainRateOut">0,20</output></span>
       </label>
-      <label class="f">Білок, г/кг розрахункової ваги
-        <span class="range-wrap"><input type="range" id="sProtein" min="1.2" max="2.4" value="1.8" step="0.1">
-        <output id="sProteinOut">1.8</output></span>
-      </label>
-      <label class="f">Жири, % калорійності
-        <span class="range-wrap"><input type="range" id="sFatPct" min="20" max="35" value="27" step="1">
-        <output id="sFatPctOut">27%</output></span>
-      </label>
+      <p class="hint goal-maintain-note" id="maintainRateNote" hidden>Для підтримки ваги темп
+        не задається — раціон орієнтується на ваші добові витрати.</p>
       <label class="f">Кількість прийомів їжі
         <div class="seg" id="sMeals">
           <button type="button" data-v="3">3</button>
@@ -698,6 +697,25 @@
       зменшуються. Це знижує ризик зривів. 0% — вимкнути слот повністю.</p>
     <label class="f" style="margin-top:14px">Час прийомів їжі</label>
     <div class="timerow" id="timeRow"></div>
+    <div class="adv-actions">
+      <button class="btn" type="button" id="btnResetPersonal">↺ Повернути рекомендовані значення</button>
+      <span class="hint">Професійні норми білка та жирів залишаться без змін.</span>
+    </div>
+  </details>
+  <details class="adv pro-only" id="professionalSettings">
+    <summary>Професійні параметри розрахунку</summary>
+    <p class="hint adv-intro">Ці коефіцієнти впливають на розподіл макронутрієнтів.
+      Їх змінює спеціаліст з урахуванням стану здоров’я, цілі та складу тіла.</p>
+    <div class="grid cols-3">
+      <label class="f">Білок, г/кг розрахункової ваги
+        <span class="range-wrap"><input type="range" id="sProtein" min="1.2" max="2.4" value="1.8" step="0.1">
+        <output id="sProteinOut">1.8</output></span>
+      </label>
+      <label class="f">Жири, % калорійності
+        <span class="range-wrap"><input type="range" id="sFatPct" min="20" max="35" value="27" step="1">
+        <output id="sFatPctOut">27%</output></span>
+      </label>
+    </div>
   </details>
 </section>
 
@@ -1940,7 +1958,7 @@ function renderTrainingPromo(){
 }
 
 function renderAll(){
-  applyMode(); renderTargets(); renderDayTabs(); renderDay(); renderShop(); renderWeight(); renderTrainingPromo(); saveLocal();
+  applyMode(); syncPersonalSettings(); renderTargets(); renderDayTabs(); renderDay(); renderShop(); renderWeight(); renderTrainingPromo(); saveLocal();
 }
 
 /* ============ ТРЕКІНГ ВАГИ ============ */
@@ -2224,7 +2242,14 @@ function syncFormFromState(){
   byId('sWeekMode').innerHTML = Object.entries(WEEK_MODES).map(([k,v])=>
     `<option value="${k}" ${k===s.weekMode?'selected':''}>${v.n}</option>`).join('');
   byId('weekModeHint').textContent = (WEEK_MODES[s.weekMode]||WEEK_MODES.vary).h;
+  syncPersonalSettings();
   renderTimeRow();
+}
+function syncPersonalSettings(){
+  const goal = state.profile.goal;
+  byId('lossRateField').hidden = goal !== 'loss';
+  byId('gainRateField').hidden = goal !== 'gain';
+  byId('maintainRateNote').hidden = goal !== 'maintain';
 }
 /* редагований час прийомів */
 function renderTimeRow(){
@@ -2349,6 +2374,12 @@ byId('sSweet').addEventListener('input', e=>{
   byId('sSweetOut').textContent = state.settings.sweetPct ? state.settings.sweetPct+'%' : 'вимк.';
   syncSweetSlot();          /* меню не перегенеровується — слот лише додається/зникає */
   renderTimeRow(); renderAll();
+});
+byId('btnResetPersonal').addEventListener('click', ()=>{
+  Object.assign(state.settings, {
+    lossRate:0.35, gainRate:0.2, meals:4, sweetPct:10, weekMode:'vary', times:[]
+  });
+  genWeek(); syncFormFromState(); renderAll();
 });
 
 /* ---- виключення ---- */

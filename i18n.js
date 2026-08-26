@@ -15,6 +15,15 @@ const exactExtra={
 };
 Object.assign(E,exactExtra);
 Object.assign(E,{
+  'Налаштуйте план під себе':'Personalize your plan',
+  'Оберіть комфортний режим харчування. Після зміни параметрів калорійність, порції та список покупок перерахуються автоматично.':'Choose a comfortable eating routine. Calories, portions and the shopping list recalculate automatically when you change these settings.',
+  'Для підтримки ваги темп не задається — раціон орієнтується на ваші добові витрати.':'No rate is needed for maintenance — the plan follows your estimated daily expenditure.',
+  '↺ Повернути рекомендовані значення':'↺ Restore recommended settings',
+  'Професійні норми білка та жирів залишаться без змін.':'Professional protein and fat targets will remain unchanged.',
+  'Професійні параметри розрахунку':'Professional calculation settings',
+  'Ці коефіцієнти впливають на розподіл макронутрієнтів. Їх змінює спеціаліст з урахуванням стану здоров’я, цілі та складу тіла.':'These coefficients affect macronutrient distribution. A professional adjusts them for health status, goals and body composition.'
+});
+Object.assign(E,{
   'Продукти в кожному списку — рівноцінні за калорійністю: змінюйте будь-який, а грами перерахуються автоматично. Грами можна відредагувати вручну (кнопка ↺ повертає авторозрахунок). У кінці кожного списку є група «Страви» — борщ і рагу серед овочів, вареники й деруни серед гарнірів, голубці й сирники серед білкових; їхні калорії приблизні (≈), бо залежать від рецепта.':'Foods in each list are calorie-equivalent: choose any item and portions recalculate automatically. You can edit grams manually; ↺ restores the automatic portion. The “Dishes” group contains prepared recipes whose calories are approximate (≈) because they depend on the recipe.'
 });
 Object.assign(E,{
