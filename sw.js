@@ -1,7 +1,7 @@
 /* Service worker: офлайн-робота додатку.
-   При оновленні index.html підвищуйте номер версії кешу (v16 → v17), щоб
+   При оновленні index.html підвищуйте номер версії кешу (v19 → v20), щоб
    користувачі отримали свіжу версію. */
-const CACHE = 'nutri-konstruktor-v16';
+const CACHE = 'nutri-konstruktor-v19';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png',
   './training-constructor-preview.jpg', './training-exercise-preview.webp',

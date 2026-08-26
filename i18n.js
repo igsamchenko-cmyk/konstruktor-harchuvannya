@@ -18,6 +18,39 @@ Object.assign(E,{
   'Продукти в кожному списку — рівноцінні за калорійністю: змінюйте будь-який, а грами перерахуються автоматично. Грами можна відредагувати вручну (кнопка ↺ повертає авторозрахунок). У кінці кожного списку є група «Страви» — борщ і рагу серед овочів, вареники й деруни серед гарнірів, голубці й сирники серед білкових; їхні калорії приблизні (≈), бо залежать від рецепта.':'Foods in each list are calorie-equivalent: choose any item and portions recalculate automatically. You can edit grams manually; ↺ restores the automatic portion. The “Dishes” group contains prepared recipes whose calories are approximate (≈) because they depend on the recipe.'
 });
 Object.assign(E,{
+  'Торт «Наполеон»':'Napoleon cake',
+  'Торт «Спартак»':'Spartak cake',
+  'Торт «Прага»':'Prague cake',
+  'Сметанник':'Smetannik sour-cream cake',
+  'Еклер з кремом':'Cream eclair',
+  'Трубочка зі згущеним молоком':'Wafer tube with condensed milk',
+  'Пахлава':'Baklava',
+  'Макарон':'Macaron',
+  'Донат':'Donut',
+  'Тістечко «Картопля»':'Kartoshka cake pop'
+});
+Object.assign(E,{
+  'Підказки балансу':'Balance hints',
+  'Баланс дня тримається красиво':'The day is nicely balanced',
+  'День майже зібраний, залишились дрібні штрихи':'The day is almost set; just small tweaks left',
+  'Є що підкрутити, але день легко врівноважити':'There is something to tune, but the day is easy to balance',
+  'в нормі':'on target',
+  'бракує':'low',
+  'надлишок':'high',
+  'Білкова опора дня зібрана добре.':'Protein support is set up well.',
+  'Білку ще не вистачає для ситості й відновлення. Додай курку, рибу, яйця, сир або грецький йогурт.':'Protein is still low for satiety and recovery. Add chicken, fish, eggs, cottage cheese or Greek yogurt.',
+  'Білка вже з запасом. Якщо калорії тиснуть, зменш м’ясо, сир або порцію протеїнового продукту.':'Protein is already above target. If calories are tight, reduce meat, cottage cheese or another protein portion.',
+  'Жири тримаються в комфортному коридорі.':'Fats are in a comfortable range.',
+  'Жирів малувато для гормонів і засвоєння вітамінів. Додай 5–10 г олії, горіхів, авокадо або жирної риби.':'Fats are a bit low for hormones and vitamin absorption. Add 5–10 g oil, nuts, avocado or fatty fish.',
+  'Жири сьогодні трохи забрали калорії на себе. Зменш олію, горіхи, сир, майонез або жирніше м’ясо.':'Fats took a little too much of today’s calories. Reduce oil, nuts, cheese, mayonnaise or fattier meat.',
+  'Енергія дня зібрана рівно.':'Daily energy is lined up well.',
+  'Вуглеводів малувато для енергії. Додай крупу, картоплю, хліб, фрукти або трохи збільш гарнір.':'Carbs are a bit low for energy. Add grains, potatoes, bread, fruit or slightly increase the side dish.',
+  'Вуглеводи вийшли вперед. Підріж гарнір, хліб, солодке або обери менш вуглеводний перекус.':'Carbs are running ahead. Trim the side dish, bread or sweets, or choose a lower-carb snack.',
+  'Клітковина закриває мінімум дня.':'Fiber covers the daily minimum.',
+  'Клітковини бракує для ситості й травлення. Додай овочі, ягоди, бобові або цільнозерновий продукт.':'Fiber is low for satiety and digestion. Add vegetables, berries, legumes or a whole-grain food.',
+  'Клітковини достатньо. Якщо є здуття, піднімай її поступово й не забувай про воду.':'Fiber is sufficient. If bloating appears, increase it gradually and keep fluids up.'
+});
+Object.assign(E,{
   "крупи, макарони й бобові — сухими; м'ясо, рибу та субпродукти — сирими (після готування маса меншає на 25–30% у м'яса та ~20% у риби); овочі й фрукти — очищеними.":"grains, pasta and legumes — dry; meat, fish and offal — raw (cooking reduces meat weight by 25–30% and fish by about 20%); vegetables and fruit — after trimming.",
   "— рахуються всі напої (вода, чай, кава, компот, юшка); ще ≈0,5 л надходить із їжею.":"— all drinks count (water, tea, coffee, compote and broth); about 0.5 L also comes from food."
 });
