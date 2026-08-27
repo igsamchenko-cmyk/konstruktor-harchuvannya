@@ -350,6 +350,27 @@
   .wlist button{border:0;background:var(--track);border-radius:50%;width:20px;height:20px;line-height:1;
     cursor:pointer;color:var(--ink-2);font-size:12px}
   .wlist button:hover{background:var(--critical);color:#fff}
+  .wadapt{margin:12px 0;padding:13px 15px;border:1px solid var(--frame);border-left:4px solid var(--accent);
+    border-radius:8px;background:var(--field);font-size:13.5px;line-height:1.5;color:var(--ink-2)}
+  .wadapt.good{border-left-color:var(--good)}
+  .wadapt.warn{border-left-color:var(--warn)}
+  .wadapt.bad{border-left-color:var(--critical)}
+  .wadapt .wa-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+  .wadapt .wa-head b{font-size:15px;color:var(--ink)}
+  .wadapt .wa-rate{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
+  .wadapt .wa-action{margin-top:7px;color:var(--ink)}
+  .wlegend{display:flex;flex-wrap:wrap;gap:12px;margin:0 8px 8px;font-size:11.5px;color:var(--muted)}
+  .wlegend span{display:inline-flex;align-items:center;gap:5px}
+  .wlegend i{display:inline-block;width:18px;height:3px;border-radius:9px;background:var(--accent)}
+  .wlegend .raw{height:7px;width:7px;border-radius:50%;background:var(--muted)}
+  .wlegend .expected{height:8px;background:color-mix(in srgb,var(--accent) 18%,transparent);border:1px solid var(--accent)}
+  .wlegend .waist{height:0;background:none;border-top:2px dashed var(--s-fat)}
+  .wchart .expected-band{fill:color-mix(in srgb,var(--accent) 13%,transparent);stroke:none}
+  .wchart .expected-path{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 4;opacity:.65}
+  .wchart .trend-line{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+  .wchart .raw-dot{fill:var(--muted);opacity:.55}
+  .wchart .waist-line{fill:none;stroke:var(--s-fat);stroke-width:2;stroke-dasharray:6 4}
+  .wchart .waist-dot{fill:var(--s-fat);stroke:var(--field);stroke-width:1.5}
   .wempty{color:var(--muted);font-size:14px;padding:24px 12px;text-align:center}
 
   /* --- промо конструктора тренувань --- */
@@ -901,14 +922,16 @@
 <section class="card" id="step5">
   <div class="step-tag"><span class="num">5</span> Прогрес</div>
   <h2>Трекінг ваги</h2>
-  <p class="hint" style="margin-top:-8px">Вносьте вагу раз на тиждень, зранку натщесерце — і стежте за динамікою.
-    Записи зберігаються на цьому пристрої.</p>
+  <p class="hint" style="margin-top:-8px">Вносьте вагу 3–7 разів на тиждень в однакових умовах,
+    бажано зранку після туалету. Застосунок згладить добові коливання; записи зберігаються на цьому пристрої.</p>
   <div class="wform">
     <label class="f">Дата<input type="date" id="wDate"></label>
     <label class="f">Вага, кг<input type="number" id="wKg" min="30" max="300" step="0.1" placeholder="70.5"></label>
+    <label class="f">Талія, см <span class="opt">необов’язково</span><input type="number" id="wWaist" min="40" max="250" step="0.1" placeholder="82"></label>
     <button class="btn primary" id="btnAddW" style="height:38px">Додати запис</button>
   </div>
   <div class="wsum" id="wSummary"></div>
+  <div id="wAdaptive"></div>
   <div class="wchart" id="wChart"></div>
   <ul class="wlist" id="wList"></ul>
 </section>
@@ -1396,7 +1419,7 @@ const DEFAULT_STATE = () => ({
   done:{},          /* відмічені прийоми: "день:прийом" -> true */
   activeDay:0,
   days:[],          /* days[7] = [ meal -> [ {prodId, customG|null} ] ] */
-  weights:[]        /* [{d:'2026-08-19', w:70.5}] */
+  weights:[]        /* [{d:'2026-08-19', w:70.5, waist:82|null}] */
 });
 const state = DEFAULT_STATE();
 
@@ -1674,6 +1697,7 @@ function migrateSettings(){
   if(!state.ui) state.ui = {mode:'pro', locked:false};
   if(state.note==null) state.note = '';
   if(!state.done) state.done = {};
+  state.weights = normalizeWeightEntries(state.weights).map(e=>({d:e.d,w:e.w,waist:e.waist}));
 }
 
 /* Побутові міри. iw=1 означає неподільну одиницю: яйце, скибка, невеликий
@@ -1998,14 +2022,81 @@ function ensureDays(){
   if(!valid) safeGenWeek(false);
 }
 
-/* Коридор прогнозу: одна межа — лінійний темп, друга — поступове згасання
-   ефекту на 12% кожні 4 тижні через зменшення маси й витрат. */
-function forecastRange(t,weeks){
-  const start=state.profile.weight, weekly=t.realRate*t.pace.dir;
-  const linear=start+weekly*weeks;
-  let damped=start;
-  for(let i=0;i<weeks;i++) damped += weekly*Math.pow(0.88,i/4);
+const DAY_MS=86400000;
+function isoDay(iso){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||''));
+  if(!m) return NaN;
+  const t=Date.UTC(+m[1],+m[2]-1,+m[3]);
+  const d=new Date(t);
+  return Number.isFinite(t)&&d.getUTCFullYear()===+m[1]&&d.getUTCMonth()===+m[2]-1&&d.getUTCDate()===+m[3]
+    ? t/DAY_MS : NaN;
+}
+function normalizeWeightEntries(entries=state.weights){
+  const byDate=new Map();
+  (Array.isArray(entries)?entries:[]).forEach((e,index)=>{
+    const t=isoDay(e&&e.d), w=+(e&&e.w), waist=+(e&&e.waist);
+    if(!Number.isFinite(t) || !Number.isFinite(w) || w<30 || w>300) return;
+    byDate.set(e.d,{d:e.d,t,w:Math.round(w*10)/10,
+      waist:Number.isFinite(waist)&&waist>=40&&waist<=250?Math.round(waist*10)/10:null,_i:index});
+  });
+  return [...byDate.values()].sort((a,b)=>a.t-b.t);
+}
+function rollingWeightPoints(entries=state.weights,windowDays=7){
+  const ws=normalizeWeightEntries(entries), span=Math.max(1,+windowDays||7);
+  return ws.map((e,i)=>{
+    const recent=ws.slice(0,i+1).filter(x=>x.t>e.t-span && x.t<=e.t);
+    const waist=recent.filter(x=>x.waist!=null);
+    return {d:e.d,t:e.t,raw:e.w,w:recent.reduce((s,x)=>s+x.w,0)/recent.length,
+      waist:waist.length?waist.reduce((s,x)=>s+x.waist,0)/waist.length:null,_i:e._i};
+  });
+}
+function median(values){
+  const a=values.filter(Number.isFinite).sort((x,y)=>x-y), n=a.length;
+  return n ? (n%2?a[(n-1)/2]:(a[n/2-1]+a[n/2])/2) : null;
+}
+/* Theil–Sen: медіана всіх попарних нахилів. Менш чутлива до одного
+   солоного вечора, циклу чи випадкового зважування, ніж звичайна пряма. */
+function robustWeeklyRate(points){
+  const slopes=[];
+  for(let i=0;i<points.length;i++) for(let j=i+1;j<points.length;j++){
+    const days=points[j].t-points[i].t;
+    if(days>=3) slopes.push((points[j].w-points[i].w)/days*7);
+  }
+  return median(slopes);
+}
+/* Динамічний коридор: лінійна межа та межа зі згасанням темпу на 12%
+   кожні 4 тижні. Це прогноз, не обіцянка результату. */
+function expectedWeightAt(startWeight,days,t){
+  const weekly=t.realRate*t.pace.dir, n=Math.max(0,Math.round(days));
+  const linear=startWeight+weekly*n/7;
+  let damped=startWeight;
+  for(let i=0;i<n;i++) damped += weekly/7*Math.pow(0.88,i/28);
   return {lo:Math.min(linear,damped),hi:Math.max(linear,damped),linear,damped};
+}
+function forecastRange(t,weeks){ return expectedWeightAt(state.profile.weight,weeks*7,t); }
+
+function weightFeedback(entries=state.weights,t=calcTargets()){
+  const ws=normalizeWeightEntries(entries), points=rollingWeightPoints(ws,7);
+  const spanDays=ws.length>1?ws[ws.length-1].t-ws[0].t:0;
+  const actualRate=robustWeeklyRate(points);
+  const expectedRate=t.pace.dir*t.realRate;
+  const tolerance=t.pace.dir===0?0.15:Math.max(0.12,Math.abs(expectedRate)*0.35);
+  const ready=ws.length>=3&&spanDays>=14&&actualRate!=null;
+  const mature=ws.length>=4&&spanDays>=21&&actualRate!=null;
+  let code='collecting', adjustment=0, blocked=false;
+  if(ready){
+    const delta=actualRate-expectedRate;
+    if(Math.abs(delta)<=tolerance) code='onTrack';
+    else if(!mature) code='observe';
+    else{
+      const raw=(expectedRate-actualRate)*KCAL_PER_KG/7;
+      adjustment=Math.sign(raw)*Math.min(150,Math.max(100,Math.round(Math.abs(raw)/50)*50));
+      if(adjustment<0&&(t.belowBmr||t.clamped||medicalSafety().blocked)){
+        adjustment=0; blocked=true; code='safetyReview';
+      }else code=adjustment>0?'raise':'lower';
+    }
+  }
+  return {ws,points,spanDays,actualRate,expectedRate,tolerance,ready,mature,code,adjustment,blocked};
 }
 
 /* Три близькі за поживністю альтернативи для швидкої клієнтської заміни. */
@@ -2415,7 +2506,7 @@ function renderAll(){
 const fmtW = w => (Math.round(w*10)/10).toLocaleString(window.nutriLanguage==='en'?'en-US':'uk-UA');
 const fmtD = iso => { const [y,m,d] = iso.split('-'); return window.nutriLanguage==='en'?`${m}/${d}`:`${d}.${m}`; };
 function renderWeight(){
-  const ws = [...state.weights].sort((a,b)=>a.d.localeCompare(b.d));
+  const t=calcTargets(), fb=weightFeedback(state.weights,t), ws=fb.ws, trend=fb.points;
   /* підсумок */
   let sum = '';
   if(ws.length){
@@ -2426,13 +2517,37 @@ function renderWeight(){
     const diffCol = goalGain ? (diff > 0.05 ? 'var(--good-text)' : col) : col;
     sum = `<span>Зараз: <b>${fmtW(last.w)} кг</b></span>
       <span>Початок: ${fmtW(first.w)} кг (${fmtD(first.d)})</span>
-      <span style="color:${diffCol};font-weight:700">${diff>0?'+':''}${fmtW(diff)} кг за весь час</span>`;
+      <span style="color:${diffCol};font-weight:700">${diff>0?'+':''}${fmtW(diff)} кг за весь час</span>
+      ${last.waist!=null?`<span>Талія: <b>${fmtW(last.waist)} см</b></span>`:''}`;
   }
   byId('wSummary').innerHTML = sum;
+  const rate=x=>`${x>0?'+':''}${numR(x)} кг/тиждень`;
+  let adaptive='';
+  if(!fb.ready){
+    const needEntries=Math.max(0,3-ws.length), needDays=Math.max(0,14-fb.spanDays);
+    adaptive=`<div class="wadapt"><div class="wa-head"><b>Збираємо базову лінію</b><span>${ws.length} запис(и) · ${fb.spanDays} дн.</span></div>
+      Для першої оцінки потрібно щонайменше 3 зважування за 14 днів.${needEntries||needDays?` Залишилось: ${needEntries?needEntries+' запис(и) ':''}${needDays?needDays+' дн.':''}.`:''}</div>`;
+  }else{
+    const rates=`<span class="wa-rate">фактично ${rate(fb.actualRate)} · очікувано ${rate(fb.expectedRate)}</span>`;
+    if(fb.code==='onTrack') adaptive=`<div class="wadapt good"><div class="wa-head"><b>Темп відповідає плану</b>${rates}</div>
+      Коливання перебувають у робочому коридорі. Калорійність поки змінювати не потрібно.</div>`;
+    else if(fb.code==='observe') adaptive=`<div class="wadapt warn"><div class="wa-head"><b>Є відхилення, але даних ще мало</b>${rates}</div>
+      Продовжуйте зважування до 21 дня і не коригуйте раціон за коротким відрізком.</div>`;
+    else if(fb.code==='safetyReview') adaptive=`<div class="wadapt bad"><div class="wa-head"><b>Не знижуйте калорійність автоматично</b>${rates}</div>
+      Поточний розрахунок уже біля захисної межі або потребує медичного погодження. Перегляньте активність, дотримання плану й стан здоров’я зі спеціалістом.</div>`;
+    else{
+      const verb=fb.adjustment>0?'підвищити':'знизити', amount=Math.abs(fb.adjustment);
+      adaptive=`<div class="wadapt warn"><div class="wa-head"><b>Темп відрізняється від запланованого</b>${rates}</div>
+        <div class="wa-action">Орієнтир для спеціаліста: <b>${verb} калорійність приблизно на ${amount} ккал/день</b>, потім спостерігати ще 2–3 тижні.</div>
+        Перед корекцією звірте дотримання меню, кроки, тренування, сіль, цикл і однакові умови зважування. Застосунок нічого не змінює автоматично.</div>`;
+    }
+  }
+  byId('wAdaptive').innerHTML=adaptive;
   /* список записів */
-  byId('wList').innerHTML = ws.map((e,i)=>
+  byId('wList').innerHTML = ws.map(e=>
     `<li>${fmtD(e.d)} — <b>${fmtW(e.w)}</b> кг
-      <button data-i="${state.weights.indexOf(e)}" title="Видалити запис">✕</button></li>`).join('');
+      ${e.waist!=null?`· ${fmtW(e.waist)} см талія`:''}
+      <button data-i="${e._i}" title="Видалити запис">✕</button></li>`).join('');
   /* графік */
   const box = byId('wChart');
   if(ws.length < 2){
@@ -2441,13 +2556,17 @@ function renderWeight(){
       : 'Додайте ще один запис — і побачите графік динаміки.'}</div>`;
     return;
   }
-  const W=640, H=240, L=46, R=18, T=16, B=30;
-  const xs = ws.map(e=>new Date(e.d+'T00:00:00').getTime());
-  const ysv = ws.map(e=>e.w);
-  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const W=640, H=240, L=46, R=42, T=16, B=30;
+  const xs=ws.map(e=>e.t), x0=Math.min(...xs), x1=Math.max(...xs), span=Math.max(1,x1-x0);
+  const steps=Math.min(60,Math.max(2,Math.ceil(span/3))), band=[];
+  for(let i=0;i<=steps;i++){
+    const day=span*i/steps, b=expectedWeightAt(trend[0].w,day,t);
+    band.push({t:x0+day,lo:b.lo,hi:b.hi,mid:(b.linear+b.damped)/2});
+  }
+  const ysv=ws.map(e=>e.w).concat(trend.map(e=>e.w),band.flatMap(e=>[e.lo,e.hi]));
   let y0 = Math.min(...ysv), y1 = Math.max(...ysv);
   const pad = Math.max(0.5,(y1-y0)*0.15); y0-=pad; y1+=pad;
-  const X = t => L + (x1===x0 ? (W-L-R)/2 : (t-x0)/(x1-x0)*(W-L-R));
+  const X = x => L + (x1===x0 ? (W-L-R)/2 : (x-x0)/(x1-x0)*(W-L-R));
   const Y = v => T + (1-(v-y0)/(y1-y0))*(H-T-B);
   /* сітка: 4 горизонтальні лінії */
   let g='';
@@ -2460,21 +2579,33 @@ function renderWeight(){
   const idxs = ws.length>2 ? [0, Math.floor((ws.length-1)/2), ws.length-1] : [0, ws.length-1];
   for(const i of new Set(idxs))
     g += `<text class="lbl" x="${X(xs[i])}" y="${H-8}" text-anchor="middle">${fmtD(ws[i].d)}</text>`;
-  const ptsStr = ws.map((e,i)=>`${X(xs[i])},${Y(e.w)}`).join(' ');
-  let dots='';
-  ws.forEach((e,i)=>{
-    dots += `<circle cx="${X(xs[i])}" cy="${Y(e.w)}" r="4.5" fill="var(--accent)" stroke="var(--field)" stroke-width="2">
-      <title>${fmtD(e.d)}: ${fmtW(e.w)} кг</title></circle>`;
-  });
-  const lastX = X(xs[xs.length-1]), lastY = Y(ysv[ysv.length-1]);
+  const trendStr=trend.map(e=>`${X(e.t)},${Y(e.w)}`).join(' ');
+  const expectedStr=band.map(e=>`${X(e.t)},${Y(e.mid)}`).join(' ');
+  const bandStr=band.map(e=>`${X(e.t)},${Y(e.hi)}`)
+    .concat([...band].reverse().map(e=>`${X(e.t)},${Y(e.lo)}`)).join(' ');
+  const dots=ws.map(e=>`<circle class="raw-dot" cx="${X(e.t)}" cy="${Y(e.w)}" r="3.5">
+    <title>${fmtD(e.d)}: ${fmtW(e.w)} кг</title></circle>`).join('');
+
+  const waistPts=trend.filter(e=>e.waist!=null);
+  let waistSvg='',waistLegend='';
+  if(waistPts.length>=2){
+    let a=Math.min(...waistPts.map(e=>e.waist)),b=Math.max(...waistPts.map(e=>e.waist));
+    const wp=Math.max(1,(b-a)*0.15);a-=wp;b+=wp;
+    const YW=v=>T+(1-(v-a)/(b-a))*(H-T-B);
+    const waistStr=waistPts.map(e=>`${X(e.t)},${YW(e.waist)}`).join(' ');
+    waistSvg=`<polyline class="waist-line" points="${waistStr}"/>${waistPts.map(e=>`<circle class="waist-dot" cx="${X(e.t)}" cy="${YW(e.waist)}" r="3"><title>${fmtD(e.d)}: ${fmtW(e.waist)} см</title></circle>`).join('')}
+      <text class="lbl" x="${W-R+7}" y="${T+4}">${fmtW(b)} см</text><text class="lbl" x="${W-R+7}" y="${H-B}">${fmtW(a)} см</text>`;
+    waistLegend='<span><i class="waist"></i>Тренд талії</span>';
+  }
+  const lastX=X(trend[trend.length-1].t),lastY=Y(trend[trend.length-1].w);
   const anchor = lastX > W-70 ? 'end' : 'start';
-  const dl = `<text class="dlab" x="${lastX + (anchor==='end'?-9:9)}" y="${lastY-9}" text-anchor="${anchor}">${fmtW(ysv[ysv.length-1])} кг</text>`;
-  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Графік динаміки ваги">
-    ${g}
-    <line class="axis" x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}"/>
-    <polyline points="${ptsStr}" fill="none" stroke="var(--accent)" stroke-width="2"
-      stroke-linejoin="round" stroke-linecap="round"/>
-    ${dots}${dl}
+  const dl=`<text class="dlab" x="${lastX+(anchor==='end'?-9:9)}" y="${lastY-9}" text-anchor="${anchor}">${fmtW(trend[trend.length-1].w)} кг</text>`;
+  box.innerHTML = `<div class="wlegend"><span><i class="raw"></i>Зважування</span><span><i></i>7-денний тренд</span>
+    <span><i class="expected"></i>Очікуваний коридор</span>${waistLegend}</div>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Графік тренду ваги та талії">
+    ${g}<line class="axis" x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}"/>
+    <polygon class="expected-band" points="${bandStr}"/><polyline class="expected-path" points="${expectedStr}"/>
+    <polyline class="trend-line" points="${trendStr}"/>${dots}${waistSvg}${dl}
   </svg>`;
 }
 
@@ -2995,10 +3126,14 @@ byId('btnAddProd').addEventListener('click', ()=>{
 byId('btnAddW').addEventListener('click', ()=>{
   const d = byId('wDate').value;
   const w = parseFloat(String(byId('wKg').value).replace(',','.'));
+  const waistRaw=String(byId('wWaist').value||'').replace(',','.');
+  const waist=waistRaw===''?null:parseFloat(waistRaw);
   if(!d || !w || w<30 || w>300){ alert('Вкажіть дату та вагу (30–300 кг).'); return; }
+  if(waist!=null&&(!Number.isFinite(waist)||waist<40||waist>250)){ alert('Талія має бути в межах 40–250 см або лишатися порожньою.'); return; }
   const ex = state.weights.find(e=>e.d===d);
-  if(ex) ex.w = w; else state.weights.push({d, w});
-  byId('wKg').value='';
+  if(ex){ ex.w=w; if(waist!=null) ex.waist=waist; }
+  else state.weights.push({d,w,waist});
+  byId('wKg').value=''; byId('wWaist').value='';
   renderWeight(); saveLocal();
 });
 byId('wList').addEventListener('click', e=>{
@@ -3086,6 +3221,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
 <script src="./i18n-foods-2.js"></script>
 <script src="./i18n-recipes.js"></script>
 <script src="./i18n-sprint2.js"></script>
+<script src="./i18n-adaptive.js"></script>
 <script src="./i18n.js"></script>
 </body>
 </html>

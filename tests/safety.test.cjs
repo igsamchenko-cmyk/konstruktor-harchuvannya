@@ -7,15 +7,21 @@ const inline = html.match(/<script>([\s\S]*?)<\/script>/);
 if (!inline) throw new Error('Inline application script not found');
 const marker = '/* ============ РЕНДЕР ============ */';
 const core = inline[1].slice(0, inline[1].indexOf(marker));
+const progressStart = inline[1].indexOf('const fmtW =');
+const progressEnd = inline[1].indexOf('/* ============ ВИКЛЮЧЕННЯ: РЕНДЕР І ЛОГІКА ============ */');
+assert(progressStart>0&&progressEnd>progressStart,'progress render source is discoverable');
+const progressRender = inline[1].slice(progressStart,progressEnd);
 const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
 assert.equal(new Set(ids).size, ids.length, 'HTML ids remain unique');
-for (const id of ['fDiet','healthScreen','safetyWarn','poolWarn','btnGenWeek','btnShareClient'])
+for (const id of ['fDiet','healthScreen','safetyWarn','poolWarn','btnGenWeek','btnShareClient','wWaist','wAdaptive'])
   assert(ids.includes(id), 'required safety control exists: ' + id);
 assert(/id="fAge" min="18"/.test(html), 'age input exposes the adult-only limit');
 assert(html.includes('./i18n-safety.js'), 'safety translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-safety.js'), 'safety translations are cached offline');
 assert(html.includes('./i18n-sprint2.js'), 'Sprint 2 translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-sprint2.js'), 'Sprint 2 translations are cached offline');
+assert(html.includes('./i18n-adaptive.js'), 'adaptive translations are loaded');
+assert(fs.readFileSync('sw.js','utf8').includes('./i18n-adaptive.js'), 'adaptive translations are cached offline');
 const context = {
   console,
   setTimeout,
@@ -26,7 +32,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext('let __seed=123456789; Math.random=()=>((__seed=Math.imul(__seed,1664525)+1013904223>>>0)/4294967296);', context);
-vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, qualityNutrients, qualityLimits, forecastRange, swapAlternatives, applyClientSwap};', context);
+vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
 
 const a = context.api;
 const reset = () => {
@@ -144,6 +150,58 @@ const ft = a.calcTargets();
 const f4 = a.forecastRange(ft,4), f12 = a.forecastRange(ft,12);
 assert(f4.lo < f4.hi, 'forecast is a range rather than a point');
 assert(f12.hi-f12.lo > f4.hi-f4.lo, 'forecast uncertainty widens over time');
+
+const weightSeries=(rate,weeks=4)=>{
+  const noise=[0,0.08,-0.06,0.04,-0.03,0.02,-0.04,0.05,-0.02,0];
+  const out=[];
+  for(let d=0,i=0;d<=weeks*7;d+=3,i++){
+    const iso=new Date(Date.UTC(2026,0,1)+d*86400000).toISOString().slice(0,10);
+    out.push({d:iso,w:85+rate*d/7+noise[i%noise.length],waist:92-rate*d/14});
+  }
+  return out;
+};
+reset();
+Object.assign(a.state.profile,{sex:'m',age:39,height:174,weight:85,goal:'loss'});
+a.state.settings.lossRate=0.35;
+const trendTarget=a.calcTargets();
+const slowFeedback=a.weightFeedback(weightSeries(-0.10),trendTarget);
+assert(slowFeedback.mature, 'four weeks of regular weigh-ins are enough for adaptive feedback');
+assert.equal(slowFeedback.code,'lower','slower-than-planned loss suggests a modest calorie reduction');
+assert(slowFeedback.adjustment===-100||slowFeedback.adjustment===-150,'adaptive reduction is capped to a small step');
+const onTrack=a.weightFeedback(weightSeries(-trendTarget.realRate),trendTarget);
+assert.equal(onTrack.code,'onTrack','matching the expected trend does not trigger a change');
+assert.equal(onTrack.adjustment,0,'on-track trend keeps calories unchanged');
+assert(!a.weightFeedback(weightSeries(-0.10,1),trendTarget).ready,'one week never triggers adaptive feedback');
+const rolling=a.rollingWeightPoints(weightSeries(-0.10),7);
+assert(rolling.length>=9&&Number.isFinite(a.robustWeeklyRate(rolling)),'rolling trend and robust slope are available');
+assert(rolling.some(x=>x.waist!=null),'waist measurements survive trend normalization');
+const longBand=a.expectedWeightAt(85,84,trendTarget),shortBand=a.expectedWeightAt(85,28,trendTarget);
+assert(longBand.hi-longBand.lo>shortBand.hi-shortBand.lo,'expected weight corridor widens over time');
+
+reset();
+Object.assign(a.state.profile,{sex:'f',age:30,height:168,weight:70,lifestyle:0,training:0,goal:'loss'});
+a.state.settings.lossRate=1;
+const lowEnergyTarget=a.calcTargets();
+assert(lowEnergyTarget.belowBmr,'safety scenario is below estimated BMR');
+const guarded=a.weightFeedback(weightSeries(0),lowEnergyTarget);
+assert.equal(guarded.code,'safetyReview','slow loss below BMR is routed to review, not a deeper deficit');
+assert.equal(guarded.adjustment,0,'no automatic downward calorie suggestion near the safety floor');
+
+/* Execute the actual SVG renderer against a minimal DOM, not just its math. */
+const renderEls=new Map(['wSummary','wAdaptive','wList','wChart'].map(id=>[id,{innerHTML:''}]));
+context.document={getElementById:id=>renderEls.get(id)||{innerHTML:''}};
+context.numR=x=>Number(x).toFixed(2).replace(/0$/,'').replace('.',',');
+vm.runInContext(progressRender,context);
+reset();
+Object.assign(a.state.profile,{sex:'m',age:39,height:174,weight:85,goal:'loss'});
+a.state.settings.lossRate=0.35;
+a.state.weights=weightSeries(-0.10);
+vm.runInContext('renderWeight()',context);
+const chartHtml=renderEls.get('wChart').innerHTML, adaptiveHtml=renderEls.get('wAdaptive').innerHTML;
+assert(chartHtml.includes('<svg')&&chartHtml.includes('expected-band'),'progress renderer draws the expected range');
+assert(chartHtml.includes('trend-line')&&chartHtml.includes('waist-line'),'progress renderer draws weight and waist trends');
+assert(adaptiveHtml.includes('Орієнтир для спеціаліста'),'progress renderer shows the adaptive recommendation');
+assert(!/NaN|undefined/.test(chartHtml+adaptiveHtml),'progress renderer emits no invalid values');
 
 reset();
 a.genWeek();
