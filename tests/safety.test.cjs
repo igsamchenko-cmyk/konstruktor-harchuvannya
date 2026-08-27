@@ -35,7 +35,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext('let __seed=123456789; Math.random=()=>((__seed=Math.imul(__seed,1664525)+1013904223>>>0)/4294967296);', context);
-vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, normalizeCheckins, recentCheckin, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
+vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, selectList, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, normalizeCheckins, recentCheckin, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
 
 const a = context.api;
 const reset = () => {
@@ -75,6 +75,13 @@ const allProtein = a.PRODUCTS.filter(p => a.categoryMatches(p, 'protein') && !p.
 a.setManualExclusion(allProtein, true);
 assert.equal(a.pool('protein').length, 0, 'excluded protein foods are never silently restored');
 assert(a.menuPoolReport().empty.length > 0, 'empty category is reported');
+
+reset();
+assert(!a.pool('protein').some(p=>p.i==='p19'), 'egg whites are not selected automatically as main protein');
+assert(!a.pool('snackProtein').some(p=>p.i==='p19'), 'egg whites are not selected automatically as snack protein');
+assert(a.selectList('protein').some(p=>p.i==='p19'), 'egg whites remain available for deliberate manual selection');
+a.genWeek();
+assert(!a.state.days.flat(2).some(c=>c.prodId==='p19'), 'a generated week never inserts standalone egg whites');
 
 reset();
 a.setPresetState('vegetarian', true);
@@ -273,7 +280,7 @@ const profiles = [
 /* Keep the long simulation reproducible even when focused tests above add generators. */
 vm.runInContext('__seed=123456789', context);
 const weeksPerProfile = Math.max(1, +(process.env.NUTRI_TEST_WEEKS || 10));
-let days = 0, macroPass = 0, coreProteinPass = 0, snackProteinPass = 0;
+let days = 0, macroPass = 0, coreProteinPass = 0, snackProteinPass = 0, automaticEggWhites = 0;
 const byProfile = [];
 for (const profile of profiles) {
   reset();
@@ -282,6 +289,7 @@ for (const profile of profiles) {
     k:0,p:0,f:0,c:0, dev:{k:0,p:0,f:0,c:0}};
   for (let week=0; week<weeksPerProfile; week++) {
     a.genWeek();
+    automaticEggWhites += a.state.days.flat(2).filter(c=>c.prodId==='p19').length;
     for (let d=0; d<7; d++) {
       const day = a.calcDay(d), target = day.targets;
       const macroOk = ['k','p','f'].every(key => {
@@ -310,6 +318,7 @@ const report = {
   macroPassPct: +(macroPass/days*100).toFixed(2),
   coreProteinPassPct: +(coreProteinPass/days*100).toFixed(2),
   snackProteinPassPct: +(snackProteinPass/days*100).toFixed(2),
+  automaticEggWhites,
   foodVolume: {
     normalProduceG: +normalVolume.produceG.toFixed(1),
     compactProduceG: +compactVolume.produceG.toFixed(1),
@@ -329,6 +338,7 @@ console.log(JSON.stringify(report, null, 2));
 assert(macroPass/days >= 0.98, 'at least 98% of simulated days keep calories/protein/fat within ±10%');
 assert(coreProteinPass/days >= 0.95, 'at least 95% of days keep all core meals at 18+ g protein');
 assert(snackProteinPass/days >= 0.90, 'at least 90% of days keep snacks at 10+ g protein');
+assert.equal(automaticEggWhites, 0, 'standalone egg whites never appear in the full automatic simulation');
 for (const row of byProfile) {
   const macroFloor = row.profile.endsWith('-vegan') ? 0.95 : 0.98;
   assert(row.macro/row.days >= macroFloor, row.profile + ': macro quality floor');
