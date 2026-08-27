@@ -21,6 +21,10 @@ assert(html.includes('./i18n-safety.js'), 'safety translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-safety.js'), 'safety translations are cached offline');
 assert(html.includes('./i18n-sprint2.js'), 'Sprint 2 translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-sprint2.js'), 'Sprint 2 translations are cached offline');
+assert(html.includes('<details class="quality pro-only">'), 'detailed quality metrics are specialist-only and collapsed');
+assert(/class="notice pro-only" id="macroWarn"/.test(html), 'technical macro warnings are specialist-only');
+assert(fs.readFileSync('i18n-sprint2.js','utf8').includes('"Детальна оцінка якості раціону"'),
+  'specialist quality disclosure has an English translation');
 assert(html.includes('./i18n-adaptive.js'), 'adaptive translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-adaptive.js'), 'adaptive translations are cached offline');
 assert(html.includes('./i18n-checkin.js'), 'check-in translations are loaded');
