@@ -127,6 +127,12 @@ function core(value){
   s=s.replace(/Загальна потреба (.*?) L \(30–35 мл\/kg\), ще ≈(.*?) L організм отримує з їжі\. У спеку та після тренувань — більше\./,'Total fluid need: $1 L (30–35 ml/kg); about $2 L comes from food. Drink more in hot weather and after training.');
   s=s.replace(/^Формула Міффліна–Сан Жеора · activity/,'Mifflin–St Jeor equation · activity');
   s=s.replace(/^За темпу$/,'At a rate of');
+  s=s.replace(/\((.*?)% маси тіла\), орієнтовний коридор:/,'($1% of body weight), estimated range:');
+  s=s.replace(/(\d+) тиж\./g,'$1 wk');
+  s=s.replace(/Темп понад 1% маси тіла на тиждень — високий ризик втрати м'язів\. Клінічний коридор: 0,5–1%\./,'A rate above 1% of body weight per week increases the risk of muscle loss. Clinical range: 0.5–1%.');
+  s=s.replace(/Дефіцит обмежено 25% добових витрат; заданий швидший темп не використано\./,'The deficit is capped at 25% of daily expenditure; the faster selected rate was not used.');
+  s=s.replace(/Темп обмежено 1% поточної маси тіла на тиждень\./,'The rate is capped at 1% of current body weight per week.');
+  s=s.replace(/Фактичний темп нижчий за заданий: калорійність підняли до безпечного мінімуму\./,'The effective rate is lower than selected because calories were raised to the protective floor.');
   s=s.replace(/\((.*?)% маси тіла\) через 4 \/ 8 \/ 12 тижнів:/,'($1% of body weight), projected weight after 4 / 8 / 12 weeks:');
   s=s.replace(/Білок за прийомами: (.*?) — для повноцінного синтезу м'язового білка основні meals мають давати 25–30 g\./,'Protein per meal: $1 — main meals should provide 25–30 g to support muscle-protein synthesis.');
   s=s.replace(/^Білки —$/,'Protein —').replace(/^Жири —$/,'Fat —').replace(/^Вуглеводи —$/,'Carbohydrates —');
