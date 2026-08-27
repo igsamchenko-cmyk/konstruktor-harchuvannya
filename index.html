@@ -123,6 +123,14 @@
     border:1px solid var(--hairline);border-radius:8px;background:var(--field);color:var(--ink);
     font-size:13px;font-weight:500;line-height:1.35;cursor:pointer}
   .muscular-choice input{width:18px;height:18px;margin:0;flex:0 0 auto;accent-color:var(--accent)}
+  .health-screen{margin-top:16px;border-top:1px solid var(--hairline);padding-top:12px}
+  .health-screen summary{cursor:pointer;font-weight:600;color:var(--accent-dark);font-size:14px}
+  .health-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .health-choice{display:flex;align-items:flex-start;gap:8px;padding:9px 10px;border:1px solid var(--hairline);
+    border-radius:8px;background:var(--field);font-size:13px;color:var(--ink-2);line-height:1.35;cursor:pointer}
+  .health-choice input{width:17px;height:17px;margin:0;flex:0 0 auto;accent-color:var(--accent)}
+  @media(max-width:760px){.health-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:480px){.health-grid{grid-template-columns:1fr}}
   input[type=text],input[type=number],select{
     font:inherit;padding:8px 10px;border:1px solid var(--hairline);border-radius:8px;
     background:var(--field);color:var(--ink);width:100%}
@@ -563,7 +571,7 @@
       </div>
     </label>
     <label class="f">Вік, років
-      <input type="number" id="fAge" min="14" max="90" value="30">
+      <input type="number" id="fAge" min="18" max="90" value="30">
     </label>
     <label class="f">Зріст, см
       <input type="number" id="fHeight" min="120" max="220" value="168">
@@ -596,6 +604,13 @@
         <option value="0.22">Щодня або двічі на день</option>
       </select>
     </label>
+    <label class="f" style="grid-column:span 2">Тип харчування
+      <select id="fDiet">
+        <option value="omnivore">Звичайне</option>
+        <option value="vegetarian">Вегетаріанське</option>
+        <option value="vegan">Веганське</option>
+      </select>
+    </label>
   </div>
   <div class="bmirow" id="bmiRow"></div>
   <p class="hint" style="margin-top:10px" id="actNote"></p>
@@ -607,6 +622,18 @@
       <button type="button" class="goal" data-v="gain"><b>Набір м'язової маси</b><span>помірний профіцит</span></button>
     </div>
   </div>
+  <details class="health-screen pro-only" id="healthScreen">
+    <summary>Медичний скринінг перед складанням раціону</summary>
+    <p class="hint" style="margin-top:9px">Позначте стани, за яких автоматичний раціон потребує погодження з лікарем або профільним дієтологом.</p>
+    <div class="health-grid">
+      <label class="health-choice"><input type="checkbox" data-health="pregnancy">Вагітність або грудне вигодовування</label>
+      <label class="health-choice"><input type="checkbox" data-health="kidney">Захворювання нирок</label>
+      <label class="health-choice"><input type="checkbox" data-health="eatingDisorder">РХП зараз або в анамнезі</label>
+      <label class="health-choice"><input type="checkbox" data-health="bariatric">Баріатрична операція</label>
+      <label class="health-choice"><input type="checkbox" data-health="diabetes">Діабет або цукрознижувальна терапія</label>
+      <label class="health-choice"><input type="checkbox" data-health="glp1">Препарати GLP-1</label>
+    </div>
+  </details>
   <details class="excl pro-only" id="exclBlock">
     <summary>Виключення продуктів (алергії та вподобання) <span id="exCount"></span></summary>
     <div class="presets" id="exPresets">
@@ -657,9 +684,10 @@
   </div>
   <div class="hint" style="margin-top:10px" id="tFormulaNote"></div>
   <div class="notice" id="lowKcalWarn" style="display:none;border-left-color:var(--critical)">
-    Розрахована калорійність нижча за безпечний мінімум (1200 ккал для жінок / 1500 ккал для чоловіків).
-    Значення піднято до мінімуму — за потреби зменшіть дефіцит у налаштуваннях.
+    Розрахована калорійність потрапила в низькоенергетичний діапазон.
+    Значення піднято до захисної межі — зменшіть заданий темп і перевірте розрахунок зі спеціалістом.
   </div>
+  <div class="notice" id="safetyWarn" style="display:none"></div>
   <div class="notice" id="macroWarn" style="display:none"></div>
   <details class="adv" id="personalSettings">
     <summary>Налаштуйте план під себе</summary>
@@ -735,6 +763,7 @@
     <button class="btn pro-only" id="btnCopyDay">Копіювати день на весь тиждень</button>
     <button class="btn primary pro-only" id="btnGenWeek">🎲 Згенерувати тиждень</button>
   </div>
+  <div class="notice" id="poolWarn" style="display:none"></div>
   <div class="notice" id="clientNote" style="display:none"></div>
   <div class="daysum" id="daySummary"></div>
   <div id="mealsWrap"></div>
@@ -864,6 +893,7 @@
 /* k=ккал, p=білки, f=жири, c=вуглеводи; brk=підходить для сніданку; dry=вага в сухому вигляді */
 const CATS = {
   protein:{name:'Білкові',        order:1, short:'Білок'},
+  snackProtein:{name:'Білкові перекуси', order:1.5, short:'Білковий перекус'},
   carb:   {name:'Гарніри та крупи',order:2, short:'Гарнір'},
   dairy:  {name:'Молочні',        order:3, short:'Молочне'},
   fat:    {name:'Жири та горіхи', order:4, short:'Жири'},
@@ -895,7 +925,7 @@ const PRODUCTS = [
 {i:'p19',c:'protein',n:'Яєчні білки',k:48,p:11,f:0.2,cb:0.7,brk:1},
 {i:'p20',c:'protein',n:'Сир кисломолочний 5%',k:121,p:17,f:5,cb:1.8,brk:1},
 {i:'p21',c:'protein',n:'Сир кисломолочний знежирений',k:71,p:16.5,f:0.2,cb:1.3,brk:1},
-{i:'p22',c:'protein',n:'Тофу',k:76,p:8,f:4.8,cb:1.9,fb:0.3},
+{i:'p22',c:'protein',n:'Тофу шовковий',k:76,p:8,f:4.8,cb:1.9,fb:0.3,vegan:1,snack:1,snackOnly:1},
 {i:'p23',c:'protein',n:'Оселедець солоний',k:217,p:19,f:15,cb:0,gb:[40,120]},
 {i:'p24',c:'protein',n:'Короп',k:112,p:16,f:5.3,cb:0,raw:1},
 {i:'p25',c:'protein',n:'Товстолобик',k:86,p:19,f:0.9,cb:0,raw:1},
@@ -914,6 +944,12 @@ const PRODUCTS = [
 {i:'p38',c:'protein',n:'Сосиски молочні',k:266,p:11,f:24,cb:1.6,gb:[50,150]},
 {i:'p39',c:'protein',n:'Тушонка яловича',k:214,p:15,f:17,cb:0},
 {i:'p40',c:'protein',n:'Яйця перепелині',k:168,p:11.9,f:13,cb:0.6,brk:1,u:11,un:'шт.',iw:1,gb:[30,120]},
+{i:'vp01',c:'protein',n:'Тофу твердий',k:144,p:17.3,f:8.7,cb:2.8,fb:2.3,vegan:1,snack:1,gb:[80,250]},
+{i:'vp02',c:'protein',n:'Темпе',k:192,p:20.3,f:10.8,cb:7.6,fb:4,vegan:1,snack:1,gb:[70,220]},
+{i:'vp03',c:'protein',n:'Сейтан',k:141,p:24.7,f:1.9,cb:12.3,fb:0.6,vegan:1,snack:1,gb:[70,220]},
+{i:'vp04',c:'protein',n:'Едамаме',k:121,p:11.9,f:5.2,cb:8.9,fb:5.2,vegan:1,snack:1,gb:[80,250]},
+{i:'vp05',c:'protein',n:'Йогурт соєвий без цукру',k:43,p:4,f:2.3,cb:1.7,fb:0.6,vegan:1,snack:1,snackOnly:1,brk:1,gb:[120,350]},
+{i:'vp06',c:'protein',n:'Напій соєвий без цукру',k:33,p:2.9,f:1.6,cb:1.7,fb:0.6,vegan:1,snack:1,snackOnly:1,brk:1,gb:[150,400]},
 /* --- гарніри та крупи --- */
 {i:'c01',c:'carb',n:'Гречка',k:343,p:12.6,f:3.3,cb:62,dry:1,fb:10},
 {i:'c02',c:'carb',n:'Рис білий',k:344,p:6.7,f:0.7,cb:78,dry:1,fb:1.4},
@@ -931,14 +967,14 @@ const PRODUCTS = [
 {i:'c14',c:'carb',n:'Хлібці житні',k:330,p:11,f:2.7,cb:58,brk:1,u:10,un:'шт.',iw:1,fb:18,gb:[10,60]},
 {i:'c15',c:'carb',n:'Лаваш тонкий',k:275,p:9,f:1,cb:56,fb:2.2},
 {i:'c16',c:'carb',n:'Кукурудза варена',k:96,p:3.4,f:1.5,cb:19,fb:2.4},
-{i:'c17',c:'carb',n:'Сочевиця',k:331,p:25,f:1.1,cb:53,dry:1,fb:11},
-{i:'c18',c:'carb',n:'Нут',k:364,p:19,f:6,cb:61,dry:1,fb:12},
-{i:'c19',c:'carb',n:'Квасоля',k:333,p:21,f:2,cb:47,dry:1,fb:12.4},
+{i:'c17',c:'carb',n:'Сочевиця',k:331,p:25,f:1.1,cb:53,dry:1,fb:11,roles:['protein']},
+{i:'c18',c:'carb',n:'Нут',k:364,p:19,f:6,cb:61,dry:1,fb:12,roles:['protein']},
+{i:'c19',c:'carb',n:'Квасоля',k:333,p:21,f:2,cb:47,dry:1,fb:12.4,roles:['protein']},
 {i:'c20',c:'carb',n:'Пшенична крупа (арнаутка)',k:329,p:11.5,f:1.3,cb:68,dry:1,fb:4.6},
 {i:'c21',c:'carb',n:'Кукурудзяна крупа (мамалига)',k:328,p:8.3,f:1.2,cb:71,dry:1,fb:4.4},
 {i:'c22',c:'carb',n:'Ячна крупа',k:324,p:10,f:1.3,cb:66,dry:1,fb:8.1},
 {i:'c23',c:'carb',n:'Манна крупа',k:333,p:10.3,f:1,cb:70,dry:1,brk:1,fb:3.6},
-{i:'c24',c:'carb',n:'Горох лущений',k:298,p:23,f:1.6,cb:49,dry:1,fb:11},
+{i:'c24',c:'carb',n:'Горох лущений',k:298,p:23,f:1.6,cb:49,dry:1,fb:11,roles:['protein']},
 {i:'c25',c:'carb',n:'Хліб «Дарницький» житній',k:206,p:6.6,f:1.1,cb:41,brk:1,u:35,un:'скиб.',iw:1,fb:5.8},
 {i:'c26',c:'carb',n:'Батон пшеничний',k:264,p:7.5,f:2.9,cb:51,brk:1,u:25,un:'скиб.',iw:1,fb:2.3},
 {i:'c27',c:'carb',n:'Галети',k:392,p:9.7,f:10,cb:66,u:13,un:'шт.',iw:1,fb:3},
@@ -1128,10 +1164,10 @@ const MEAL_PLANS = {
 };
 const MEAL_COMPS = {
   b: [ {cat:'carb',  sh:0.40}, {cat:'protein',sh:0.35}, {cat:'fat',sh:0.10}, {cat:'fruit',sh:0.15} ],
-  s1:[ {cat:'dairy', sh:0.45}, {cat:'fruit',  sh:0.30}, {cat:'fat',sh:0.25} ],
-  s2:[ {cat:'dairy', sh:0.55}, {cat:'fruit',  sh:0.45} ],
+  s1:[ {cat:'snackProtein',sh:0.55}, {cat:'fruit',sh:0.30}, {cat:'fat',sh:0.15} ],
+  s2:[ {cat:'snackProtein',sh:0.60}, {cat:'fruit',sh:0.40} ],
   l: [ {cat:'protein',sh:0.35},{cat:'carb',   sh:0.35}, {cat:'veg',sh:0.13}, {cat:'fat',sh:0.17} ],
-  d: [ {cat:'protein',sh:0.45},{cat:'carb',   sh:0.18}, {cat:'veg',sh:0.22}, {cat:'fat',sh:0.15} ],
+  d: [ {cat:'protein',sh:0.35},{cat:'carb',   sh:0.28}, {cat:'veg',sh:0.22}, {cat:'fat',sh:0.15} ],
   sw:[ {cat:'sweet', sh:1} ]
 };
 /* план прийомів з урахуванням смаколика: його частка "відкушується"
@@ -1194,8 +1230,9 @@ const WEEK_MODES = {
   batch: {n:'Готую на 2 порції',h:'Вечеря повторюється як обід наступного дня — готуєте раз, їсте двічі.'}
 };
 const DEFAULT_STATE = () => ({
-  profile:{ name:'', sex:'f', age:30, height:168, weight:70, waist:null, muscular:false,
-            lifestyle:0.08, training:0.10, goal:'loss' },
+  profile:{ name:'', sex:'f', age:30, ageRestricted:false, height:168, weight:70, waist:null, muscular:false,
+            lifestyle:0.08, training:0.10, goal:'loss', diet:'omnivore',
+            health:{pregnancy:false,kidney:false,eatingDisorder:false,bariatric:false,diabetes:false,glp1:false} },
   settings:{ lossRate:0.35, gainRate:0.2, proteinPerKg:1.8, fatPct:27,
              meals:4, sweetPct:10, excluded:[], weekMode:'vary', times:[] },
   ui:{ mode:'pro', locked:false },
@@ -1251,13 +1288,8 @@ function loadLocal(){
     if(data.done) state.done = data.done;
     if(Array.isArray(data.days)) state.days = data.days;
     if(Array.isArray(data.weights)) state.weights = data.weights;
-    for(const day of state.days) for(const meal of day) meal.forEach((c,ci)=>{
-      if(!prodById(c.prodId)){
-        const tpl = MEAL_COMPS[c.mealId] && MEAL_COMPS[c.mealId][ci];
-        c.prodId = pool(tpl ? tpl.cat : 'carb')[0].i;
-        c.customG = null;
-      }
-    });
+    sanitizeProfile();
+    if(!repairLoadedDays()) state.days = [];
     return true;
   }catch(e){ return false; }
 }
@@ -1271,29 +1303,102 @@ const clampNum = (v, lo, hi, fb) => {
 function sanitizeProfile(){
   const pr = state.profile;
   pr.sex = pr.sex==='m' ? 'm' : 'f';
-  pr.age = Math.round(clampNum(pr.age, 14, 90, 30));
+  const rawAge = +String(pr.age ?? '').replace(',', '.');
+  if(isFinite(rawAge) && rawAge<18) pr.ageRestricted = true;
+  pr.age = Math.round(clampNum(pr.age, 18, 90, 30));
   pr.height = Math.round(clampNum(pr.height, 120, 220, 168));
   pr.weight = Math.round(clampNum(pr.weight, 35, 250, 70)*10)/10;
   pr.waist = pr.waist == null || pr.waist==='' ? null : Math.round(clampNum(pr.waist, 50, 200, 0)*10)/10;
   if(pr.waist===0) pr.waist = null;
+  if(!['omnivore','vegetarian','vegan'].includes(pr.diet)) pr.diet = 'omnivore';
+  pr.health = Object.assign({pregnancy:false,kidney:false,eatingDisorder:false,bariatric:false,diabetes:false,glp1:false}, pr.health||{});
   return pr;
 }
-const POOL_FALLBACK = {dairy:['fruit'], protein:['dairy'], fruit:['veg'], carb:['veg'], fat:['protein'], sweet:['fruit'], veg:[]};
+const VEGAN_DENY = new Set(['f03','f13','f15','f16','f22','f23','f24','f25','f26']);
+function dietAllows(p){
+  const diet = state.profile.diet || 'omnivore';
+  if(diet==='omnivore') return true;
+  if(p.custom) return p.diet===diet || (diet==='vegetarian' && p.diet==='vegan');
+  if(diet==='vegetarian') return !PRESETS.vegetarian.includes(p.i);
+  if(p.dish || p.c==='dairy' || VEGAN_DENY.has(p.i)) return false;
+  if(p.c==='protein') return !!p.vegan;
+  if(p.c==='sweet') return !!p.vegan;
+  return true;
+}
+const activeExcludedSet = () => excludedSet();
+function categoryMatches(p, cat){
+  if(cat==='snackProtein')
+    return !!p.snack || (p.c==='dairy' && p.p>=7) || (p.c==='protein' && !!p.brk);
+  if(cat==='protein') return (p.c==='protein' && !p.snackOnly) || !!(p.roles && p.roles.includes(cat));
+  return p.c===cat || !!(p.roles && p.roles.includes(cat));
+}
+const POOL_FALLBACK = {sweet:['fruit']};
 const pool = (cat, brkOnly) => {
-  const ex = excludedSet();
-  const base = c => PRODUCTS.filter(p=>p.c===c && !p.season && !p.dish && !ex.has(p.i));
+  const ex = activeExcludedSet();
+  const base = c => PRODUCTS.filter(p=>categoryMatches(p,c) && !p.season && !p.dish && !ex.has(p.i) && dietAllows(p));
   let arr = base(cat);
   if(!arr.length) for(const fc of (POOL_FALLBACK[cat]||[])){ arr = base(fc); if(arr.length) break; }
-  if(!arr.length) arr = PRODUCTS.filter(p=>p.c===cat && !p.season && !p.dish); /* останній рятунок */
   if(brkOnly){ const b = arr.filter(p=>p.brk); if(b.length>=3) arr = b; }
   return arr;
 };
 const rnd = arr => arr[Math.floor(Math.random()*arr.length)];
 /* список для випадаючого меню: без приправ, страви — окремою групою */
 function selectList(cat, keepId){
-  const ex = excludedSet();
-  return PRODUCTS.filter(p=>p.c===cat && (!p.season || p.i===keepId)
-    && (!ex.has(p.i) || p.i===keepId));
+  const ex = activeExcludedSet();
+  const direct = PRODUCTS.filter(p=>categoryMatches(p,cat) && (!p.season || p.i===keepId)
+    && (!ex.has(p.i) || p.i===keepId) && (dietAllows(p) || p.i===keepId));
+  if(direct.length) return direct;
+  const fallback = new Set(pool(cat).map(p=>p.i));
+  return PRODUCTS.filter(p=>fallback.has(p.i) || p.i===keepId);
+}
+const HEALTH_LABELS = {
+  pregnancy:'вагітність або грудне вигодовування',
+  kidney:'захворювання нирок',
+  eatingDisorder:'РХП зараз або в анамнезі',
+  bariatric:'баріатрична операція',
+  diabetes:'діабет або цукрознижувальна терапія',
+  glp1:'препарати GLP-1'
+};
+function medicalSafety(){
+  const h = state.profile.health || {};
+  const active = Object.keys(HEALTH_LABELS).filter(k=>!!h[k]);
+  const labels = active.map(k=>HEALTH_LABELS[k]);
+  if(state.profile.ageRestricted || (+state.profile.age||0)<18) labels.unshift('вік до 18 років');
+  return {blocked:labels.length>0, active, labels};
+}
+function menuPoolReport(){
+  const seen = new Set(), empty = [], limited = [];
+  for(const meal of getPlan()) for(const tpl of (MEAL_COMPS[meal.id]||[])){
+    if(seen.has(tpl.cat)) continue;
+    seen.add(tpl.cat);
+    const n = pool(tpl.cat, meal.id==='b').length;
+    const label = (CATS[tpl.cat]||{name:tpl.cat}).name;
+    if(!n) empty.push(label);
+    else if(n<3) limited.push({label,n});
+  }
+  return {empty, limited};
+}
+function generationBlockReason(){
+  const med = medicalSafety();
+  if(med.blocked) return `Автоматичне складання призупинено: ${med.labels.join(', ')}. Потрібне індивідуальне погодження з лікарем або профільним дієтологом.`;
+  const pools = menuPoolReport();
+  if(pools.empty.length) return `Неможливо скласти меню без порушення виключень. Немає дозволених продуктів у категоріях: ${pools.empty.join(', ')}.`;
+  return '';
+}
+function repairLoadedDays(){
+  let valid = true;
+  for(const day of state.days) for(const meal of day) meal.forEach((c,ci)=>{
+    const tpl = MEAL_COMPS[c.mealId] && MEAL_COMPS[c.mealId][ci];
+    const current = prodById(c.prodId);
+    if(!tpl){ valid=false; return; }
+    if(!current || activeExcludedSet().has(c.prodId) || !dietAllows(current) || !categoryMatches(current,tpl.cat)){
+      const replacement = pool(tpl.cat, c.mealId==='b')[0];
+      if(!replacement){ valid=false; return; }
+      c.prodId = replacement.i;
+      c.customG = null;
+    }
+  });
+  return valid;
 }
 
 /* ============ РОЗРАХУНКИ ============ */
@@ -1327,19 +1432,21 @@ function waistRisk(pr){
   return {lvl:0, ratio, txt:'співвідношення нижче 0,5'};
 }
 /* Розрахункова вага для норм білка та жирів.
-   1,8 г/кг на 120 кг — це білок на жирову тканину, якій він не потрібен.
-   Стандарт клінічної дієтології: adjusted body weight = вага за ІМТ 25
-   плюс чверть надлишку. За ІМТ нижче 25 або позначеної м'язової статури беремо фактичну вагу. */
+   Для атлетичної статури беремо половину перевищення над вагою за ІМТ 25:
+   це визнає більшу безжирову масу, але не множить білок на всю фактичну вагу. */
 function calcWeight(pr){
-  if(pr.muscular) return pr.weight;
   const h=(pr.height||168)/100, ref=25*h*h;
-  return pr.weight>ref ? ref + 0.25*(pr.weight-ref) : pr.weight;
+  const share = pr.muscular ? 0.50 : 0.25;
+  return pr.weight>ref ? ref + share*(pr.weight-ref) : pr.weight;
 }
 /* Темп зміни ваги -> добовий дефіцит/профіцит у відсотках від витрат. */
 function paceInfo(pr, s, tdee){
   if(pr.goal==='loss'){
-    const r = s.lossRate!=null ? +s.lossRate : 0.5;
-    return {dir:-1, rate:r, pct:Math.min(28, r*KCAL_PER_KG/7/Math.max(1,tdee)*100)};
+    const requested = s.lossRate!=null ? +s.lossRate : 0.5;
+    const rate = Math.min(requested, Math.max(0.2, pr.weight*0.01));
+    const rawPct = rate*KCAL_PER_KG/7/Math.max(1,tdee)*100;
+    return {dir:-1, requested, rate, rateCapped:rate<requested-0.001,
+      pct:Math.min(25, rawPct), deficitCapped:rawPct>25};
   }
   if(pr.goal==='gain'){
     const r = s.gainRate!=null ? +s.gainRate : 0.25;
@@ -1354,12 +1461,15 @@ function calcTargets(){
   const pace = paceInfo(pr, s, tdee);
   let kcal = tdee*(1 + pace.dir*pace.pct/100);
   const minK = pr.sex==='m' ? 1500 : 1200;
-  const clamped = kcal < minK;
+  const clamped = pr.goal==='loss' && kcal < minK;
   if(clamped) kcal = minK;
 
   const cw = calcWeight(pr);                 /* розрахункова вага */
   const adjusted = cw < pr.weight - 0.5;
   let prot = Math.round(s.proteinPerKg * cw);
+  const protMax = Math.max(1, Math.floor(kcal*0.35/4));
+  const proteinCapped = prot > protMax;
+  if(proteinCapped) prot = protMax;
 
   /* Нижня межа жирів: менше — і страждають статеві гормони та засвоєння
      жиророзчинних вітамінів. 0,6 г/кг розрахункової ваги, але не менше 40 г. */
@@ -1384,7 +1494,7 @@ function calcTargets(){
   const realRate = pace.dir ? Math.abs(tdee-kcal)*7/KCAL_PER_KG : 0;
 
   return { bmr:Math.round(bmr), tdee:Math.round(tdee), kcal:Math.round(kcal),
-           prot, fat, carb, fib, clamped, fatLifted, fatMin, protTrimmed,
+           prot, fat, carb, fib, clamped, belowBmr:kcal<bmr, fatLifted, fatMin, protTrimmed, proteinCapped, protMax,
            calcW:cw, adjusted, bmi:bmiOf(pr), pace, realRate };
 }
 /* міграція налаштувань зі старих збережень (v9: deficit/surplus у відсотках) */
@@ -1401,6 +1511,8 @@ function migrateSettings(){
   if(!s.weekMode) s.weekMode = 'vary';
   if(!Array.isArray(s.times)) s.times = [];
   if(pr.muscular==null) pr.muscular = false;
+  if(!['omnivore','vegetarian','vegan'].includes(pr.diet)) pr.diet = 'omnivore';
+  pr.health = Object.assign({pregnancy:false,kidney:false,eatingDisorder:false,bariatric:false,diabetes:false,glp1:false}, pr.health||{});
   if(!state.ui) state.ui = {mode:'pro', locked:false};
   if(state.note==null) state.note = '';
   if(!state.done) state.done = {};
@@ -1483,6 +1595,7 @@ const OPT_WM = 0.9;    /* тримати калорійність кожного
 const OPT_LAM = 0.10;  /* тяжіння до стартових грамів — зберігає структуру прийому */
 
 function optimizeDay(meals, t){
+  const W = state.profile.diet==='vegan' ? {...OPT_W,p:3.6} : OPT_W;
   const T = {k:Math.max(1,t.kcal), p:Math.max(1,t.prot), f:Math.max(1,t.fat),
              c:Math.max(1,t.carb), fb:Math.max(1,t.fib)};
   const all = meals.flatMap(m=>m.items);
@@ -1506,18 +1619,18 @@ function optimizeDay(meals, t){
         /* суми без цього компонента */
         const eK=K-it.g*a.k, eP=P-it.g*a.p, eF=F-it.g*a.f, eC=C-it.g*a.c, eFB=FB-it.g*a.fb;
         const eM=MK[mi]-it.g*a.k;
-        let num = OPT_W.k*a.k*(T.k-eK)/(T.k*T.k)
-                + OPT_W.p*a.p*(T.p-eP)/(T.p*T.p)
-                + OPT_W.f*a.f*(T.f-eF)/(T.f*T.f)
-                + OPT_W.c*a.c*(T.c-eC)/(T.c*T.c)
-                + OPT_W.fb*a.fb*(T.fb-eFB)/(T.fb*T.fb)
+        let num = W.k*a.k*(T.k-eK)/(T.k*T.k)
+                + W.p*a.p*(T.p-eP)/(T.p*T.p)
+                + W.f*a.f*(T.f-eF)/(T.f*T.f)
+                + W.c*a.c*(T.c-eC)/(T.c*T.c)
+                + W.fb*a.fb*(T.fb-eFB)/(T.fb*T.fb)
                 + OPT_WM*a.k*(mt-eM)/(mt*mt)
                 + OPT_LAM/it.g0;
-        let den = OPT_W.k*a.k*a.k/(T.k*T.k)
-                + OPT_W.p*a.p*a.p/(T.p*T.p)
-                + OPT_W.f*a.f*a.f/(T.f*T.f)
-                + OPT_W.c*a.c*a.c/(T.c*T.c)
-                + OPT_W.fb*a.fb*a.fb/(T.fb*T.fb)
+        let den = W.k*a.k*a.k/(T.k*T.k)
+                + W.p*a.p*a.p/(T.p*T.p)
+                + W.f*a.f*a.f/(T.f*T.f)
+                + W.c*a.c*a.c/(T.c*T.c)
+                + W.fb*a.fb*a.fb/(T.fb*T.fb)
                 + OPT_WM*a.k*a.k/(mt*mt)
                 + OPT_LAM/(it.g0*it.g0);
         if(!(den>0)) continue;
@@ -1539,9 +1652,10 @@ function optimizeDay(meals, t){
 /* наскільки день влучив у цілі (менше — краще) */
 function dayScore(tot, t){
   const rel = (got,want,w) => { const d=(got-Math.max(1,want))/Math.max(1,want); return w*d*d; };
+  const proteinWeight = state.profile.diet==='vegan' ? 3.6 : 2.6;
   /* клітковина: недобір карається сильно, перебір — майже ні */
   const dfb = (tot.fb - t.fib)/Math.max(1,t.fib);
-  return rel(tot.k,t.kcal,3) + rel(tot.p,t.prot,2.6) + rel(tot.f,t.fat,2.6) + rel(tot.c,t.carb,1.6)
+  return rel(tot.k,t.kcal,3) + rel(tot.p,t.prot,proteinWeight) + rel(tot.f,t.fat,2.6) + rel(tot.c,t.carb,1.6)
        + (dfb<0 ? 1.2 : 0.12)*dfb*dfb;
 }
 
@@ -1558,7 +1672,7 @@ function adaptShares(mealId, t){
   const fP = clamp((t.prot*4/K)/BASE_SPLIT.p);
   const fF = clamp((t.fat*9/K)/BASE_SPLIT.f);
   const fC = clamp((t.carb*4/K)/BASE_SPLIT.c);
-  const w = {protein:fP, dairy:(fP+fC)/2, fat:fF, carb:fC, fruit:(fC+1)/2, veg:1, sweet:1};
+  const w = {protein:fP, snackProtein:fP, dairy:(fP+fC)/2, fat:fF, carb:fC, fruit:(fC+1)/2, veg:1, sweet:1};
   const raw = base.map(x=>x.sh*(w[x.cat]||1));
   const sum = raw.reduce((a,b)=>a+b,0) || 1;
   return base.map((x,i)=>({cat:x.cat, sh:raw[i]/sum}));
@@ -1573,7 +1687,11 @@ function buildDay(dayComps, t){
     const adapted = adaptShares(comps.length ? comps[0].mealId : m.id, t);
     const items = comps.map((mc,idx)=>{
       const tpl = adapted[idx] || (MEAL_COMPS[mc.mealId] && MEAL_COMPS[mc.mealId][idx]) || {cat:'carb', sh:1};
-      const p = prodById(mc.prodId) || PRODUCTS[0];
+      const current = prodById(mc.prodId);
+      const ex = activeExcludedSet();
+      const p = current && !ex.has(current.i) && dietAllows(current) && categoryMatches(current,tpl.cat)
+        ? current : pool(tpl.cat, m.id==='b')[0];
+      if(!p) throw new Error('Немає дозволеного продукту для категорії '+tpl.cat);
       const [lo,hi] = gramBounds(p);
       const fixed = mc.customG!=null;
       let g = fixed ? mc.customG
@@ -1626,6 +1744,7 @@ function newComp(mealId, tplIdx, prevProdId){
     const noOil = ps.filter(p=>!p.oil); if(noOil.length) ps = noOil;
   }
   if(prevProdId && ps.length>1) ps = ps.filter(p=>p.i!==prevProdId);
+  if(!ps.length) throw new Error('Немає дозволених продуктів для категорії '+tpl.cat);
   return { mealId, prodId: rnd(ps).i, customG:null };
 }
 function randomDay(prevDay){
@@ -1636,12 +1755,30 @@ function randomDay(prevDay){
   }));
 }
 /* генеруємо кілька варіантів дня і лишаємо той, що найкраще лягає в БЖВ */
+function mealProteinPenalty(day, t){
+  const coreMin = Math.min(30, Math.max(20, t.prot*0.18));
+  const snackMin = Math.min(20, Math.max(12, t.prot*0.10));
+  let score = 0;
+  for(const meal of day.meals){
+    const min = ['b','l','d'].includes(meal.def.id) ? coreMin
+              : ['s1','s2'].includes(meal.def.id) ? snackMin : 0;
+    if(min && meal.tot.p<min){
+      const d=(min-meal.tot.p)/min; score += 1.4*d*d;
+    }
+    if(meal.tot.p>50){
+      const d=(meal.tot.p-50)/50; score += 0.35*d*d;
+    }
+  }
+  return score;
+}
 function genDay(dayIdx, prevDay){
   const t = calcTargets();
   let best = null, bestScore = Infinity;
-  for(let i=0;i<40;i++){
+  const tries = state.profile.diet==='vegan' ? 80 : 40;
+  for(let i=0;i<tries;i++){
     const cand = randomDay(prevDay);
-    const sc = dayScore(buildDay(cand, t).tot, t);
+    const built = buildDay(cand, t);
+    const sc = dayScore(built.tot, t) + mealProteinPenalty(built, t);
     if(sc < bestScore){ bestScore = sc; best = cand; }
     if(bestScore < 0.002) break;         /* достатньо точно — далі не шукаємо */
   }
@@ -1669,6 +1806,15 @@ function genWeek(){
   for(let d=0;d<7;d++) state.days.push(genDay(d, d>0?state.days[d-1]:null));
   if(mode==='batch') applyBatch();
 }
+function safeGenWeek(showMessage=true){
+  const reason = generationBlockReason();
+  if(reason){
+    if(showMessage) alert(reason);
+    return false;
+  }
+  genWeek();
+  return true;
+}
 /* додає/прибирає слот "Смаколик" без втрати вручну зібраного меню */
 function syncSweetSlot(){
   const want = (state.settings.sweetPct||0) > 0;
@@ -1685,7 +1831,7 @@ function ensureDays(){
   const plan = getPlan();
   const valid = state.days.length===7 && state.days.every(day=>
     day.length===plan.length && day.every((meal,mi)=>meal.length===MEAL_COMPS[plan[mi].id].length));
-  if(!valid) genWeek();
+  if(!valid) safeGenWeek(false);
 }
 
 /* ============ РЕНДЕР ============ */
@@ -1773,9 +1919,9 @@ function renderBmi(t){
   const wr = waistRisk(pr);
   if(wr) html += `<span class="chip${wr.lvl===2?' bad':wr.lvl===1?' warn':''}">Талія <b>${pr.waist} см</b> · до зросту <b>${num2(wr.ratio)}</b> — ${wr.txt}</span>`;
   if(pr.muscular) html += `<span class="chip ok">М’язова статура <b>врахована</b></span>`;
-  if(t.adjusted) html += `<span class="chip" title="Норми білка та жирів рахуються на скориговану вагу: вага за ІМТ 25 плюс чверть надлишку. Інакше білок рахувався б на жирову тканину.">Розрахункова вага <b>${num1(t.calcW)} кг</b></span>`;
+  if(t.adjusted) html += `<span class="chip" title="Норми білка та жирів рахуються на скориговану вагу. Для атлетичної статури враховується більша частка перевищення, але не вся фактична вага.">Розрахункова вага <b>${num1(t.calcW)} кг</b></span>`;
   if(muscularHigh){
-    html += `<div class="bmi-note">ІМТ не розрізняє м’язи та жир, тому ярлик надлишкової ваги не застосовується. Норми білка й жирів рахуються від фактичної ваги. ${wr&&wr.lvl>0?'Водночас співвідношення талії до зросту вище 0,5 — оцініть склад тіла та кардіометаболічні фактори окремо.':'Для контролю орієнтуйтесь на талію відносно зросту та, за можливості, вимір складу тіла.'}</div>`;
+    html += `<div class="bmi-note">ІМТ не розрізняє м’язи та жир, тому ярлик надлишкової ваги не застосовується. Білок і жири рахуються зі скоригованої ваги з більшою поправкою на м’язову масу. ${wr&&wr.lvl>0?'Водночас співвідношення талії до зросту вище 0,5 — оцініть склад тіла та кардіометаболічні фактори окремо.':'Для контролю орієнтуйтесь на талію відносно зросту та, за можливості, вимір складу тіла.'}</div>`;
   }else if(b>=25){
     html += `<div class="bmi-note">ІМТ — скринінговий показник, а не діагноз: він не відрізняє жир від м’язів. Інтерпретуйте його разом із талією відносно зросту, анамнезом і, за можливості, складом тіла.</div>`;
   }
@@ -1790,7 +1936,8 @@ function forecastHtml(t){
   const req = Math.round(t.pace.rate*10)/10, got = Math.round(t.realRate*10)/10;
   let warn = '';
   if(pctBW > 1) warn = `<br><span class="risky">Темп понад 1% маси тіла на тиждень — високий ризик втрати м'язів. Клінічний коридор: 0,5–1%.</span>`;
-  else if(t.pace.dir<0 && t.pace.pct >= 27.5) warn = `<br><span class="risky">Дефіцит уперся в стелю 28% витрат — швидше безпечно не вийде.</span>`;
+  else if(t.pace.dir<0 && t.pace.deficitCapped) warn = `<br><span class="risky">Дефіцит обмежено 25% добових витрат; заданий швидший темп не використано.</span>`;
+  else if(t.pace.rateCapped) warn = `<br><span class="risky">Темп обмежено 1% поточної маси тіла на тиждень.</span>`;
   else if(got < req-0.02) warn = `<br><span class="risky">Фактичний темп нижчий за заданий: калорійність підняли до безпечного мінімуму.</span>`;
   return `За темпу <b>${numR(t.realRate)} кг/тиждень</b> (${num1(pctBW)}% маси тіла) через 4 / 8 / 12 тижнів: ${pts}.${warn}`;
 }
@@ -1799,12 +1946,45 @@ function renderMacroWarn(t){
   const box = byId('macroWarn'), msgs = [];
   if(t.fatLifted) msgs.push(`Жири підняті до <b>${t.fat} г</b> — нижче цієї межі (${t.fatMin} г) страждають статеві гормони й засвоєння вітамінів A, D, E, K. Повзунок «жири, %» тут уже не діє.`);
   if(t.protTrimmed) msgs.push(`Білок зменшено до <b>${t.prot} г</b>, щоб лишити місце вуглеводам: за такої калорійності задана норма білка не поміщається.`);
+  if(t.proteinCapped) msgs.push(`Білок обмежено до <b>${t.prot} г</b> (не більше 35% енергії), щоб надмірна норма не витіснила жири та вуглеводи.`);
   const sweetKcal = t.kcal*(state.settings.sweetPct||0)/100;
   if((state.settings.sweetPct||0) > 10)
     msgs.push(`Смаколики — <b>${fmt(sweetKcal)} ккал</b> (${state.settings.sweetPct}% раціону). ВООЗ радить тримати вільні цукри нижче 10% енергії; вище 10% тримайте слот на фруктах, чорному шоколаді чи горіхах, а не на цукерках.`);
   if(t.fib >= 35) msgs.push(`Норма клітковини <b>${t.fib} г</b> — нарощуйте її поступово (по 5 г на тиждень) і збільшуйте воду, інакше буде здуття.`);
   box.innerHTML = msgs.map(m=>`<div>${m}</div>`).join('<div style="height:7px"></div>');
   box.style.display = msgs.length ? '' : 'none';
+}
+
+function renderSafety(t){
+  const med = medicalSafety();
+  const box = byId('safetyWarn'), msgs = [];
+  if(med.blocked)
+    msgs.push(`<b>Автоматичне складання призупинено.</b> Позначено: ${med.labels.join(', ')}. Для такого профілю потрібне індивідуальне погодження з лікарем або профільним дієтологом.`);
+  if(t.belowBmr && state.profile.goal==='loss')
+    msgs.push(`Розрахована калорійність нижча за оцінений BMR (${fmt(t.bmr)} ккал). BMR не використовується як жорстка межа, але це сигнал переглянути активність, заданий темп і переносимість раціону.`);
+  if(t.pace.rateCapped || t.pace.deficitCapped)
+    msgs.push(`Запитаний темп схуднення автоматично зменшено: діють межі до 1% маси тіла на тиждень і до 25% добових витрат.`);
+  box.innerHTML = msgs.map(m=>`<div>${m}</div>`).join('<div style="height:7px"></div>');
+  box.className = 'notice'+(med.blocked?' critical':'');
+  box.style.display = msgs.length ? '' : 'none';
+
+  const pools = menuPoolReport(), pbox = byId('poolWarn'), pmsgs = [];
+  if(pools.empty.length)
+    pmsgs.push(`<b>Меню не генерується:</b> немає дозволених продуктів у категоріях ${pools.empty.join(', ')}. Виключення не будуть обійдені автоматично.`);
+  if(pools.limited.length)
+    pmsgs.push(`Мало варіантів для ротації: ${pools.limited.map(x=>x.label+' — '+x.n).join('; ')}.`);
+  if(state.profile.diet==='vegan')
+    pmsgs.push('Веганський профіль використовує лише явно позначені рослинні продукти. Окремо перевірте B12, кальцій, йод, залізо, цинк та омега-3: цей конструктор не підтверджує їх повне покриття.');
+  pbox.innerHTML = pmsgs.map(m=>`<div>${m}</div>`).join('<div style="height:7px"></div>');
+  pbox.className = 'notice'+(pools.empty.length?' critical':'');
+  pbox.style.display = pmsgs.length ? '' : 'none';
+
+  const blocked = !!generationBlockReason();
+  for(const id of ['btnGenDay','btnGenWeek','btnCopyDay','btnShareClient']){
+    const el=byId(id); if(!el) continue;
+    el.disabled = blocked;
+    el.title = blocked ? generationBlockReason() : '';
+  }
 }
 
 function renderDayTabs(){
@@ -1995,7 +2175,7 @@ function renderTrainingPromo(){
 }
 
 function renderAll(){
-  applyMode(); syncPersonalSettings(); renderTargets(); renderDayTabs(); renderDay(); renderShop(); renderWeight(); renderTrainingPromo(); saveLocal();
+  applyMode(); syncPersonalSettings(); renderTargets(); renderSafety(calcTargets()); renderDayTabs(); renderDay(); renderShop(); renderWeight(); renderTrainingPromo(); saveLocal();
 }
 
 /* ============ ТРЕКІНГ ВАГИ ============ */
@@ -2080,10 +2260,11 @@ function renderExcluded(){
 }
 /* виключені продукти в уже зібраному меню замінюємо на дозволені */
 function fixExcludedInDays(){
-  const ex = excludedSet();
+  const ex = activeExcludedSet();
   for(const day of state.days) for(const meal of day) meal.forEach((c,ci)=>{
-    if(ex.has(c.prodId)){
-      const tpl = MEAL_COMPS[c.mealId][ci];
+    const current = prodById(c.prodId);
+    const tpl = MEAL_COMPS[c.mealId] && MEAL_COMPS[c.mealId][ci];
+    if(tpl && (!current || ex.has(c.prodId) || !dietAllows(current) || !categoryMatches(current,tpl.cat))){
       const ps = pool(tpl.cat, c.mealId==='b').filter(p=>p.i!==c.prodId);
       if(ps.length){ c.prodId = rnd(ps).i; c.customG = null; }
     }
@@ -2224,15 +2405,10 @@ function loadFromFile(file){
       Object.assign(state.settings, data.settings||{});
       if(Array.isArray(data.days)) state.days = data.days;
       if(Array.isArray(data.weights)) state.weights = data.weights;
-      /* замінюємо посилання на невідомі продукти */
-      for(const day of state.days) for(const meal of day) meal.forEach((c,ci)=>{
-        if(!prodById(c.prodId)){
-          const tpl = MEAL_COMPS[c.mealId] && MEAL_COMPS[c.mealId][ci];
-          c.prodId = pool(tpl ? tpl.cat : 'carb')[0].i;
-          c.customG = null;
-        }
-      });
-      migrateSettings(); syncFormFromState(); ensureDays(); renderExcluded(); renderAll();
+      migrateSettings();
+      sanitizeProfile();
+      if(!repairLoadedDays()) state.days = [];
+      syncFormFromState(); ensureDays(); renderExcluded(); renderAll();
     }catch(e){ alert('Не вдалося прочитати файл: '+e.message); }
   };
   rd.readAsText(file);
@@ -2249,6 +2425,9 @@ function syncFormFromState(){
   byId('fHeight').value = pr.height; byId('fWeight').value = pr.weight;
   byId('fWaist').value = pr.waist || '';
   byId('fMuscular').checked = !!pr.muscular;
+  byId('fDiet').value = pr.diet || 'omnivore';
+  for(const el of byId('healthScreen').querySelectorAll('[data-health]'))
+    el.checked = !!(pr.health && pr.health[el.dataset.health]);
   byId('proNote').value = state.note || '';
   /* міграція старих збережень: був один коефіцієнт activity.
      Тригер — саме наявність pr.activity: поля lifestyle/training уже мають
@@ -2349,6 +2528,7 @@ function bindProfileNumber(id, key, lo, hi, fb, nullable=false){
   const el = byId(id);
   el.addEventListener('input', e=>{
     const raw = String(e.target.value).replace(',', '.').trim();
+    if(key==='age') state.profile.ageRestricted = !!raw && isFinite(+raw) && +raw<18;
     state.profile[key] = nullable && !raw ? null : clampNum(raw, lo, hi, fb);
     if(key==='waist'){ renderTargets(); saveLocal(); }
     else renderAll();
@@ -2360,11 +2540,23 @@ function bindProfileNumber(id, key, lo, hi, fb, nullable=false){
     else renderAll();
   });
 }
-bindProfileNumber('fAge', 'age', 14, 90, 30);
+bindProfileNumber('fAge', 'age', 18, 90, 30);
 bindProfileNumber('fHeight', 'height', 120, 220, 168);
 bindProfileNumber('fWeight', 'weight', 35, 250, 70);
 bindProfileNumber('fWaist', 'waist', 50, 200, 0, true);
 byId('fMuscular').addEventListener('change', e=>{ state.profile.muscular = e.target.checked; renderAll(); });
+byId('fDiet').addEventListener('change', e=>{
+  state.profile.diet = e.target.value;
+  fixExcludedInDays();
+  safeGenWeek();
+  renderAll();
+});
+byId('healthScreen').addEventListener('change', e=>{
+  const el=e.target.closest('[data-health]'); if(!el) return;
+  state.profile.health = state.profile.health || {};
+  state.profile.health[el.dataset.health] = el.checked;
+  renderAll();
+});
 byId('proNote').addEventListener('input', e=>{ state.note = e.target.value; saveLocal(); });
 byId('fLifestyle').addEventListener('change', e=>{ state.profile.lifestyle = +e.target.value; renderAll(); });
 byId('fTraining').addEventListener('change', e=>{ state.profile.training = +e.target.value; renderAll(); });
@@ -2393,11 +2585,11 @@ bindRateRange('sGainRate','sGainRateOut','gainRate');
 bindRange('sProtein','sProteinOut','proteinPerKg','');
 bindRange('sFatPct','sFatPctOut','fatPct','%');
 bindSeg('sMeals', v=>{ state.settings.meals = +v; state.settings.times = [];
-  genWeek(); syncFormFromState(); renderAll(); });
+  safeGenWeek(); syncFormFromState(); renderAll(); });
 byId('sWeekMode').addEventListener('change', e=>{
   state.settings.weekMode = e.target.value;
   byId('weekModeHint').textContent = (WEEK_MODES[e.target.value]||WEEK_MODES.vary).h;
-  genWeek(); renderAll();
+  safeGenWeek(); renderAll();
 });
 byId('timeRow').addEventListener('input', e=>{
   const el = e.target.closest('.tInp'); if(!el) return;
@@ -2416,7 +2608,7 @@ byId('btnResetPersonal').addEventListener('click', ()=>{
   Object.assign(state.settings, {
     lossRate:0.35, gainRate:0.2, meals:4, sweetPct:10, weekMode:'vary', times:[]
   });
-  genWeek(); syncFormFromState(); renderAll();
+  safeGenWeek(); syncFormFromState(); renderAll();
 });
 
 /* ---- виключення ---- */
@@ -2448,8 +2640,10 @@ byId('dayTabs').addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
   state.activeDay = +b.dataset.d; renderDayTabs(); renderDay();
 });
-byId('btnGenWeek').addEventListener('click', ()=>{ genWeek(); renderAll(); });
+byId('btnGenWeek').addEventListener('click', ()=>{ safeGenWeek(); renderAll(); });
 byId('btnGenDay').addEventListener('click', ()=>{
+  const reason = generationBlockReason();
+  if(reason){ alert(reason); renderAll(); return; }
   state.days[state.activeDay] = genDay(state.activeDay,
     state.activeDay>0 ? state.days[state.activeDay-1] : null);
   renderDay(); renderShop();
@@ -2525,6 +2719,8 @@ byId('mealsWrap').addEventListener('click', e=>{
 byId('btnPrint').addEventListener('click', ()=>{ buildPrintView(); window.print(); });
 byId('btnSave').addEventListener('click', saveToFile);
 async function shareLink(forClient){
+  const reason = forClient ? generationBlockReason() : '';
+  if(reason){ alert(reason); return; }
   const url = await packStateToUrl(forClient);
   const msg = forClient
     ? 'Посилання для клієнта скопійовано!\n\nВідкривши його, клієнт побачить лише меню, ' +
@@ -2576,7 +2772,7 @@ byId('btnNewClient').addEventListener('click', ()=>{
   try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
   for(let i=PRODUCTS.length-1;i>=0;i--) if(PRODUCTS[i].custom) PRODUCTS.splice(i,1);
   Object.assign(state, DEFAULT_STATE());
-  migrateSettings(); genWeek(); syncFormFromState(); renderExcluded(); renderAll();
+  migrateSettings(); safeGenWeek(false); syncFormFromState(); renderExcluded(); renderAll();
 });
 
 /* ---- тема ---- */
@@ -2623,6 +2819,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{
 const fromLink = await unpackStateFromHash();
 const restored = fromLink || loadLocal();
 migrateSettings();
+sanitizeProfile();
 ensureDays();
 syncFormFromState();
 renderExcluded();
@@ -2642,6 +2839,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
 }
 </script>
 <script src="./i18n-ui.js"></script>
+<script src="./i18n-safety.js"></script>
 <script src="./i18n-foods-1.js"></script>
 <script src="./i18n-foods-2.js"></script>
 <script src="./i18n-recipes.js"></script>

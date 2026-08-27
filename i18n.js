@@ -4,6 +4,8 @@ let language='uk', observer=null, busy=false;
 const texts=new WeakMap(), attrs=new WeakMap();
 const hasUk=s=>/[А-Яа-яІіЇїЄєҐґ]/.test(s||'');
 const exactExtra={
+  'ІМТ не розрізняє м’язи та жир, тому ярлик надлишкової ваги не застосовується. Білок і жири рахуються зі скоригованої ваги з більшою поправкою на м’язову масу. Для контролю орієнтуйтесь на талію відносно зросту та, за можливості, вимір складу тіла.':'BMI does not distinguish muscle from fat, so no excess-weight label is applied. Protein and fat use an adjusted weight with a larger allowance for muscle mass. Monitor waist-to-height ratio and, when available, body composition.',
+  'ІМТ не розрізняє м’язи та жир, тому ярлик надлишкової ваги не застосовується. Білок і жири рахуються зі скоригованої ваги з більшою поправкою на м’язову масу. Водночас співвідношення талії до зросту вище 0,5 — оцініть склад тіла та кардіометаболічні фактори окремо.':'BMI does not distinguish muscle from fat, so no excess-weight label is applied. Protein and fat use an adjusted weight with a larger allowance for muscle mass. The waist-to-height ratio is above 0.5, so assess body composition and cardiometabolic factors separately.',
   'ІМТ не розрізняє м’язи та жир, тому ярлик надлишкової ваги не застосовується. Норми білка й жирів рахуються від фактичної ваги. Для контролю орієнтуйтесь на талію відносно зросту та, за можливості, вимір складу тіла.':'BMI does not distinguish muscle from fat, so no excess-weight label is applied. Protein and fat targets use actual body weight. Monitor waist-to-height ratio and, when available, body-composition measurements.',
   'ІМТ не розрізняє м’язи та жир, тому ярлик надлишкової ваги не застосовується. Норми білка й жирів рахуються від фактичної ваги. Водночас співвідношення талії до зросту вище 0,5 — оцініть склад тіла та кардіометаболічні фактори окремо.':'BMI does not distinguish muscle from fat, so no excess-weight label is applied. Protein and fat targets use actual body weight. The waist-to-height ratio is above 0.5, so assess body composition and cardiometabolic factors separately.',
   'ІМТ — скринінговий показник, а не діагноз: він не відрізняє жир від м’язів. Інтерпретуйте його разом із талією відносно зросту, анамнезом і, за можливості, складом тіла.':'BMI is a screening measure, not a diagnosis: it does not distinguish fat from muscle. Interpret it alongside waist-to-height ratio, medical history and, when available, body composition.',
@@ -83,6 +85,22 @@ function core(value){
   if(suffix)return (E[suffix[1]]||suffix[1])+(suffix[2]==='суха'?' (dry weight)':' (raw weight)');
   let s=key;
   const pairs=[
+    ['Автоматичне складання призупинено.','Automatic generation is paused.'],
+    ['Позначено:','Selected:'],['Потрібне індивідуальне погодження з лікарем або профільним дієтологом.','Individual review by a physician or qualified dietitian is required.'],
+    ['вагітність або грудне вигодовування','pregnancy or breastfeeding'],['захворювання нирок','kidney disease'],
+    ['РХП зараз або в анамнезі','current or previous eating disorder'],['баріатрична операція','bariatric surgery'],
+    ['діабет або цукрознижувальна терапія','diabetes or glucose-lowering medication'],['препарати GLP-1','GLP-1 medication'],
+    ['вік до 18 років','age under 18'],
+    ['Меню не генерується:','The menu cannot be generated:'],['немає дозволених продуктів у категоріях','there are no allowed foods in these categories'],
+    ['Виключення не будуть обійдені автоматично.','Exclusions will never be bypassed automatically.'],
+    ['Мало варіантів для ротації:','Few options for rotation:'],
+    ['Веганський профіль використовує лише явно позначені рослинні продукти.','The vegan profile uses only explicitly tagged plant foods.'],
+    ['Окремо перевірте B12, кальцій, йод, залізо, цинк та омега-3: цей конструктор не підтверджує їх повне покриття.','Review B12, calcium, iodine, iron, zinc and omega-3 separately: this builder does not confirm complete coverage.'],
+    ['Розрахована калорійність нижча за оцінений BMR','Calculated intake is below estimated BMR'],
+    ['BMR не використовується як жорстка межа, але це сигнал переглянути активність, заданий темп і переносимість раціону.','BMR is not used as a hard floor, but this is a prompt to review activity, the selected rate and plan tolerance.'],
+    ['Запитаний темп схуднення автоматично зменшено: діють межі до 1% маси тіла на тиждень і до 25% добових витрат.','The requested loss rate was reduced automatically: limits of 1% body weight per week and 25% of daily expenditure apply.'],
+    ['Білок обмежено до','Protein was capped at'],['не більше 35% енергії','no more than 35% of energy'],
+    ['щоб надмірна норма не витіснила жири та вуглеводи.','so an excessive target does not displace fats and carbohydrates.'],
     ['Коефіцієнт активності:','Activity factor:'],['рух протягом дня і тренування рахуються окремо','daily movement and training are calculated separately'],['з реальних витрат','using realistic energy expenditure'],['на 1000 кроків','per 1,000 steps'],['за тренування','per workout'],
     ['Тому значення нижчі за звичні таблиці 1,375/1,55 — ті завищують внесок тренувань у 3–4 рази.','These values are lower than conventional 1.375/1.55 tables, which overstate training expenditure three- to fourfold.'],
     ['Це стартова оцінка:','This is a starting estimate:'],['через 2–3 тижні звірте з фактичною динамікою ваги','compare it with the actual weight trend after 2–3 weeks'],['в розділі «Прогрес»','in the “Progress” section'],['і за потреби скоригуйте дефіцит або профіцит.','and adjust the deficit or surplus if needed.'],
