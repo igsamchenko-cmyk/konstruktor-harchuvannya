@@ -24,7 +24,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext('let __seed=123456789; Math.random=()=>((__seed=Math.imul(__seed,1664525)+1013904223>>>0)/4294967296);', context);
-vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek};', context);
+vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek};', context);
 
 const a = context.api;
 const reset = () => {
@@ -61,9 +61,49 @@ assert(/призупинено/.test(a.generationBlockReason()), 'medical hold h
 
 reset();
 const allProtein = a.PRODUCTS.filter(p => a.categoryMatches(p, 'protein') && !p.season && !p.dish).map(p => p.i);
-a.state.settings.excluded = allProtein;
+a.setManualExclusion(allProtein, true);
 assert.equal(a.pool('protein').length, 0, 'excluded protein foods are never silently restored');
 assert(a.menuPoolReport().empty.length > 0, 'empty category is reported');
+
+reset();
+a.setPresetState('vegetarian', true);
+assert(a.state.settings.activePresets.includes('vegetarian'), 'preset state is explicit');
+assert(a.excludedSet().has('p09'), 'vegetarian preset excludes fish');
+a.setPresetState('fish', false);
+assert(a.excludedSet().has('p09'), 'disabling an overlapping inactive preset does not undo vegetarian exclusions');
+a.setPresetState('vegetarian', false);
+assert.equal(a.excludedSet().size, 0, 'disabling a preset removes all exclusions introduced by it');
+
+reset();
+a.setPresetState('vegetarian', true);
+a.setPresetState('gluten', true);
+a.setPresetState('vegetarian', false);
+for(const id of a.PRESETS.gluten) assert(a.excludedSet().has(id), 'another active preset keeps its exclusions');
+assert(!a.excludedSet().has('p01'), 'products unique to the disabled preset are restored');
+
+reset();
+a.setManualExclusion(['p01'], true);
+a.setPresetState('vegetarian', true);
+a.setPresetState('vegetarian', false);
+assert(a.excludedSet().has('p01'), 'manual exclusion survives preset removal');
+
+reset();
+a.setPresetState('vegetarian', true);
+a.setManualExclusion(['p01'], false);
+assert(!a.excludedSet().has('p01'), 'an individual product can be restored inside an active preset');
+assert(a.state.settings.activePresets.includes('vegetarian'), 'individual restore keeps preset active');
+
+reset();
+const legacy = a.PRESETS.vegetarian.filter(id => !a.PRESETS.fish.includes(id));
+a.state.settings = Object.assign({}, a.state.settings, {excluded:legacy});
+delete a.state.settings.activePresets;
+delete a.state.settings.manualExcluded;
+delete a.state.settings.includedOverrides;
+a.migrateExclusionState();
+assert(a.state.settings.activePresets.includes('vegetarian'), 'legacy partial preset is recovered');
+assert(!a.excludedSet().has('p09'), 'legacy products restored by the user remain restored');
+a.setPresetState('vegetarian', false);
+assert.equal(a.excludedSet().size, 0, 'legacy partial preset can be fully cleared after migration');
 
 reset();
 a.state.profile.diet = 'vegan';

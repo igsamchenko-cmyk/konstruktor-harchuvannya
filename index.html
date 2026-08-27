@@ -1218,7 +1218,69 @@ const PRESETS = {
   gluten: ['c04','c05','c08','c09','c10','c13','c14','c15','c20','c22','c23','c25','c26','c27',
     's08','s10','s13','s20','s21','s22','s23','s25','s26','s27','s28','s29','s30','s31','s32','s33','s35','s36','m03','m04','m05','m06','m14','m18']
 };
-const excludedSet = () => new Set(state.settings.excluded||[]);
+
+/* Пресети, ручні виключення та точкові повернення зберігаються окремо.
+   Інакше перетини наборів (наприклад, «вегетаріанське» містить увесь набір
+   «без риби») роблять неможливим коректне вимкнення одного фільтра. */
+function hasExclusionState(){
+  const s=state.settings||{};
+  return Array.isArray(s.activePresets) && Array.isArray(s.manualExcluded) && Array.isArray(s.includedOverrides);
+}
+function syncExcludedSettings(){
+  const s=state.settings;
+  const ex=new Set(s.manualExcluded||[]);
+  for(const name of s.activePresets||[]) for(const id of PRESETS[name]||[]) ex.add(id);
+  for(const id of s.includedOverrides||[]) ex.delete(id);
+  s.excluded=[...ex]; /* сумісність зі старими файлами та клієнтськими посиланнями */
+  return ex;
+}
+function migrateExclusionState(){
+  const s=state.settings;
+  if(hasExclusionState()){ syncExcludedSettings(); return; }
+
+  const legacy=new Set(s.excluded||[]), claimed=new Set(), active=[];
+  const candidates=Object.entries(PRESETS).map(([name,ids])=>({
+    name, ids, matched:ids.filter(id=>legacy.has(id))
+  })).filter(x=>x.matched.length/x.ids.length>=0.5)
+    .sort((a,b)=>b.matched.length-a.matched.length);
+
+  /* Найбільший відповідний набір забираємо першим. Так повністю ввімкнене
+     «вегетаріанське» не перетворюється ще й на зайвий активний «без риби». */
+  for(const x of candidates){
+    const novel=x.matched.filter(id=>!claimed.has(id));
+    if(novel.length<Math.max(2,Math.ceil(x.ids.length*0.15))) continue;
+    active.push(x.name);
+    for(const id of x.matched) claimed.add(id);
+  }
+  const presetUnion=new Set(active.flatMap(name=>PRESETS[name]||[]));
+  s.activePresets=active;
+  s.manualExcluded=[...legacy].filter(id=>!presetUnion.has(id));
+  s.includedOverrides=[...presetUnion].filter(id=>!legacy.has(id));
+  syncExcludedSettings();
+}
+const excludedSet = () => hasExclusionState() ? syncExcludedSettings() : new Set(state.settings.excluded||[]);
+function setPresetState(name,on){
+  migrateExclusionState();
+  const active=new Set(state.settings.activePresets);
+  on ? active.add(name) : active.delete(name);
+  state.settings.activePresets=[...active];
+  const covered=new Set(state.settings.activePresets.flatMap(key=>PRESETS[key]||[]));
+  state.settings.includedOverrides=(state.settings.includedOverrides||[])
+    .filter(id=>covered.has(id) && !(on && (PRESETS[name]||[]).includes(id)));
+  return syncExcludedSettings();
+}
+function setManualExclusion(ids,on){
+  migrateExclusionState();
+  const manual=new Set(state.settings.manualExcluded), restored=new Set(state.settings.includedOverrides);
+  const covered=new Set(state.settings.activePresets.flatMap(key=>PRESETS[key]||[]));
+  for(const id of ids){
+    if(on){ manual.add(id); restored.delete(id); }
+    else { manual.delete(id); covered.has(id) ? restored.add(id) : restored.delete(id); }
+  }
+  state.settings.manualExcluded=[...manual];
+  state.settings.includedOverrides=[...restored];
+  return syncExcludedSettings();
+}
 
 /* ============ СТАН ============ */
 const DAY_NAMES = ['Понеділок','Вівторок','Середа','Четвер','П’ятниця','Субота','Неділя'];
@@ -1234,7 +1296,8 @@ const DEFAULT_STATE = () => ({
             lifestyle:0.08, training:0.10, goal:'loss', diet:'omnivore',
             health:{pregnancy:false,kidney:false,eatingDisorder:false,bariatric:false,diabetes:false,glp1:false} },
   settings:{ lossRate:0.35, gainRate:0.2, proteinPerKg:1.8, fatPct:27,
-             meals:4, sweetPct:10, excluded:[], weekMode:'vary', times:[] },
+             meals:4, sweetPct:10, excluded:[], activePresets:[], manualExcluded:[], includedOverrides:[],
+             weekMode:'vary', times:[] },
   ui:{ mode:'pro', locked:false },
   note:'',          /* нотатка спеціаліста для клієнта */
   done:{},          /* відмічені прийоми: "день:прийом" -> true */
@@ -1510,6 +1573,7 @@ function migrateSettings(){
   s.gainRate = Math.min(0.4, Math.max(0.1, +s.gainRate||0.2));
   if(!s.weekMode) s.weekMode = 'vary';
   if(!Array.isArray(s.times)) s.times = [];
+  migrateExclusionState();
   if(pr.muscular==null) pr.muscular = false;
   if(!['omnivore','vegetarian','vegan'].includes(pr.diet)) pr.diet = 'omnivore';
   pr.health = Object.assign({pregnancy:false,kidney:false,eatingDisorder:false,bariatric:false,diabetes:false,glp1:false}, pr.health||{});
@@ -2247,6 +2311,7 @@ function renderWeight(){
 
 /* ============ ВИКЛЮЧЕННЯ: РЕНДЕР І ЛОГІКА ============ */
 function renderExcluded(){
+  migrateExclusionState();
   const ex = [...excludedSet()];
   byId('exCount').textContent = ex.length ? `— ${ex.length}` : '';
   byId('exList').innerHTML = ex.map(id=>{
@@ -2254,8 +2319,7 @@ function renderExcluded(){
     return `<span>${p.n}<button data-i="${id}" title="Повернути продукт">✕</button></span>`;
   }).join('');
   for(const b of byId('exPresets').querySelectorAll('.preset')){
-    const set = PRESETS[b.dataset.set];
-    b.classList.toggle('on', set.every(id=>excludedSet().has(id)));
+    b.classList.toggle('on', state.settings.activePresets.includes(b.dataset.set));
   }
 }
 /* виключені продукти в уже зібраному меню замінюємо на дозволені */
@@ -2271,16 +2335,17 @@ function fixExcludedInDays(){
   });
 }
 function addExcluded(ids){
-  const ex = new Set(state.settings.excluded||[]);
-  for(const id of ids) ex.add(id);
-  state.settings.excluded = [...ex];
+  setManualExclusion(ids,true);
   fixExcludedInDays(); renderExcluded(); renderAll();
 }
 function removeExcluded(ids){
-  const ex = new Set(state.settings.excluded||[]);
-  for(const id of ids) ex.delete(id);
-  state.settings.excluded = [...ex];
+  setManualExclusion(ids,false);
   renderExcluded(); renderAll();
+}
+function toggleExcludedPreset(name){
+  migrateExclusionState();
+  setPresetState(name,!state.settings.activePresets.includes(name));
+  fixExcludedInDays(); renderExcluded(); renderAll();
 }
 
 /* ============ ДРУК ============ */
@@ -2614,9 +2679,7 @@ byId('btnResetPersonal').addEventListener('click', ()=>{
 /* ---- виключення ---- */
 byId('exPresets').addEventListener('click', e=>{
   const btn = e.target.closest('.preset'); if(!btn) return;
-  const set = PRESETS[btn.dataset.set];
-  const active = set.every(id=>excludedSet().has(id));
-  active ? removeExcluded(set) : addExcluded(set);
+  toggleExcludedPreset(btn.dataset.set);
 });
 byId('exSearch').addEventListener('input', e=>{
   const q = e.target.value.trim().toLowerCase();
