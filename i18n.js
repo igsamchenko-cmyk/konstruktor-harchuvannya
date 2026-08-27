@@ -127,6 +127,10 @@ function core(value){
   s=s.replace(/Загальна потреба (.*?) L \(30–35 мл\/kg\), ще ≈(.*?) L організм отримує з їжі\. У спеку та після тренувань — більше\./,'Total fluid need: $1 L (30–35 ml/kg); about $2 L comes from food. Drink more in hot weather and after training.');
   s=s.replace(/^Формула Міффліна–Сан Жеора · activity/,'Mifflin–St Jeor equation · activity');
   s=s.replace(/^За темпу$/,'At a rate of');
+  s=s.replace(/фактично/g,'actual').replace(/очікувано/g,'expected');
+  s=s.replace(/Залишилось:/g,'Remaining:').replace(/запис\(и\)/g,'entries').replace(/дн\./g,'days');
+  s=s.replace(/Орієнтир для спеціаліста:/g,'Professional review:').replace(/підвищити калорійність приблизно на/g,'increase calories by about').replace(/знизити калорійність приблизно на/g,'reduce calories by about');
+  s=s.replace(/потім спостерігати ще 2–3 тижні\./g,'then observe for another 2–3 weeks.').replace(/см талія/g,'cm waist');
   s=s.replace(/\((.*?)% маси тіла\), орієнтовний коридор:/,'($1% of body weight), estimated range:');
   s=s.replace(/(\d+) тиж\./g,'$1 wk');
   s=s.replace(/Темп понад 1% маси тіла на тиждень — високий ризик втрати м'язів\. Клінічний коридор: 0,5–1%\./,'A rate above 1% of body weight per week increases the risk of muscle loss. Clinical range: 0.5–1%.');

@@ -1,0 +1,20 @@
+Object.assign(window.NUTRI_EN=window.NUTRI_EN||{}, {
+  "Вносьте вагу 3–7 разів на тиждень в однакових умовах, бажано зранку після туалету. Застосунок згладить добові коливання; записи зберігаються на цьому пристрої.":"Log weight 3–7 times per week under consistent conditions, preferably in the morning after using the bathroom. The app smooths day-to-day fluctuations; entries stay on this device.",
+  "Талія, см":"Waist, cm",
+  "Збираємо базову лінію":"Building a baseline",
+  "Для першої оцінки потрібно щонайменше 3 зважування за 14 днів.":"The first estimate needs at least 3 weigh-ins across 14 days.",
+  "Темп відповідає плану":"The trend matches the plan",
+  "Коливання перебувають у робочому коридорі. Калорійність поки змінювати не потрібно.":"Fluctuations are within the working range. No calorie change is needed yet.",
+  "Є відхилення, але даних ще мало":"There is a deviation, but data are still limited",
+  "Продовжуйте зважування до 21 дня і не коригуйте раціон за коротким відрізком.":"Continue weighing through day 21 and do not adjust the plan from a short interval.",
+  "Не знижуйте калорійність автоматично":"Do not reduce calories automatically",
+  "Поточний розрахунок уже біля захисної межі або потребує медичного погодження. Перегляньте активність, дотримання плану й стан здоров’я зі спеціалістом.":"The current target is already near a protective floor or needs clinical review. Review activity, adherence and health status with a qualified professional.",
+  "Темп відрізняється від запланованого":"The trend differs from the plan",
+  "Перед корекцією звірте дотримання меню, кроки, тренування, сіль, цикл і однакові умови зважування. Застосунок нічого не змінює автоматично.":"Before adjusting, review menu adherence, steps, training, salt intake, menstrual cycle and consistent weighing conditions. The app changes nothing automatically.",
+  "Зважування":"Weigh-ins",
+  "7-денний тренд":"7-day trend",
+  "Очікуваний коридор":"Expected range",
+  "Тренд талії":"Waist trend",
+  "Графік тренду ваги та талії":"Weight and waist trend chart",
+  "Талія має бути в межах 40–250 см або лишатися порожньою.":"Waist must be between 40 and 250 cm or left blank."
+});
