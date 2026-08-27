@@ -13,7 +13,8 @@ assert(progressStart>0&&progressEnd>progressStart,'progress render source is dis
 const progressRender = inline[1].slice(progressStart,progressEnd);
 const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
 assert.equal(new Set(ids).size, ids.length, 'HTML ids remain unique');
-for (const id of ['fDiet','healthScreen','safetyWarn','poolWarn','btnGenWeek','btnShareClient','wWaist','wAdaptive'])
+for (const id of ['fDiet','healthScreen','safetyWarn','poolWarn','btnGenWeek','btnShareClient','wWaist','wAdaptive',
+  'ciDate','ciAdherence','ciHunger','ciEnergy','ciPerformance','btnAddCheckin','ciLatest','ciList'])
   assert(ids.includes(id), 'required safety control exists: ' + id);
 assert(/id="fAge" min="18"/.test(html), 'age input exposes the adult-only limit');
 assert(html.includes('./i18n-safety.js'), 'safety translations are loaded');
@@ -22,6 +23,8 @@ assert(html.includes('./i18n-sprint2.js'), 'Sprint 2 translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-sprint2.js'), 'Sprint 2 translations are cached offline');
 assert(html.includes('./i18n-adaptive.js'), 'adaptive translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-adaptive.js'), 'adaptive translations are cached offline');
+assert(html.includes('./i18n-checkin.js'), 'check-in translations are loaded');
+assert(fs.readFileSync('sw.js','utf8').includes('./i18n-checkin.js'), 'check-in translations are cached offline');
 const context = {
   console,
   setTimeout,
@@ -32,7 +35,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext('let __seed=123456789; Math.random=()=>((__seed=Math.imul(__seed,1664525)+1013904223>>>0)/4294967296);', context);
-vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
+vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, normalizeCheckins, recentCheckin, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
 
 const a = context.api;
 const reset = () => {
@@ -160,11 +163,13 @@ const weightSeries=(rate,weeks=4)=>{
   }
   return out;
 };
+const checkinFor=(weights,patch={})=>[{d:weights[weights.length-1].d,adherence:90,hunger:3,energy:3,performance:3,...patch}];
 reset();
 Object.assign(a.state.profile,{sex:'m',age:39,height:174,weight:85,goal:'loss'});
 a.state.settings.lossRate=0.35;
 const trendTarget=a.calcTargets();
-const slowFeedback=a.weightFeedback(weightSeries(-0.10),trendTarget);
+const slowWeights=weightSeries(-0.10);
+const slowFeedback=a.weightFeedback(slowWeights,trendTarget,checkinFor(slowWeights));
 assert(slowFeedback.mature, 'four weeks of regular weigh-ins are enough for adaptive feedback');
 assert.equal(slowFeedback.code,'lower','slower-than-planned loss suggests a modest calorie reduction');
 assert(slowFeedback.adjustment===-100||slowFeedback.adjustment===-150,'adaptive reduction is capped to a small step');
@@ -172,6 +177,18 @@ const onTrack=a.weightFeedback(weightSeries(-trendTarget.realRate),trendTarget);
 assert.equal(onTrack.code,'onTrack','matching the expected trend does not trigger a change');
 assert.equal(onTrack.adjustment,0,'on-track trend keeps calories unchanged');
 assert(!a.weightFeedback(weightSeries(-0.10,1),trendTarget).ready,'one week never triggers adaptive feedback');
+assert.equal(a.weightFeedback(slowWeights,trendTarget,[]).code,'checkinNeeded','off-track trend waits for a fresh weekly check-in');
+const staleCheckin=checkinFor(slowWeights); staleCheckin[0].d=slowWeights[slowWeights.length-6].d;
+assert.equal(a.weightFeedback(slowWeights,trendTarget,staleCheckin).code,'checkinNeeded','a check-in older than ten days is stale');
+assert.equal(a.weightFeedback(slowWeights,trendTarget,checkinFor(slowWeights,{adherence:65})).code,'adherenceReview',
+  'low adherence blocks a misleading calorie reduction');
+assert.equal(a.weightFeedback(slowWeights,trendTarget,checkinFor(slowWeights,{hunger:5,energy:2,performance:2})).code,'recoveryReview',
+  'poor recovery blocks a deeper deficit');
+const cleanCheckins=a.normalizeCheckins([{d:'2026-01-01',adherence:140,hunger:0,energy:9,performance:3},
+  {d:'bad',adherence:90,hunger:3,energy:3,performance:3}]);
+assert.equal(cleanCheckins.length,1,'invalid check-in dates are removed');
+assert.deepEqual([cleanCheckins[0].adherence,cleanCheckins[0].hunger,cleanCheckins[0].energy],[100,1,5],
+  'check-in scales are normalized to safe bounds');
 const rolling=a.rollingWeightPoints(weightSeries(-0.10),7);
 assert(rolling.length>=9&&Number.isFinite(a.robustWeeklyRate(rolling)),'rolling trend and robust slope are available');
 assert(rolling.some(x=>x.waist!=null),'waist measurements survive trend normalization');
@@ -188,19 +205,21 @@ assert.equal(guarded.code,'safetyReview','slow loss below BMR is routed to revie
 assert.equal(guarded.adjustment,0,'no automatic downward calorie suggestion near the safety floor');
 
 /* Execute the actual SVG renderer against a minimal DOM, not just its math. */
-const renderEls=new Map(['wSummary','wAdaptive','wList','wChart'].map(id=>[id,{innerHTML:''}]));
+const renderEls=new Map(['wSummary','wAdaptive','wList','wChart','ciLatest','ciList'].map(id=>[id,{innerHTML:''}]));
 context.document={getElementById:id=>renderEls.get(id)||{innerHTML:''}};
 context.numR=x=>Number(x).toFixed(2).replace(/0$/,'').replace('.',',');
 vm.runInContext(progressRender,context);
 reset();
 Object.assign(a.state.profile,{sex:'m',age:39,height:174,weight:85,goal:'loss'});
 a.state.settings.lossRate=0.35;
-a.state.weights=weightSeries(-0.10);
+a.state.weights=slowWeights;
+a.state.checkins=checkinFor(slowWeights);
 vm.runInContext('renderWeight()',context);
 const chartHtml=renderEls.get('wChart').innerHTML, adaptiveHtml=renderEls.get('wAdaptive').innerHTML;
 assert(chartHtml.includes('<svg')&&chartHtml.includes('expected-band'),'progress renderer draws the expected range');
 assert(chartHtml.includes('trend-line')&&chartHtml.includes('waist-line'),'progress renderer draws weight and waist trends');
 assert(adaptiveHtml.includes('Орієнтир для спеціаліста'),'progress renderer shows the adaptive recommendation');
+assert(renderEls.get('ciLatest').innerHTML.includes('90%'),'progress renderer shows the latest weekly check-in');
 assert(!/NaN|undefined/.test(chartHtml+adaptiveHtml),'progress renderer emits no invalid values');
 
 reset();

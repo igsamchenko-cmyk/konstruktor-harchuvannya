@@ -359,6 +359,18 @@
   .wadapt .wa-head b{font-size:15px;color:var(--ink)}
   .wadapt .wa-rate{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
   .wadapt .wa-action{margin-top:7px;color:var(--ink)}
+  .checkin{margin:14px 0;padding:15px;border:1px solid var(--frame);border-radius:8px;background:var(--field)}
+  .checkin h3{margin:0 0 5px;font-size:16px}
+  .checkin .hint{margin:0 0 12px}
+  .ciform{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr)) auto;gap:10px;align-items:end}
+  .ciform label.f{min-width:0}
+  .ciform input,.ciform select{width:100%}
+  .cilatest{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--surface);font-size:13px;color:var(--ink-2)}
+  .cilatest b{color:var(--ink)}
+  .cilist{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:7px}
+  .cilist li{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--hairline);border-radius:999px;padding:4px 6px 4px 11px;font-size:12.5px;background:var(--surface);font-variant-numeric:tabular-nums}
+  .cilist button{border:0;background:var(--track);border-radius:50%;width:20px;height:20px;line-height:1;cursor:pointer;color:var(--ink-2);font-size:12px}
+  .cilist button:hover{background:var(--critical);color:#fff}
   .wlegend{display:flex;flex-wrap:wrap;gap:12px;margin:0 8px 8px;font-size:11.5px;color:var(--muted)}
   .wlegend span{display:inline-flex;align-items:center;gap:5px}
   .wlegend i{display:inline-block;width:18px;height:3px;border-radius:9px;background:var(--accent)}
@@ -372,6 +384,8 @@
   .wchart .waist-line{fill:none;stroke:var(--s-fat);stroke-width:2;stroke-dasharray:6 4}
   .wchart .waist-dot{fill:var(--s-fat);stroke:var(--field);stroke-width:1.5}
   .wempty{color:var(--muted);font-size:14px;padding:24px 12px;text-align:center}
+  @media(max-width:980px){.ciform{grid-template-columns:repeat(2,minmax(150px,1fr))}.ciform .btn{width:100%}}
+  @media(max-width:560px){.ciform{grid-template-columns:1fr}}
 
   /* --- промо конструктора тренувань --- */
   .training-promo{position:relative;margin-top:18px;display:grid;
@@ -931,6 +945,28 @@
     <button class="btn primary" id="btnAddW" style="height:38px">Додати запис</button>
   </div>
   <div class="wsum" id="wSummary"></div>
+  <div class="checkin">
+    <h3>Щотижневий check-in</h3>
+    <p class="hint">Заповнюйте раз на тиждень. Це допомагає відрізнити потребу в корекції калорій від пропусків меню або недостатнього відновлення.</p>
+    <div class="ciform">
+      <label class="f">Дата<input type="date" id="ciDate"></label>
+      <label class="f">Дотримання меню, %
+        <select id="ciAdherence"><option value="50">≈ 50%</option><option value="65">≈ 65%</option><option value="80">≈ 80%</option><option value="90" selected>≈ 90%</option><option value="100">100%</option></select>
+      </label>
+      <label class="f">Голод <span class="opt">1 — низький, 5 — високий</span>
+        <select id="ciHunger"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
+      </label>
+      <label class="f">Енергія <span class="opt">1 — низька, 5 — висока</span>
+        <select id="ciEnergy"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
+      </label>
+      <label class="f">Тренування <span class="opt">1 — гірше, 5 — краще</span>
+        <select id="ciPerformance"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
+      </label>
+      <button class="btn" id="btnAddCheckin" style="height:38px">Зберегти check-in</button>
+    </div>
+    <div id="ciLatest"></div>
+    <ul class="cilist" id="ciList"></ul>
+  </div>
   <div id="wAdaptive"></div>
   <div class="wchart" id="wChart"></div>
   <ul class="wlist" id="wList"></ul>
@@ -1419,7 +1455,8 @@ const DEFAULT_STATE = () => ({
   done:{},          /* відмічені прийоми: "день:прийом" -> true */
   activeDay:0,
   days:[],          /* days[7] = [ meal -> [ {prodId, customG|null} ] ] */
-  weights:[]        /* [{d:'2026-08-19', w:70.5, waist:82|null}] */
+  weights:[],       /* [{d:'2026-08-19', w:70.5, waist:82|null}] */
+  checkins:[]       /* [{d:'2026-08-25', adherence:90, hunger:3, energy:3, performance:3}] */
 });
 const state = DEFAULT_STATE();
 
@@ -1447,7 +1484,7 @@ function saveLocal(){
     try{
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         profile:state.profile, settings:state.settings, days:state.days,
-        weights:state.weights, ui:state.ui, note:state.note, done:state.done,
+        weights:state.weights, checkins:state.checkins, ui:state.ui, note:state.note, done:state.done,
         customProducts:PRODUCTS.filter(p=>p.custom)
       }));
     }catch(e){/* приватний режим або file:// — просто без збереження */}
@@ -1467,6 +1504,7 @@ function loadLocal(){
     if(data.done) state.done = data.done;
     if(Array.isArray(data.days)) state.days = data.days;
     if(Array.isArray(data.weights)) state.weights = data.weights;
+    if(Array.isArray(data.checkins)) state.checkins = data.checkins;
     sanitizeProfile();
     if(!repairLoadedDays()) state.days = [];
     return true;
@@ -1698,6 +1736,8 @@ function migrateSettings(){
   if(state.note==null) state.note = '';
   if(!state.done) state.done = {};
   state.weights = normalizeWeightEntries(state.weights).map(e=>({d:e.d,w:e.w,waist:e.waist}));
+  state.checkins = normalizeCheckins(state.checkins).map(e=>({d:e.d,adherence:e.adherence,
+    hunger:e.hunger,energy:e.energy,performance:e.performance}));
 }
 
 /* Побутові міри. iw=1 означає неподільну одиницю: яйце, скибка, невеликий
@@ -2041,6 +2081,26 @@ function normalizeWeightEntries(entries=state.weights){
   });
   return [...byDate.values()].sort((a,b)=>a.t-b.t);
 }
+function normalizeCheckins(entries=state.checkins){
+  const byDate=new Map();
+  (Array.isArray(entries)?entries:[]).forEach((e,index)=>{
+    const t=isoDay(e&&e.d);
+    if(!Number.isFinite(t)) return;
+    const adherence=Math.round(clampNum(e.adherence,0,100,90));
+    const hunger=Math.round(clampNum(e.hunger,1,5,3));
+    const energy=Math.round(clampNum(e.energy,1,5,3));
+    const performance=Math.round(clampNum(e.performance,1,5,3));
+    byDate.set(e.d,{d:e.d,t,adherence,hunger,energy,performance,_i:index});
+  });
+  return [...byDate.values()].sort((a,b)=>a.t-b.t);
+}
+function recentCheckin(entries=state.checkins,refDay=null,maxAge=10){
+  const all=normalizeCheckins(entries);
+  if(!all.length) return null;
+  const ref=Number.isFinite(refDay)?refDay:all[all.length-1].t;
+  const eligible=all.filter(x=>x.t<=ref+2&&ref-x.t<=maxAge);
+  return eligible.length?eligible[eligible.length-1]:null;
+}
 function rollingWeightPoints(entries=state.weights,windowDays=7){
   const ws=normalizeWeightEntries(entries), span=Math.max(1,+windowDays||7);
   return ws.map((e,i)=>{
@@ -2075,7 +2135,7 @@ function expectedWeightAt(startWeight,days,t){
 }
 function forecastRange(t,weeks){ return expectedWeightAt(state.profile.weight,weeks*7,t); }
 
-function weightFeedback(entries=state.weights,t=calcTargets()){
+function weightFeedback(entries=state.weights,t=calcTargets(),checkins=state.checkins){
   const ws=normalizeWeightEntries(entries), points=rollingWeightPoints(ws,7);
   const spanDays=ws.length>1?ws[ws.length-1].t-ws[0].t:0;
   const actualRate=robustWeeklyRate(points);
@@ -2083,6 +2143,7 @@ function weightFeedback(entries=state.weights,t=calcTargets()){
   const tolerance=t.pace.dir===0?0.15:Math.max(0.12,Math.abs(expectedRate)*0.35);
   const ready=ws.length>=3&&spanDays>=14&&actualRate!=null;
   const mature=ws.length>=4&&spanDays>=21&&actualRate!=null;
+  const checkin=recentCheckin(checkins,ws.length?ws[ws.length-1].t:null,10);
   let code='collecting', adjustment=0, blocked=false;
   if(ready){
     const delta=actualRate-expectedRate;
@@ -2093,10 +2154,16 @@ function weightFeedback(entries=state.weights,t=calcTargets()){
       adjustment=Math.sign(raw)*Math.min(150,Math.max(100,Math.round(Math.abs(raw)/50)*50));
       if(adjustment<0&&(t.belowBmr||t.clamped||medicalSafety().blocked)){
         adjustment=0; blocked=true; code='safetyReview';
+      }else if(!checkin){
+        adjustment=0; code='checkinNeeded';
+      }else if(checkin.adherence<80){
+        adjustment=0; code='adherenceReview';
+      }else if(adjustment<0&&(checkin.hunger>=4||checkin.energy<=2||checkin.performance<=2)){
+        adjustment=0; code='recoveryReview';
       }else code=adjustment>0?'raise':'lower';
     }
   }
-  return {ws,points,spanDays,actualRate,expectedRate,tolerance,ready,mature,code,adjustment,blocked};
+  return {ws,points,spanDays,actualRate,expectedRate,tolerance,ready,mature,code,adjustment,blocked,checkin};
 }
 
 /* Три близькі за поживністю альтернативи для швидкої клієнтської заміни. */
@@ -2505,7 +2572,16 @@ function renderAll(){
 /* ============ ТРЕКІНГ ВАГИ ============ */
 const fmtW = w => (Math.round(w*10)/10).toLocaleString(window.nutriLanguage==='en'?'en-US':'uk-UA');
 const fmtD = iso => { const [y,m,d] = iso.split('-'); return window.nutriLanguage==='en'?`${m}/${d}`:`${d}.${m}`; };
+function renderCheckins(){
+  const cis=normalizeCheckins(state.checkins), latest=cis.length?cis[cis.length-1]:null;
+  byId('ciLatest').innerHTML=latest?`<div class="cilatest"><b><span>Останній check-in</span> · ${fmtD(latest.d)}</b> —
+    <span>дотримання</span> ${latest.adherence}% · <span>голод</span> ${latest.hunger}/5 ·
+    <span>енергія</span> ${latest.energy}/5 · <span>тренування</span> ${latest.performance}/5</div>`:'';
+  byId('ciList').innerHTML=cis.slice(-6).reverse().map(e=>`<li>${fmtD(e.d)} · ${e.adherence}%
+    <button data-i="${e._i}" title="Видалити check-in">✕</button></li>`).join('');
+}
 function renderWeight(){
+  renderCheckins();
   const t=calcTargets(), fb=weightFeedback(state.weights,t), ws=fb.ws, trend=fb.points;
   /* підсумок */
   let sum = '';
@@ -2535,6 +2611,13 @@ function renderWeight(){
       Продовжуйте зважування до 21 дня і не коригуйте раціон за коротким відрізком.</div>`;
     else if(fb.code==='safetyReview') adaptive=`<div class="wadapt bad"><div class="wa-head"><b>Не знижуйте калорійність автоматично</b>${rates}</div>
       Поточний розрахунок уже біля захисної межі або потребує медичного погодження. Перегляньте активність, дотримання плану й стан здоров’я зі спеціалістом.</div>`;
+    else if(fb.code==='checkinNeeded') adaptive=`<div class="wadapt warn"><div class="wa-head"><b>Додайте свіжий щотижневий check-in</b>${rates}</div>
+      Даних ваги вже достатньо, але без оцінки дотримання, голоду, енергії та тренувань коригувати калорійність зарано.</div>`;
+    else if(fb.code==='adherenceReview') adaptive=`<div class="wadapt warn"><div class="wa-head"><b>Спершу вирівняйте дотримання меню</b>${rates}</div>
+      <span>Останній check-in показує</span> ${fb.checkin.adherence}% <span>дотримання.</span>
+      <span>Зміна калорій може приховати справжню причину відхилення — спочатку спробуйте 7–14 днів виконувати план щонайменше на 80%.</span></div>`;
+    else if(fb.code==='recoveryReview') adaptive=`<div class="wadapt bad"><div class="wa-head"><b>Спершу перевірте відновлення</b>${rates}</div>
+      Check-in показує високий голод, низьку енергію або погіршення тренувань. Не знижуйте калорії: оцініть сон, стрес, навантаження та самопочуття зі спеціалістом.</div>`;
     else{
       const verb=fb.adjustment>0?'підвищити':'знизити', amount=Math.abs(fb.adjustment);
       adaptive=`<div class="wadapt warn"><div class="wa-head"><b>Темп відрізняється від запланованого</b>${rates}</div>
@@ -2751,7 +2834,7 @@ function buildPrintView(){
 function saveToFile(){
   const custom = PRODUCTS.filter(p=>p.custom);
   const data = JSON.stringify({v:1, profile:state.profile, settings:state.settings,
-    days:state.days, weights:state.weights, customProducts:custom}, null, 1);
+    days:state.days, weights:state.weights, checkins:state.checkins, customProducts:custom}, null, 1);
   const blob = new Blob([data], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -2770,6 +2853,7 @@ function loadFromFile(file){
       Object.assign(state.settings, data.settings||{});
       if(Array.isArray(data.days)) state.days = data.days;
       if(Array.isArray(data.weights)) state.weights = data.weights;
+      if(Array.isArray(data.checkins)) state.checkins = data.checkins;
       migrateSettings();
       sanitizeProfile();
       if(!repairLoadedDays()) state.days = [];
@@ -3142,9 +3226,27 @@ byId('wList').addEventListener('click', e=>{
   renderWeight(); saveLocal();
 });
 
+/* ---- щотижневий check-in: додати / видалити ---- */
+byId('btnAddCheckin').addEventListener('click', ()=>{
+  const item={d:byId('ciDate').value,adherence:+byId('ciAdherence').value,
+    hunger:+byId('ciHunger').value,energy:+byId('ciEnergy').value,performance:+byId('ciPerformance').value};
+  if(!Number.isFinite(isoDay(item.d))){ alert('Вкажіть дату check-in.'); return; }
+  if(![item.hunger,item.energy,item.performance].every(v=>v>=1&&v<=5)||item.adherence<0||item.adherence>100){
+    alert('Перевірте оцінки check-in.'); return;
+  }
+  const ex=state.checkins.find(e=>e.d===item.d);
+  if(ex) Object.assign(ex,item); else state.checkins.push(item);
+  renderWeight(); saveLocal();
+});
+byId('ciList').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  state.checkins.splice(+b.dataset.i,1);
+  renderWeight(); saveLocal();
+});
+
 /* ---- новий клієнт ---- */
 byId('btnNewClient').addEventListener('click', ()=>{
-  if(!confirm('Очистити всі дані (анкету, меню, записи ваги) й почати з чистої анкети?\n' +
+  if(!confirm('Очистити всі дані (анкету, меню, записи ваги та check-in) й почати з чистої анкети?\n' +
     'Порада: перед цим можна зберегти поточну програму у файл.')) return;
   try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
   for(let i=PRODUCTS.length-1;i>=0;i--) if(PRODUCTS[i].custom) PRODUCTS.splice(i,1);
@@ -3209,7 +3311,8 @@ if(fromLink){
 })();
 /* дата за замовчуванням — сьогодні (локальний час) */
 { const t = new Date();
-  byId('wDate').value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; }
+  const today=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  byId('wDate').value = today; byId('ciDate').value = today; }
 /* PWA: працює, коли сайт відкрито за https-посиланням */
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
@@ -3222,6 +3325,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
 <script src="./i18n-recipes.js"></script>
 <script src="./i18n-sprint2.js"></script>
 <script src="./i18n-adaptive.js"></script>
+<script src="./i18n-checkin.js"></script>
 <script src="./i18n.js"></script>
 </body>
 </html>
