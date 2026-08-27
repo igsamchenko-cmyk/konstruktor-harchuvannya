@@ -239,6 +239,8 @@
   .bal.bad .bd{color:var(--critical)}
   .bal .ba{margin-top:4px;color:var(--ink-2);line-height:1.35}
   .quality{margin-top:12px;border-top:1px solid var(--hairline);padding-top:11px}
+  .quality>summary{cursor:pointer;color:var(--ink-2);font-size:13px;font-weight:700}
+  .quality[open]>summary{margin-bottom:9px;color:var(--ink)}
   .quality-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;
     margin-bottom:8px;font-size:13px;color:var(--ink-2)}
   .quality-head b{color:var(--ink);font-size:14px}
@@ -758,7 +760,7 @@
     Значення піднято до захисної межі — зменшіть заданий темп і перевірте розрахунок зі спеціалістом.
   </div>
   <div class="notice" id="safetyWarn" style="display:none"></div>
-  <div class="notice" id="macroWarn" style="display:none"></div>
+  <div class="notice pro-only" id="macroWarn" style="display:none"></div>
   <details class="adv" id="personalSettings">
     <summary>Налаштуйте план під себе</summary>
     <p class="hint adv-intro">Оберіть комфортний режим харчування. Після зміни параметрів
@@ -991,7 +993,8 @@
 <div id="printView"></div>
 <script>
 /* ============ БАЗА ПРОДУКТІВ (на 100 г) ============ */
-/* k=ккал, p=білки, f=жири, c=вуглеводи; brk=підходить для сніданку; dry=вага в сухому вигляді */
+/* k=ккал, p=білки, f=жири, c=вуглеводи; brk=підходить для сніданку;
+   dry=вага в сухому вигляді; manualOnly=лише свідомий ручний вибір */
 const CATS = {
   protein:{name:'Білкові',        order:1, short:'Білок'},
   snackProtein:{name:'Білкові перекуси', order:1.5, short:'Білковий перекус'},
@@ -1023,7 +1026,7 @@ const PRODUCTS = [
 {i:'p16',c:'protein',n:'Креветки',k:87,p:18,f:1,cb:0.8,raw:1},
 {i:'p17',c:'protein',n:'Кальмар',k:74,p:16,f:1,cb:0.3,raw:1},
 {i:'p18',c:'protein',n:'Яйця курячі',k:155,p:12.7,f:11,cb:0.7,brk:1,u:55,un:'шт.',iw:1,gb:[50,180]},
-{i:'p19',c:'protein',n:'Яєчні білки',k:48,p:11,f:0.2,cb:0.7,brk:1},
+{i:'p19',c:'protein',n:'Яєчні білки',k:48,p:11,f:0.2,cb:0.7,brk:1,manualOnly:1},
 {i:'p20',c:'protein',n:'Сир кисломолочний 5%',k:121,p:17,f:5,cb:1.8,brk:1},
 {i:'p21',c:'protein',n:'Сир кисломолочний знежирений',k:71,p:16.5,f:0.2,cb:1.3,brk:1},
 {i:'p22',c:'protein',n:'Тофу шовковий',k:76,p:8,f:4.8,cb:1.9,fb:0.3,vegan:1,snack:1,snackOnly:1},
@@ -1552,7 +1555,8 @@ function categoryMatches(p, cat){
 const POOL_FALLBACK = {sweet:['fruit']};
 const pool = (cat, brkOnly) => {
   const ex = activeExcludedSet();
-  const base = c => PRODUCTS.filter(p=>categoryMatches(p,c) && !p.season && !p.dish && !ex.has(p.i) && dietAllows(p));
+  const base = c => PRODUCTS.filter(p=>categoryMatches(p,c) && !p.season && !p.dish && !p.manualOnly
+    && !ex.has(p.i) && dietAllows(p));
   let arr = base(cat);
   if(!arr.length) for(const fc of (POOL_FALLBACK[cat]||[])){ arr = base(fc); if(arr.length) break; }
   if(brkOnly){ const b = arr.filter(p=>p.brk); if(b.length>=3) arr = b; }
@@ -2002,7 +2006,7 @@ function mealProteinPenalty(day, t){
 function genDay(dayIdx, prevDay){
   const t = calcTargets();
   let best = null, bestScore = Infinity;
-  const tries = state.profile.diet==='vegan' ? 80 : 40;
+  const tries = state.profile.diet==='vegan' ? 80 : 60;
   for(let i=0;i<tries;i++){
     const cand = randomDay(prevDay);
     const built = buildDay(cand, t);
@@ -2386,11 +2390,12 @@ function qualitySummary(tot,t){
       <div class="qbar"><div class="qfill" style="width:${Math.min(100,pct)}%"></div></div>
     </div>`;
   }).join('');
-  return `<div class="quality">
+  return `<details class="quality pro-only">
+    <summary>Детальна оцінка якості раціону</summary>
     <div class="quality-head"><b>Орієнтовний світлофор якості</b><span>ВООЗ: натрій &lt; 2000 мг, насичені жири й вільні цукри &lt; 10% енергії</span></div>
     <div class="quality-grid">${cards}</div>
     <div class="hint" style="margin-top:7px">Довідкова оцінка: склад конкретного бренду та кількість доданої під час готування солі можуть відрізнятися.</div>
-  </div>`;
+  </details>`;
 }
 
 function balanceHints(tot, t){
