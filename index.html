@@ -238,6 +238,21 @@
   .bal.warn .bd{color:var(--warn-text)}
   .bal.bad .bd{color:var(--critical)}
   .bal .ba{margin-top:4px;color:var(--ink-2);line-height:1.35}
+  .quality{margin-top:12px;border-top:1px solid var(--hairline);padding-top:11px}
+  .quality-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;
+    margin-bottom:8px;font-size:13px;color:var(--ink-2)}
+  .quality-head b{color:var(--ink);font-size:14px}
+  .quality-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .quality-item{padding:9px 10px;border:1px solid var(--hairline);border-radius:7px;background:var(--surface)}
+  .quality-item .qh{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:700}
+  .quality-item .qv{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .quality-item .qbar{height:6px;margin-top:7px;border-radius:999px;background:var(--track);overflow:hidden}
+  .quality-item .qfill{height:100%;border-radius:999px;background:var(--good)}
+  .quality-item.warn .qfill{background:var(--warn)}
+  .quality-item.bad .qfill{background:var(--critical)}
+  .quality-item.warn .qv{color:var(--warn-text)}
+  .quality-item.bad .qv{color:var(--critical)}
+  @media(max-width:700px){.quality-grid{grid-template-columns:1fr}}
 
   .meal{border:1px solid var(--frame);border-radius:8px;background:var(--field);margin-bottom:14px;
     overflow:hidden;box-shadow:0 6px 18px var(--shadow)}
@@ -459,8 +474,26 @@
   body[data-mode="client"] .client-only{display:block}
   body[data-mode="client"] #step1{display:none}
   body[data-mode="client"] .comp{grid-template-columns:96px 1fr 148px 92px}
-  .pname{font-weight:600}
+  body[data-mode="client"] .meal{overflow:visible}
+  .pname{font-weight:600;display:flex;align-items:center;gap:8px;min-width:0;position:relative}
+  .swap-menu{display:inline-block;margin-left:auto;position:relative;flex:0 0 auto}
+  .swap-menu summary{list-style:none;cursor:pointer;border:1px solid var(--hairline);border-radius:999px;
+    padding:4px 8px;color:var(--accent-dark);background:var(--surface);font-size:12px;font-weight:700;white-space:nowrap}
+  .swap-menu summary::-webkit-details-marker{display:none}
+  .swap-menu[open] summary{border-color:var(--accent);background:var(--accent-soft)}
+  .swap-list{position:absolute;z-index:20;right:0;top:calc(100% + 6px);width:min(310px,78vw);
+    padding:7px;background:var(--field);border:1px solid var(--frame);border-radius:8px;
+    box-shadow:0 12px 28px var(--shadow)}
+  .swap-option{display:flex;width:100%;justify-content:space-between;gap:10px;text-align:left;
+    border:0;border-radius:6px;background:transparent;color:var(--ink);padding:8px;cursor:pointer;font:inherit;font-size:12.5px}
+  .swap-option:hover{background:var(--accent-soft)}
+  .swap-option span:last-child{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
   .gstat{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  @media(max-width:700px){
+    body[data-mode="client"] .comp{grid-template-columns:1fr auto;grid-template-areas:"cat ck" "sel sel" "g g"}
+    body[data-mode="client"] .pname{grid-area:sel}
+    body[data-mode="client"] .gstat{grid-area:g;text-align:left}
+  }
   .eaten{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;
     color:var(--ink-2);cursor:pointer;user-select:none}
   .eaten input{width:18px;height:18px;accent-color:var(--good);cursor:pointer}
@@ -719,6 +752,13 @@
       </label>
       <label class="f" style="grid-column:span 2">Режим тижня
         <select id="sWeekMode"></select>
+      </label>
+      <label class="f">Об’єм їжі
+        <select id="sFoodVolume">
+          <option value="normal">Звичайний</option>
+          <option value="compact">Компактний</option>
+        </select>
+        <span class="hint">Компактний режим зменшує об’єм овочів і фруктів, але зберігає цільові калорії та БЖВ.</span>
       </label>
     </div>
     <p class="hint" id="weekModeHint" style="margin-top:10px"></p>
@@ -1148,6 +1188,55 @@ const PRODUCTS = [
 {i:'m18',c:'protein',n:'Суп курячий з локшиною',k:62,p:4.5,f:2,cb:6.5,dish:1,fb:0.7,rc:'400 г курки на 2,5 л води, 80 г локшини, морква, цибуля. Вихід ≈ 3 л.'}
 ];
 
+/* Орієнтовні показники якості на 100 г. Це скринінг, а не лабораторний
+   аналіз конкретного бренду: наймінливіший показник — натрій у готових
+   продуктах. Явні значення для солоних/перероблених позицій мають пріоритет,
+   решта оцінюється консервативно за категорією та складом. */
+const SODIUM_OVERRIDES = {
+  p15:300,p23:1200,p29:650,p35:900,p36:800,p37:1100,p38:900,p39:700,
+  c13:430,c14:450,c15:520,c25:600,c26:500,c27:600,
+  d07:350,d13:110,f13:650,f14:735,f15:1500,f22:635,f23:1200,f24:700,f25:1000,f26:1100,
+  v17:650,v27:1100,v32:900,v33:450,v34:590,s15:525,s21:450,s22:430,s23:380,
+  m01:320,m02:280,m03:420,m04:360,m05:180,m06:300,m07:350,m08:260,m09:330,
+  m10:380,m11:300,m12:340,m13:220,m14:240,m15:230,m16:620,m17:300,m18:330
+};
+const FREE_SUGAR_OVERRIDES = {
+  d13:20,m05:3.5,
+  s01:24,s02:50,s03:72,s04:70,s05:70,s06:81,s07:38,s08:30,s09:17,s10:12,s11:20,s12:50,
+  s13:35,s14:10,s15:1,s16:25,s17:55,s18:60,s19:58,s20:40,s21:12,s22:10,s23:22,s24:65,
+  s25:38,s26:32,s27:28,s28:36,s29:34,s30:25,s31:24,s32:36,s33:32,s34:50,s35:30,s36:34
+};
+function qualityNutrients(p){
+  const n=(p.n||'').toLowerCase();
+  let na = p.na!=null ? +p.na : SODIUM_OVERRIDES[p.i];
+  if(na==null){
+    if(p.dish) na=300;
+    else if(p.c==='protein') na=/яйц/.test(n)?125:(p.vegan?25:70);
+    else if(p.c==='dairy') na=55;
+    else if(p.c==='carb') na=/хліб|лаваш|галет|бублик|сушк|печив/.test(n)?450:12;
+    else if(p.c==='veg') na=25;
+    else if(p.c==='fruit') na=5;
+    else if(p.c==='fat') na=/сир|бринз|оливк|майонез|сало/.test(n)?700:5;
+    else if(p.c==='sweet') na=120;
+    else na=40;
+  }
+  let ratio=0.18;
+  if(/масло вершкове/.test(n)) ratio=0.63;
+  else if(/смалець|сало/.test(n)) ratio=0.40;
+  else if(p.c==='dairy' || /сир|вершк|сметан|молочн/.test(n)) ratio=0.60;
+  else if(p.c==='protein' && !p.vegan) ratio=/лосось|скумбр|оселед|риба|хек|минтай|тріск|судак|короп|щук|сом|тунець|кревет|кальмар|горбуш/.test(n)?0.24:0.35;
+  else if(p.c==='sweet') ratio=0.48;
+  else if(p.c==='fat' && p.oil) ratio=0.13;
+  else if(p.c==='fat') ratio=0.16;
+  const sf = p.sf!=null ? +p.sf : Math.max(0,Math.min(+p.f||0,(+p.f||0)*ratio));
+  let sug = p.sug!=null ? +p.sug : FREE_SUGAR_OVERRIDES[p.i];
+  if(sug==null) sug = p.c==='sweet' ? Math.max(0,(+p.cb||0)*0.5) : 0;
+  return {na:Math.max(0,na),sf:Math.max(0,sf),sug:Math.max(0,sug),estimated:p.na==null||p.sf==null||p.sug==null};
+}
+function qualityLimits(t){
+  return {na:2000, sf:t.kcal*0.10/9, sug:t.kcal*0.10/4};
+}
+
 /* ============ СТРУКТУРА ПРИЙОМІВ ЇЖІ ============ */
 /* share — частка добової калорійності; comps — категорія + частка калорій прийому */
 const MEAL_PLANS = {
@@ -1190,6 +1279,8 @@ const SCALABLE = {carb:1, protein:1, dish:1, dairy:1};
 function gramBounds(p){
   const [lo,hi] = rawBounds(p);
   const sc = SCALABLE[p.dish ? 'dish' : p.c] ? PORTION_SCALE : 1;
+  if(state.settings.foodVolume==='compact' && !p.dish && (p.c==='veg' || (p.c==='fruit' && p.k<150)))
+    return [Math.max(40,Math.round(lo*0.7)), Math.min(180,Math.round(hi*0.72))];
   return [lo, Math.min(500, Math.round(hi*sc))];  /* абсолютна стеля порції */
 }
 function rawBounds(p){
@@ -1299,7 +1390,7 @@ const DEFAULT_STATE = () => ({
             health:{pregnancy:false,kidney:false,eatingDisorder:false,bariatric:false,diabetes:false,glp1:false} },
   settings:{ lossRate:0.35, gainRate:0.2, proteinPerKg:1.8, fatPct:27,
              meals:4, sweetPct:10, excluded:[], activePresets:[], manualExcluded:[], includedOverrides:[],
-             weekMode:'vary', times:[] },
+             weekMode:'vary', foodVolume:'normal', times:[] },
   ui:{ mode:'pro', locked:false },
   note:'',          /* нотатка спеціаліста для клієнта */
   done:{},          /* відмічені прийоми: "день:прийом" -> true */
@@ -1574,6 +1665,7 @@ function migrateSettings(){
   s.lossRate = Math.min(1, Math.max(0.2, +s.lossRate||0.35));
   s.gainRate = Math.min(0.4, Math.max(0.1, +s.gainRate||0.2));
   if(!s.weekMode) s.weekMode = 'vary';
+  if(!['normal','compact'].includes(s.foodVolume)) s.foodVolume = 'normal';
   if(!Array.isArray(s.times)) s.times = [];
   migrateExclusionState();
   if(pr.muscular==null) pr.muscular = false;
@@ -1661,7 +1753,8 @@ const OPT_WM = 0.9;    /* тримати калорійність кожного
 const OPT_LAM = 0.10;  /* тяжіння до стартових грамів — зберігає структуру прийому */
 
 function optimizeDay(meals, t){
-  const W = state.profile.diet==='vegan' ? {...OPT_W,p:3.6} : OPT_W;
+  const W0 = state.profile.diet==='vegan' ? {...OPT_W,p:3.6} : OPT_W;
+  const W = state.settings.foodVolume==='compact' ? {...W0,fb:0.12} : W0;
   const T = {k:Math.max(1,t.kcal), p:Math.max(1,t.prot), f:Math.max(1,t.fat),
              c:Math.max(1,t.carb), fb:Math.max(1,t.fib)};
   const all = meals.flatMap(m=>m.items);
@@ -1721,8 +1814,9 @@ function dayScore(tot, t){
   const proteinWeight = state.profile.diet==='vegan' ? 3.6 : 2.6;
   /* клітковина: недобір карається сильно, перебір — майже ні */
   const dfb = (tot.fb - t.fib)/Math.max(1,t.fib);
+  const fibPenalty = state.settings.foodVolume==='compact' ? (dfb<0 ? 0.35 : 0.08) : (dfb<0 ? 1.2 : 0.12);
   return rel(tot.k,t.kcal,3) + rel(tot.p,t.prot,proteinWeight) + rel(tot.f,t.fat,2.6) + rel(tot.c,t.carb,1.6)
-       + (dfb<0 ? 1.2 : 0.12)*dfb*dfb;
+       + fibPenalty*dfb*dfb;
 }
 
 /* побудова дня з набору компонентів (без звернення до state) */
@@ -1738,7 +1832,9 @@ function adaptShares(mealId, t){
   const fP = clamp((t.prot*4/K)/BASE_SPLIT.p);
   const fF = clamp((t.fat*9/K)/BASE_SPLIT.f);
   const fC = clamp((t.carb*4/K)/BASE_SPLIT.c);
-  const w = {protein:fP, snackProtein:fP, dairy:(fP+fC)/2, fat:fF, carb:fC, fruit:(fC+1)/2, veg:1, sweet:1};
+  const compact = state.settings.foodVolume==='compact' ? 0.72 : 1;
+  const w = {protein:fP, snackProtein:fP, dairy:(fP+fC)/2, fat:fF, carb:fC,
+             fruit:(fC+1)/2*compact, veg:compact, sweet:1};
   const raw = base.map(x=>x.sh*(w[x.cat]||1));
   const sum = raw.reduce((a,b)=>a+b,0) || 1;
   return base.map((x,i)=>({cat:x.cat, sh:raw[i]/sum}));
@@ -1787,12 +1883,14 @@ function buildDay(dayComps, t){
     it.g = Math.min(it.hi, Math.max(it.lo, Math.round(it.g/step)*step));
   }
   for(const m of meals){
-    m.tot = m.items.reduce((a,it)=>{ const q=it.g/100;
-      a.k+=it.p.k*q; a.p+=it.p.p*q; a.f+=it.p.f*q; a.c+=it.p.cb*q; a.fb+=(it.p.fb||0)*q; return a;
-    },{k:0,p:0,f:0,c:0,fb:0});
+    m.tot = m.items.reduce((a,it)=>{ const q=it.g/100, quality=qualityNutrients(it.p);
+      a.k+=it.p.k*q; a.p+=it.p.p*q; a.f+=it.p.f*q; a.c+=it.p.cb*q; a.fb+=(it.p.fb||0)*q;
+      a.na+=quality.na*q; a.sf+=quality.sf*q; a.sug+=quality.sug*q; return a;
+    },{k:0,p:0,f:0,c:0,fb:0,na:0,sf:0,sug:0});
   }
-  const tot = meals.reduce((a,m)=>{a.k+=m.tot.k;a.p+=m.tot.p;a.f+=m.tot.f;a.c+=m.tot.c;a.fb+=m.tot.fb;return a},
-    {k:0,p:0,f:0,c:0,fb:0});
+  const tot = meals.reduce((a,m)=>{a.k+=m.tot.k;a.p+=m.tot.p;a.f+=m.tot.f;a.c+=m.tot.c;a.fb+=m.tot.fb;
+      a.na+=m.tot.na;a.sf+=m.tot.sf;a.sug+=m.tot.sug;return a},
+    {k:0,p:0,f:0,c:0,fb:0,na:0,sf:0,sug:0});
   return { targets:t, meals, tot };
 }
 
@@ -1900,6 +1998,47 @@ function ensureDays(){
   if(!valid) safeGenWeek(false);
 }
 
+/* Коридор прогнозу: одна межа — лінійний темп, друга — поступове згасання
+   ефекту на 12% кожні 4 тижні через зменшення маси й витрат. */
+function forecastRange(t,weeks){
+  const start=state.profile.weight, weekly=t.realRate*t.pace.dir;
+  const linear=start+weekly*weeks;
+  let damped=start;
+  for(let i=0;i<weeks;i++) damped += weekly*Math.pow(0.88,i/4);
+  return {lo:Math.min(linear,damped),hi:Math.max(linear,damped),linear,damped};
+}
+
+/* Три близькі за поживністю альтернативи для швидкої клієнтської заміни. */
+function swapAlternatives(day,mi,ci,limit=3){
+  const current=day && day.meals[mi] && day.meals[mi].items[ci];
+  if(!current) return [];
+  const used=new Set(day.meals.flatMap(m=>m.items.map(it=>it.p.i)));
+  const targetKcal=current.g*current.p.k/100;
+  const density=(p,key)=>(+p[key]||0)/Math.max(1,+p.k||0);
+  return selectList(current.tpl.cat,current.p.i)
+    .filter(p=>p.i!==current.p.i && !p.season && p.k>0)
+    .map(p=>{
+      const [lo,hi]=gramBounds(p);
+      let g=Math.min(hi,Math.max(lo,targetKcal/p.k*100));
+      if(p.u) g=snapUnitGrams(p,g,lo,hi); else g=Math.round(g/5)*5;
+      const score=Math.abs(density(p,'p')-density(current.p,'p'))*7
+        +Math.abs(density(p,'f')-density(current.p,'f'))*4
+        +Math.abs(density(p,'cb')-density(current.p,'cb'))*3
+        +(used.has(p.i)?0.18:0)+(p.dish!==current.p.dish?0.08:0);
+      return {p,g:Math.min(hi,Math.max(lo,g)),score};
+    }).sort((a,b)=>a.score-b.score || a.p.n.localeCompare(b.p.n)).slice(0,limit);
+}
+function applyClientSwap(mi,ci,prodId){
+  if(!(state.ui && state.ui.mode==='client')) return false;
+  const day=calcDay(state.activeDay);
+  const alt=swapAlternatives(day,mi,ci,PRODUCTS.length).find(x=>x.p.i===prodId);
+  const comp=state.days[state.activeDay] && state.days[state.activeDay][mi] && state.days[state.activeDay][mi][ci];
+  if(!alt || !comp) return false;
+  comp.prodId=alt.p.i;
+  comp.customG=alt.g;
+  return true;
+}
+
 /* ============ РЕНДЕР ============ */
 const fmt = n => Math.round(n).toLocaleString(window.nutriLanguage==='en'?'en-US':'uk-UA');
 const isClient = () => state.ui && state.ui.mode==='client';
@@ -1996,16 +2135,17 @@ function renderBmi(t){
 /* прогноз ваги за поточного темпу */
 function forecastHtml(t){
   if(!t.pace.dir) return `Вага утримується на поточному рівні.`;
-  const w = state.profile.weight, r = t.realRate*t.pace.dir;
+  const w = state.profile.weight;
   const pctBW = t.realRate/Math.max(1,w)*100;
-  const pts = [4,8,12].map(k=>`<b>${num1(w+r*k)}</b> кг`).join(' → ');
+  const pts = [4,8,12].map(k=>{ const x=forecastRange(t,k);
+    return `<b>${k} тиж.</b> ${num1(x.lo)}–${num1(x.hi)} кг`; }).join(' · ');
   const req = Math.round(t.pace.rate*10)/10, got = Math.round(t.realRate*10)/10;
   let warn = '';
   if(pctBW > 1) warn = `<br><span class="risky">Темп понад 1% маси тіла на тиждень — високий ризик втрати м'язів. Клінічний коридор: 0,5–1%.</span>`;
   else if(t.pace.dir<0 && t.pace.deficitCapped) warn = `<br><span class="risky">Дефіцит обмежено 25% добових витрат; заданий швидший темп не використано.</span>`;
   else if(t.pace.rateCapped) warn = `<br><span class="risky">Темп обмежено 1% поточної маси тіла на тиждень.</span>`;
   else if(got < req-0.02) warn = `<br><span class="risky">Фактичний темп нижчий за заданий: калорійність підняли до безпечного мінімуму.</span>`;
-  return `За темпу <b>${numR(t.realRate)} кг/тиждень</b> (${num1(pctBW)}% маси тіла) через 4 / 8 / 12 тижнів: ${pts}.${warn}`;
+  return `За темпу <b>${numR(t.realRate)} кг/тиждень</b> (${num1(pctBW)}% маси тіла), орієнтовний коридор: ${pts}. Нижня/верхня межа враховує нормальне поступове зниження витрат.${warn}`;
 }
 /* попередження про межі БЖВ */
 function renderMacroWarn(t){
@@ -2070,6 +2210,28 @@ function macroRow(name, colorVar, got, target, unit, plain){
     <div class="m-name"><span class="dot" style="width:9px;height:9px;border-radius:50%;background:var(${colorVar})"></span>${name}</div>
     <div class="m-bar"><div class="m-fill" style="width:${Math.min(100,pct)}%;background:var(${colorVar})"></div></div>
     <div class="m-val${cls}">${fmt(got)} / ${fmt(target)} ${unit}${mark}</div>
+  </div>`;
+}
+
+function qualitySummary(tot,t){
+  const lim=qualityLimits(t);
+  const rows=[
+    {name:'Натрій',got:tot.na,max:lim.na,unit:'мг'},
+    {name:'Насичені жири',got:tot.sf,max:lim.sf,unit:'г'},
+    {name:'Вільні цукри',got:tot.sug,max:lim.sug,unit:'г'}
+  ];
+  const cards=rows.map(x=>{
+    const pct=x.got/Math.max(1,x.max)*100;
+    const cls=pct>100?'bad':pct>80?'warn':'ok';
+    return `<div class="quality-item ${cls}">
+      <div class="qh"><span>${x.name}</span><span class="qv">≈ ${fmt(x.got)} / ${fmt(x.max)} ${x.unit}</span></div>
+      <div class="qbar"><div class="qfill" style="width:${Math.min(100,pct)}%"></div></div>
+    </div>`;
+  }).join('');
+  return `<div class="quality">
+    <div class="quality-head"><b>Орієнтовний світлофор якості</b><span>ВООЗ: натрій &lt; 2000 мг, насичені жири й вільні цукри &lt; 10% енергії</span></div>
+    <div class="quality-grid">${cards}</div>
+    <div class="hint" style="margin-top:7px">Довідкова оцінка: склад конкретного бренду та кількість доданої під час готування солі можуть відрізнятися.</div>
   </div>`;
 }
 
@@ -2164,6 +2326,7 @@ function renderDay(){
       ${macroRow('Вуглеводи','--s-carb',d.tot.c,t.carb,'г',cl)}
       ${macroRow('Клітковина','--s-fib',d.tot.fb,t.fib,'г',cl)}
     </div>
+    ${qualitySummary(d.tot,t)}
     ${cl ? '' : balanceHints(d.tot, t)}
     ${cl ? '' : `<div class="hint" style="margin-top:9px">Білок за прийомами: ${
       d.meals.map(m=>fmt(m.tot.p)).join(' / ')} г — для повноцінного синтезу м'язового
@@ -2191,10 +2354,14 @@ function renderDay(){
         const unit = it.p.dry ? 'г сух.' : it.p.raw ? 'г сир.' : 'г';
         const custom = it.mc.customG!=null;
         const ua = unitApprox(it.p,it.g);
+        const swaps = cl ? swapAlternatives(d,mi,ci,3) : [];
+        const swapMenu = swaps.length ? `<details class="swap-menu"><summary title="Рівноцінна заміна">⇄ Замінити</summary>
+          <div class="swap-list">${swaps.map(x=>`<button type="button" class="swap-option" data-m="${mi}" data-c="${ci}" data-i="${x.p.i}">
+            <span>${window.nutriProductName?nutriProductName(x.p):x.p.n}</span><span>≈ ${x.g} г</span></button>`).join('')}</div></details>` : '';
         const row = cl
           ? `<div class="comp">
               <span class="cat" title="${CATS[it.tpl.cat].name}">${CATS[it.tpl.cat].short||CATS[it.tpl.cat].name}</span>
-              <span class="pname">${it.p.n}${it.p.dish?' <span class="un">(≈)</span>':''}</span>
+              <div class="pname">${it.p.n}${it.p.dish?' <span class="un">(≈)</span>':''}${swapMenu}</div>
               <span class="gstat">${it.g} ${unit}${ua?` <span class="un">(${ua.replace('≈ ','')})</span>`:''}</span>
               <span class="ck">${it.p.dish?'≈ ':''}${fmt(it.g*it.p.k/100)} ккал</span>
             </div>`
@@ -2524,6 +2691,7 @@ function syncFormFromState(){
   byId('sSweet').value = sw; byId('sSweetOut').textContent = sw ? sw+'%' : 'вимк.';
   byId('sWeekMode').innerHTML = Object.entries(WEEK_MODES).map(([k,v])=>
     `<option value="${k}" ${k===s.weekMode?'selected':''}>${v.n}</option>`).join('');
+  byId('sFoodVolume').value = s.foodVolume || 'normal';
   byId('weekModeHint').textContent = (WEEK_MODES[s.weekMode]||WEEK_MODES.vary).h;
   syncPersonalSettings();
   renderTimeRow();
@@ -2658,6 +2826,10 @@ byId('sWeekMode').addEventListener('change', e=>{
   byId('weekModeHint').textContent = (WEEK_MODES[e.target.value]||WEEK_MODES.vary).h;
   safeGenWeek(); renderAll();
 });
+byId('sFoodVolume').addEventListener('change', e=>{
+  state.settings.foodVolume = e.target.value==='compact' ? 'compact' : 'normal';
+  safeGenWeek(); renderAll();
+});
 byId('timeRow').addEventListener('input', e=>{
   const el = e.target.closest('.tInp'); if(!el) return;
   const i = +el.dataset.i, v = el.value.trim();
@@ -2673,7 +2845,7 @@ byId('sSweet').addEventListener('input', e=>{
 });
 byId('btnResetPersonal').addEventListener('click', ()=>{
   Object.assign(state.settings, {
-    lossRate:0.35, gainRate:0.2, meals:4, sweetPct:10, weekMode:'vary', times:[]
+    lossRate:0.35, gainRate:0.2, meals:4, sweetPct:10, weekMode:'vary', foodVolume:'normal', times:[]
   });
   safeGenWeek(); syncFormFromState(); renderAll();
 });
@@ -2776,6 +2948,11 @@ byId('mealsWrap').addEventListener('change', e=>{
   renderDay();
 });
 byId('mealsWrap').addEventListener('click', e=>{
+  const swap=e.target.closest('.swap-option');
+  if(swap){
+    if(applyClientSwap(+swap.dataset.m,+swap.dataset.c,swap.dataset.i)){ renderDay(); renderShop(); }
+    return;
+  }
   const b = e.target.closest('.reset-g'); if(!b) return;
   state.days[state.activeDay][+b.dataset.m][+b.dataset.c].customG = null;
   renderDay(); renderShop();
@@ -2908,6 +3085,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
 <script src="./i18n-foods-1.js"></script>
 <script src="./i18n-foods-2.js"></script>
 <script src="./i18n-recipes.js"></script>
+<script src="./i18n-sprint2.js"></script>
 <script src="./i18n.js"></script>
 </body>
 </html>

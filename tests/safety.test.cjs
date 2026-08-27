@@ -14,6 +14,8 @@ for (const id of ['fDiet','healthScreen','safetyWarn','poolWarn','btnGenWeek','b
 assert(/id="fAge" min="18"/.test(html), 'age input exposes the adult-only limit');
 assert(html.includes('./i18n-safety.js'), 'safety translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-safety.js'), 'safety translations are cached offline');
+assert(html.includes('./i18n-sprint2.js'), 'Sprint 2 translations are loaded');
+assert(fs.readFileSync('sw.js','utf8').includes('./i18n-sprint2.js'), 'Sprint 2 translations are cached offline');
 const context = {
   console,
   setTimeout,
@@ -24,7 +26,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext('let __seed=123456789; Math.random=()=>((__seed=Math.imul(__seed,1664525)+1013904223>>>0)/4294967296);', context);
-vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek};', context);
+vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, qualityNutrients, qualityLimits, forecastRange, swapAlternatives, applyClientSwap};', context);
 
 const a = context.api;
 const reset = () => {
@@ -118,6 +120,71 @@ for (let d=0; d<7; d++) {
   }
 }
 
+reset();
+for (const p of a.PRODUCTS) {
+  const q = a.qualityNutrients(p);
+  for (const key of ['na','sf','sug'])
+    assert(Number.isFinite(q[key]) && q[key] >= 0, p.i + ': quality nutrient ' + key + ' is covered');
+}
+assert(a.qualityNutrients(a.PRODUCTS.find(p=>p.i==='p23')).na > 1000, 'salted herring is surfaced as high sodium');
+assert(a.qualityNutrients(a.PRODUCTS.find(p=>p.i==='f03')).sf > a.qualityNutrients(a.PRODUCTS.find(p=>p.i==='f01')).sf,
+  'butter has more saturated fat than olive oil');
+assert(a.qualityNutrients(a.PRODUCTS.find(p=>p.i==='s06')).sug > 50, 'honey is counted toward free sugars');
+
+reset();
+const veg = a.PRODUCTS.find(p=>p.i==='v01');
+const normalBounds = a.gramBounds(veg);
+a.state.settings.foodVolume = 'compact';
+const compactBounds = a.gramBounds(veg);
+assert(compactBounds[1] < normalBounds[1], 'compact mode lowers high-volume food ceiling');
+
+reset();
+Object.assign(a.state.profile, {goal:'loss',weight:85});
+const ft = a.calcTargets();
+const f4 = a.forecastRange(ft,4), f12 = a.forecastRange(ft,12);
+assert(f4.lo < f4.hi, 'forecast is a range rather than a point');
+assert(f12.hi-f12.lo > f4.hi-f4.lo, 'forecast uncertainty widens over time');
+
+reset();
+a.genWeek();
+a.state.ui.mode = 'client';
+let swapCase = null, built = a.calcDay(0);
+for(let mi=0; mi<built.meals.length && !swapCase; mi++) for(let ci=0; ci<built.meals[mi].items.length; ci++){
+  const opts = a.swapAlternatives(built,mi,ci,3);
+  if(opts.length) swapCase={mi,ci,opt:opts[0],before:built.meals[mi].items[ci].p.i};
+}
+assert(swapCase, 'client receives an equivalent swap option');
+assert(a.applyClientSwap(swapCase.mi,swapCase.ci,swapCase.opt.p.i), 'client swap is applied');
+const swapped = a.calcDay(0);
+assert.notEqual(swapped.meals[swapCase.mi].items[swapCase.ci].p.i, swapCase.before, 'food actually changes');
+assert(Math.abs(swapped.tot.k-swapped.targets.kcal)/swapped.targets.kcal <= 0.10, 'swap keeps daily calories within 10%');
+
+function volumeSimulation(mode, seed){
+  reset();
+  Object.assign(a.state.profile, {sex:'f',age:34,height:168,weight:68,goal:'maintain',diet:'omnivore'});
+  a.state.settings.foodVolume=mode;
+  vm.runInContext(`__seed=${seed}`, context);
+  let produceG=0, macroOk=0, count=0;
+  for(let week=0;week<6;week++){
+    a.genWeek();
+    for(let d=0;d<7;d++){
+      const day=a.calcDay(d), target=day.targets;
+      for(const meal of day.meals) for(const item of meal.items)
+        if(!item.p.dish && (item.p.c==='veg' || item.p.c==='fruit')) produceG+=item.g;
+      if(['k','p','f'].every(key=>{
+        const want=key==='k'?target.kcal:key==='p'?target.prot:target.fat;
+        return close(day.tot[key],want,want*0.10);
+      })) macroOk++;
+      count++;
+    }
+  }
+  return {produceG:produceG/count,macroPct:macroOk/count};
+}
+const normalVolume=volumeSimulation('normal',246813579);
+const compactVolume=volumeSimulation('compact',246813579);
+assert(compactVolume.produceG < normalVolume.produceG*0.85, 'compact mode materially lowers produce volume');
+assert(compactVolume.macroPct >= 0.95, 'compact mode preserves macro quality on at least 95% of days');
+
 const profiles = [
   {sex:'f',age:25,height:164,weight:55,goal:'maintain',diet:'omnivore'},
   {sex:'f',age:38,height:168,weight:96,goal:'loss',diet:'omnivore'},
@@ -126,6 +193,8 @@ const profiles = [
   {sex:'f',age:31,height:170,weight:68,goal:'gain',diet:'vegetarian'},
   {sex:'f',age:29,height:166,weight:64,goal:'maintain',diet:'vegan'}
 ];
+/* Keep the long simulation reproducible even when focused tests above add generators. */
+vm.runInContext('__seed=123456789', context);
 const weeksPerProfile = Math.max(1, +(process.env.NUTRI_TEST_WEEKS || 10));
 let days = 0, macroPass = 0, coreProteinPass = 0, snackProteinPass = 0;
 const byProfile = [];
@@ -164,6 +233,12 @@ const report = {
   macroPassPct: +(macroPass/days*100).toFixed(2),
   coreProteinPassPct: +(coreProteinPass/days*100).toFixed(2),
   snackProteinPassPct: +(snackProteinPass/days*100).toFixed(2),
+  foodVolume: {
+    normalProduceG: +normalVolume.produceG.toFixed(1),
+    compactProduceG: +compactVolume.produceG.toFixed(1),
+    reductionPct: +((1-compactVolume.produceG/normalVolume.produceG)*100).toFixed(1),
+    compactMacroPct: +(compactVolume.macroPct*100).toFixed(2)
+  },
   byProfile: byProfile.map(x=>({
     profile:x.profile,
     macroPct:+(x.macro/x.days*100).toFixed(2),
