@@ -248,7 +248,8 @@
   .meal-head .mt{color:var(--muted);font-weight:400;font-size:13px}
   .gwrap .un b{color:var(--ink-2);font-weight:600}
   .meal-head .mk{font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
-  .comp{display:grid;grid-template-columns:96px 1fr 148px 92px 34px;gap:10px;align-items:center;
+  .comp{display:grid;grid-template-columns:96px minmax(0,1fr) 136px 84px 92px 34px;
+    gap:10px;align-items:center;
     padding:10px 16px;border-bottom:1px solid var(--hairline)}
   .comp:last-child{border-bottom:0}
   @media(max-width:700px){
@@ -258,8 +259,8 @@
     .comp .cat{grid-area:cat;justify-self:start;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em;padding:4px 8px}
     .comp .ck{grid-area:ck;font-weight:600;color:var(--ink-2)}
     .comp select{grid-area:sel;font-size:15px;padding:10px 10px}
-    .comp .gwrap{grid-area:g;display:flex;align-items:center;gap:8px}
-    .comp .gwrap input{flex:1;font-size:15px;padding:10px;text-align:left}
+    .comp .gwrap{grid-area:g;display:grid;grid-template-columns:minmax(0,1fr) 84px;align-items:center;gap:8px}
+    .comp .gwrap input{font-size:15px;padding:10px;text-align:left}
     .comp .reset-g{grid-area:rst;align-self:center;font-size:18px;padding:6px 4px}
     .meal-head{padding:13px 14px}
     .meal-head .mk{font-size:12.5px}
@@ -269,9 +270,10 @@
   .comp .cat{font-size:12px;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);
     border-radius:7px;padding:5px 9px;text-align:center;line-height:1.3;white-space:nowrap}
   .comp select{min-width:0}
-  .gwrap{display:flex;align-items:center;gap:5px}
-  .gwrap input{text-align:right;font-variant-numeric:tabular-nums}
-  .gwrap .un{font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+  .gwrap{display:contents}
+  .gwrap input{min-width:0;text-align:right;font-variant-numeric:tabular-nums}
+  .gwrap .un{display:flex;min-height:38px;flex-direction:column;justify-content:center;
+    font-size:12.5px;line-height:1.35;color:var(--ink-2);white-space:nowrap}
   .comp .ck{font-size:13px;color:var(--ink-2);font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
   .reset-g{border:0;background:none;cursor:pointer;font-size:15px;color:var(--muted);padding:2px}
   .reset-g:hover{color:var(--accent-dark)}
@@ -2200,8 +2202,8 @@ function renderDay(){
               <span class="cat" title="${CATS[it.tpl.cat].name}">${CATS[it.tpl.cat].short||CATS[it.tpl.cat].name}</span>
               <select data-m="${mi}" data-c="${ci}" class="selProd" aria-label="Продукт">${opts}</select>
               <span class="gwrap"><input type="number" class="inpG" data-m="${mi}" data-c="${ci}"
-                 value="${it.g}" min="0" max="900" step="${inputGramStep(it.p)}" aria-label="Грами"><span class="un">${unit}${
-                   ua ? '<br><b>'+ua+'</b>' : ''}</span></span>
+                 value="${it.g}" min="0" max="900" step="${inputGramStep(it.p)}" aria-label="Грами"><span class="un"><span>${unit}</span>${
+                   ua ? '<b>'+ua+'</b>' : ''}</span></span>
               <span class="ck">${it.p.dish?'≈ ':''}${fmt(it.g*it.p.k/100)} ккал</span>
               <button type="button" class="reset-g" data-m="${mi}" data-c="${ci}"
                  title="Повернути авторозрахунок" ${custom?'':'style="visibility:hidden"'}>↺</button>
