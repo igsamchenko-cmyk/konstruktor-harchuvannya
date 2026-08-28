@@ -166,8 +166,12 @@ a.setPresetState('vegetarian', false);
 assert.equal(a.excludedSet().size, 0, 'legacy partial preset can be fully cleared after migration');
 
 reset();
-const unavailableIds = new Set(['p22','vp01','vp02','vp03','vp04','vp05','vp06','c06','c12','f10','f12']);
-const unavailableNames = /Тофу|Темпе|Сейтан|Едамаме|соєв|Кіноа|Батат|чіа|Авокадо/i;
+const unavailableIds = new Set([
+  'p06','p08','p16','p17','p25','p26','p27','p28','p30','p31','p32','p37','p38','p39','p40',
+  'p22','vp01','vp02','vp03','vp04','vp05','vp06','c06','c12','d07','d11','d12','f10','f12','f15','f16','f17','f18','f20',
+  'v15','v25','v26','v29','v30','v31','v32','r24','r25','r26','r27','r28','r29','r32','s14','s33','s34'
+]);
+const unavailableNames = /Кролик|Печінка|Серця|Шлуночки|Креветки|Кальмар|Товстолобик|^Сом$|Горбуша|Ковбаса|Сосиски|Тушонка|перепелині|Тофу|Темпе|Сейтан|Едамаме|соєв|Кіноа|Батат|Айран|Простокваша|козяче|чіа|Авокадо|Сало|Смалець|Олія лляна|Олія гарбузова|Кунжут|Спаржа|Редька|Патисон|Гриби білі|Лисички|Опеньки|мариновані|Аґрус|Ожина|Журавлина|Обліпиха|Калина|Айва|Інжир|Сушені банани|Пахлава|Макарон(?!и)/i;
 assert(!a.PRODUCTS.some(p => unavailableIds.has(p.i) || unavailableNames.test(p.n)),
   'hard-to-buy exotic products are removed from the visible food database');
 assert(!a.selectList('protein').some(p => unavailableIds.has(p.i) || unavailableNames.test(p.n)),
@@ -216,10 +220,10 @@ assert(a.dayScore({k:1800,p:120,f:60,c:190,fb:25,na:1800,sf:15,sug:80}, {kcal:18
   'free sugar excess is part of day scoring');
 
 reset();
-a.state.days = Array.from({length:7}, () => [[{mealId:'l',prodId:'p30',customG:null}]]);
+a.state.days = Array.from({length:7}, () => [[{mealId:'l',prodId:'p15',customG:null}]]);
 a.enforceWeeklyProductLimits();
-const liverDays = a.state.days.filter(day => day.flat().some(c => c.prodId==='p30')).length;
-assert(liverDays <= 1, 'weekly product limits cap beef liver to one day');
+const tunaDays = a.state.days.filter(day => day.flat().some(c => c.prodId==='p15')).length;
+assert(tunaDays <= 2, 'weekly product limits cap canned tuna to two days');
 
 reset();
 a.genWeek();
