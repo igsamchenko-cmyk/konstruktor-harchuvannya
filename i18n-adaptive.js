@@ -25,5 +25,6 @@ Object.assign(window.NUTRI_EN=window.NUTRI_EN||{}, {
   "Два меню чергуються весь тиждень. Мінімум різних продуктів, найпростіші закупівля та приготування.":"Two menus alternate all week. The fewest different foods and the simplest shopping and cooking.",
   "Різноманітне меню · 7 днів":"Varied menu · 7 days",
   "Сім різних днів і ширше чергування продуктів. Потребує більше закупівель і приготування.":"Seven different days with broader food rotation. Requires more shopping and cooking.",
-  "У ручному режимі одна категорія має однаковий список у всіх прийомах їжі. Можна свідомо повторювати той самий продукт або скопіювати готовий день на весь тиждень.":"In manual mode, each category uses the same list at every meal. You can intentionally repeat the same food or copy a completed day across the whole week."
+  "У ручному режимі одна категорія має однаковий список у всіх прийомах їжі. Можна свідомо повторювати той самий продукт або скопіювати готовий день на весь тиждень.":"In manual mode, each category uses the same list at every meal. You can intentionally repeat the same food or copy a completed day across the whole week.",
+  "Розподіл калорій":"Calorie distribution"
 });

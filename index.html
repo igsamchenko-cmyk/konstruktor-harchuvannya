@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="description" content="Індивідуальний розрахунок калорійності та БЖВ і побудова тижневого меню з рівноцінних продуктів.">
 <meta name="theme-color" content="#1f6f73">
 <link rel="canonical" href="https://igsamchenko-cmyk.github.io/konstruktor-harchuvannya/">
@@ -97,8 +97,8 @@
         repeating-linear-gradient(90deg,transparent 0 31px,rgba(244,251,248,.018) 31px 32px),
         var(--page)}
   }
-  main{max-width:1080px;margin:0 auto;padding:10px 16px 64px}
-  header.app{max-width:1080px;margin:0 auto;padding:28px 16px 10px;position:relative}
+  main{max-width:1240px;margin:0 auto;padding:10px 16px 64px}
+  header.app{max-width:1240px;margin:0 auto;padding:28px 16px 10px;position:relative}
   header.app::after{content:"";display:block;height:5px;margin-top:18px;border-radius:4px;
     background:linear-gradient(90deg,var(--clinic) 0 24%,var(--produce) 24% 49%,var(--kitchen) 49% 75%,var(--berry) 75% 100%)}
   header.app h1{margin:0;font-size:28px;font-weight:800;letter-spacing:0;padding-right:310px}
@@ -191,24 +191,31 @@
   .goal span{font-size:12.5px;color:var(--muted)}
 
   /* --- блок результату --- */
-  .result{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;
+  .result{display:grid;grid-template-columns:minmax(260px,.72fr) minmax(540px,1.55fr);gap:34px;align-items:center;
     padding:6px 0 20px;border-bottom:1px solid var(--hairline);margin-bottom:18px}
-  @media(max-width:700px){.result{grid-template-columns:1fr;gap:18px}}
+  .result>*{min-width:0}
+  @media(max-width:900px){.result{grid-template-columns:1fr;gap:18px}}
   .hero .kcal{font-size:56px;font-weight:800;line-height:1;letter-spacing:0;color:var(--ink)}
   @media(max-width:480px){.hero .kcal{font-size:44px}}
   .hero .unit{font-size:15px;font-weight:600;color:var(--ink-2);margin-left:6px;letter-spacing:0}
   .hero .cap{font-size:13px;font-weight:600;color:var(--accent-dark);text-transform:uppercase;
     letter-spacing:0.06em;margin-bottom:8px}
-  .hero .expl{margin-top:8px;font-size:13.5px;color:var(--ink-2);max-width:300px}
+  .hero .expl{margin-top:8px;font-size:13.5px;color:var(--ink-2);max-width:360px}
+  .split{min-width:0;padding:18px 20px;border:1px solid var(--hairline);border-radius:12px;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 7%,var(--surface)),var(--surface));
+    box-shadow:0 8px 22px var(--shadow)}
   .split .shead{display:flex;justify-content:space-between;align-items:baseline;
-    font-size:13px;color:var(--ink-2);margin-bottom:7px}
-  .sbar{display:flex;height:34px;border-radius:8px;overflow:hidden;gap:2px;background:var(--track)}
-  .sbar div{display:grid;place-items:center;font-size:12.5px;font-weight:700;color:#fff;
+    font-size:15px;font-weight:700;color:var(--ink);margin-bottom:11px;white-space:nowrap}
+  .sbar{display:flex;height:46px;border-radius:10px;overflow:hidden;gap:3px;background:var(--track)}
+  .sbar div{display:grid;place-items:center;font-size:14px;font-weight:800;color:#fff;
     min-width:0;overflow:hidden;white-space:nowrap}
-  .slegend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:13px}
-  .slegend span{display:inline-flex;align-items:center;gap:7px;color:var(--ink-2)}
-  .slegend i{width:9px;height:9px;border-radius:2px;font-style:normal;flex:0 0 auto}
-  .slegend b{color:var(--ink)}
+  .slegend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px 12px;margin-top:12px;font-size:14px}
+  .slegend .sitem{display:flex;align-items:center;justify-content:center;
+    gap:7px;min-width:0;padding:8px 9px;border:1px solid var(--hairline);border-radius:8px;white-space:nowrap}
+  .slegend .skey{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis}
+  .slegend i{width:10px;height:10px;border-radius:3px;font-style:normal;flex:0 0 auto}
+  .slegend b{color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums}
 
   /* --- stat tiles --- */
   .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
@@ -611,12 +618,71 @@
   .eaten input{width:18px;height:18px;accent-color:var(--good);cursor:pointer}
   .prog{font-size:13px;color:var(--ink-2)}
   .prog b{color:var(--good-text)}
-  .unlock{max-width:1080px;margin:18px auto 0;padding:0 16px;font-size:12.5px}
+  .unlock{max-width:1240px;margin:18px auto 0;padding:0 16px;font-size:12.5px}
   .unlock a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--muted)}
   .unlock a:hover{color:var(--accent-dark);border-color:var(--accent-dark)}
   .cnote{background:var(--accent-soft);border-left-color:var(--accent);color:var(--ink);
     white-space:pre-wrap}
   @media print{ .unlock{display:none} }
+  /* --- вузькі телефони, розкладені екрани та безпечні області --- */
+  @supports (padding:max(0px)) {
+    main{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));
+      padding-bottom:max(64px,env(safe-area-inset-bottom))}
+    header.app,.unlock{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+  }
+  @media(max-width:900px){
+    .result{grid-template-columns:minmax(0,1fr);gap:16px}
+    .split{width:100%}
+  }
+  @media(min-width:521px) and (max-width:900px){
+    main,header.app,.unlock{max-width:none}
+    .split{padding:18px 20px}
+    .slegend{grid-template-columns:repeat(3,minmax(0,1fr))}
+  }
+  @media(max-width:560px){.slegend{grid-template-columns:1fr}}
+  @media(max-width:520px){
+    main{padding-top:6px;padding-left:max(10px,env(safe-area-inset-left));
+      padding-right:max(10px,env(safe-area-inset-right))}
+    header.app{padding-top:18px;padding-left:max(10px,env(safe-area-inset-left));
+      padding-right:max(10px,env(safe-area-inset-right))}
+    section.card{padding:16px 12px;border-radius:7px}
+    .result{gap:14px;padding-bottom:16px}
+    .split{padding:14px 12px}
+    .split .shead{font-size:14px}
+    .sbar{height:42px}
+    .slegend{grid-template-columns:1fr;gap:7px}
+    .slegend .sitem{justify-content:flex-start;min-height:38px}
+    .slegend b{margin-left:auto}
+    .tiles{gap:8px}
+    .tile{padding:12px}
+    .macros{grid-template-columns:1fr}
+    .toolbar{align-items:stretch}
+    .toolbar>span{display:none}
+  }
+  @media(max-width:360px){
+    header.app h1{font-size:24px}
+    .hero .kcal{font-size:40px}
+    .daytabs{width:100%;overflow-x:auto;scrollbar-width:none}
+    .daytabs::-webkit-scrollbar{display:none}
+    .daytabs button{flex:0 0 40px;padding:8px 9px}
+    .toolbar .btn{flex-basis:100%}
+    .comp{padding:11px 10px}
+    .comp .gwrap{grid-template-columns:minmax(0,1fr) 72px}
+    .bmirow .chip{flex:1 1 100%}
+    .cta{padding:16px 13px}
+    .cta .txt{min-width:0;flex-basis:100%}
+  }
+  @media (horizontal-viewport-segments:2){
+    header.app{max-width:env(viewport-segment-width 0 0);
+      margin-left:env(viewport-segment-left 0 0);margin-right:auto}
+    main{max-width:none;display:grid;padding-left:0;padding-right:0;
+      grid-template-columns:env(viewport-segment-width 0 0) env(viewport-segment-width 1 0);
+      column-gap:calc(env(viewport-segment-left 1 0) - env(viewport-segment-right 0 0))}
+    main>*{min-width:0;margin-left:12px;margin-right:12px}
+    main>#step1,main>#step3,main>.training-promo,main>.cta{grid-column:1}
+    main>#step2,main>#step4,main>#step5{grid-column:2}
+    .result{grid-template-columns:1fr}
+  }
 
   /* --- друк / PDF: завжди світлий, фірмова верстка --- */
   #printView{display:none}
@@ -812,7 +878,7 @@
       <div class="fcast" id="tForecast"></div>
     </div>
     <div class="split">
-      <div class="shead"><span>Розподіл калорій між нутрієнтами</span></div>
+      <div class="shead"><span>Розподіл калорій</span></div>
       <div class="sbar" id="sBar"></div>
       <div class="slegend" id="sLegend"></div>
     </div>
@@ -2585,7 +2651,7 @@ function renderTargets(){
     return `<div style="flex:${pc};background:${p.col}" title="${p.k}: ${Math.round(pc)}%">${pc>=12?Math.round(pc)+'%':''}</div>`;
   }).join('');
   byId('sLegend').innerHTML = parts.map(p=>
-    `<span><i style="background:${p.col}"></i>${p.k} — <b>${p.g} г</b></span>`).join('');
+    `<span class="sitem"><i style="background:${p.col}"></i><span class="skey">${p.k}</span><b>${p.g} г</b></span>`).join('');
   byId('tProt').textContent = t.prot+' г';
   byId('tProtSub').textContent = `${fmt(t.prot*4)} ккал · ${Math.round(t.prot*4/t.kcal*100)}%`;
   byId('tFat').textContent = t.fat+' г';

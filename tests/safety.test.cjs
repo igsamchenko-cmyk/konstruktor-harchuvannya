@@ -27,6 +27,12 @@ assert(/class="notice pro-only" id="macroWarn"/.test(html), 'technical macro war
 assert(fs.readFileSync('i18n-sprint2.js','utf8').includes('"Детальна оцінка якості раціону"'),
   'specialist quality disclosure has an English translation');
 assert(html.includes('class="m-ring"'), 'macro summary uses large circular gauges');
+assert(/viewport-fit=cover/.test(html), 'viewport includes safe-area support for foldable screens');
+assert(/max-width:1240px/.test(html), 'wide screens use the expanded content width');
+assert(/class="sitem"/.test(html), 'calorie legend uses stable non-wrapping items');
+assert(/@media\(max-width:560px\)/.test(html) && /@media\(max-width:520px\)/.test(html) && /@media\(max-width:360px\)/.test(html),
+  'closed foldable and narrow-phone layouts have dedicated breakpoints');
+assert(/horizontal-viewport-segments:2/.test(html), 'dual-segment foldable layout avoids the hinge');
 assert(fs.readFileSync('i18n-sprint2.js','utf8').includes('"Умови тренування для оцінки натрію"'),
   'sodium exercise context has an English translation');
 assert(html.includes('./i18n-adaptive.js'), 'adaptive translations are loaded');
