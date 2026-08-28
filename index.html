@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Індивідуальний розрахунок калорійності та БЖВ і побудова тижневого меню з рівноцінних продуктів.">
 <meta name="theme-color" content="#1f6f73">
+<link rel="canonical" href="https://igsamchenko-cmyk.github.io/konstruktor-harchuvannya/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Конструктор програми харчування">
+<meta property="og:description" content="Індивідуальний розрахунок калорійності та БЖВ і побудова тижневого меню з рівноцінних продуктів.">
+<meta property="og:url" content="https://igsamchenko-cmyk.github.io/konstruktor-harchuvannya/">
+<meta property="og:image" content="https://igsamchenko-cmyk.github.io/konstruktor-harchuvannya/icon-512.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Конструктор програми харчування">
+<meta name="twitter:description" content="Індивідуальний розрахунок калорійності та БЖВ і побудова тижневого меню з рівноцінних продуктів.">
+<meta name="twitter:image" content="https://igsamchenko-cmyk.github.io/konstruktor-harchuvannya/icon-512.png">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" type="image/png" href="./icon-192.png">
@@ -1097,7 +1107,7 @@ const PRODUCTS = [
 {i:'p12',c:'protein',n:'Судак',k:84,p:19,f:1,cb:0,raw:1},
 {i:'p13',c:'protein',n:'Лосось',k:208,p:20,f:13,cb:0,raw:1},
 {i:'p14',c:'protein',n:'Скумбрія запечена',k:191,p:18,f:13,cb:0},
-{i:'p15',c:'protein',n:'Тунець у власному соку',k:96,p:21,f:1,cb:0},
+{i:'p15',c:'protein',n:'Тунець у власному соку',k:96,p:21,f:1,cb:0,maxPerWeek:2},
 {i:'p16',c:'protein',n:'Креветки',k:87,p:18,f:1,cb:0.8,raw:1},
 {i:'p17',c:'protein',n:'Кальмар',k:74,p:16,f:1,cb:0.3,raw:1},
 {i:'p18',c:'protein',n:'Яйця курячі',k:155,p:12.7,f:11,cb:0.7,brk:1,u:55,un:'шт.',iw:1,gb:[50,180]},
@@ -1111,8 +1121,8 @@ const PRODUCTS = [
 {i:'p26',c:'protein',n:'Щука',k:84,p:18.4,f:1.1,cb:0,raw:1},
 {i:'p27',c:'protein',n:'Сом',k:143,p:17,f:8.5,cb:0,raw:1},
 {i:'p28',c:'protein',n:'Горбуша',k:142,p:21,f:6,cb:0,raw:1},
-{i:'p29',c:'protein',n:'Шпроти в олії',k:363,p:17,f:32,cb:0.4,gb:[30,100]},
-{i:'p30',c:'protein',n:'Печінка яловича',k:127,p:20,f:3.6,cb:4,raw:1},
+{i:'p29',c:'protein',n:'Шпроти в олії',k:363,p:17,f:32,cb:0.4,gb:[30,100],maxPerWeek:1},
+{i:'p30',c:'protein',n:'Печінка яловича',k:127,p:20,f:3.6,cb:4,raw:1,maxPerWeek:1},
 {i:'p31',c:'protein',n:'Серця курячі',k:159,p:16,f:10,cb:0.8,raw:1},
 {i:'p32',c:'protein',n:'Шлуночки курячі',k:114,p:18,f:4.2,cb:0.6,raw:1},
 {i:'p33',c:'protein',n:'Фарш яловичий',k:200,p:18,f:14,cb:0,raw:1},
@@ -1368,7 +1378,9 @@ const FREE_SUGAR_OVERRIDES = {
   s13:35,s14:10,s15:1,s16:25,s17:55,s18:60,s19:58,s20:40,s21:12,s22:10,s23:22,s24:65,
   s25:38,s26:32,s27:28,s28:36,s29:34,s30:25,s31:24,s32:36,s33:32,s34:50,s35:30,s36:34
 };
+const QUALITY_CACHE = new Map();
 function qualityNutrients(p){
+  if(p && p.i && QUALITY_CACHE.has(p.i)) return QUALITY_CACHE.get(p.i);
   const n=(p.n||'').toLowerCase();
   let na = p.na!=null ? +p.na : SODIUM_OVERRIDES[p.i];
   if(na==null){
@@ -1393,7 +1405,9 @@ function qualityNutrients(p){
   const sf = p.sf!=null ? +p.sf : Math.max(0,Math.min(+p.f||0,(+p.f||0)*ratio));
   let sug = p.sug!=null ? +p.sug : FREE_SUGAR_OVERRIDES[p.i];
   if(sug==null) sug = p.c==='sweet' ? Math.max(0,(+p.cb||0)*0.5) : 0;
-  return {na:Math.max(0,na),sf:Math.max(0,sf),sug:Math.max(0,sug),estimated:p.na==null||p.sf==null||p.sug==null};
+  const out = {na:Math.max(0,na),sf:Math.max(0,sf),sug:Math.max(0,sug),estimated:p.na==null||p.sf==null||p.sug==null};
+  if(p && p.i) QUALITY_CACHE.set(p.i,out);
+  return out;
 }
 function qualityLimits(t){
   return {na:2000, sf:t.kcal*0.10/9, sug:t.kcal*0.10/4};
@@ -1492,6 +1506,12 @@ function syncExcludedSettings(){
   s.excluded=[...ex]; /* сумісність зі старими файлами та клієнтськими посиланнями */
   return ex;
 }
+let EXCLUSION_CACHE = {sig:'', set:null};
+function exclusionSignature(){
+  const s=state.settings||{};
+  return JSON.stringify([s.activePresets||[],s.manualExcluded||[],s.includedOverrides||[],s.excluded||[]]);
+}
+function clearExclusionCache(){ EXCLUSION_CACHE = {sig:'', set:null}; }
 function migrateExclusionState(){
   const s=state.settings;
   if(hasExclusionState()){ syncExcludedSettings(); return; }
@@ -1515,10 +1535,19 @@ function migrateExclusionState(){
   s.manualExcluded=[...legacy].filter(id=>!presetUnion.has(id));
   s.includedOverrides=[...presetUnion].filter(id=>!legacy.has(id));
   syncExcludedSettings();
+  clearExclusionCache();
 }
-const excludedSet = () => hasExclusionState() ? syncExcludedSettings() : new Set(state.settings.excluded||[]);
+function excludedSet(){
+  if(!hasExclusionState()) return new Set(state.settings.excluded||[]);
+  const sig = exclusionSignature();
+  if(EXCLUSION_CACHE.set && EXCLUSION_CACHE.sig===sig) return EXCLUSION_CACHE.set;
+  const set = syncExcludedSettings();
+  EXCLUSION_CACHE = {sig:exclusionSignature(), set};
+  return set;
+}
 function setPresetState(name,on){
   migrateExclusionState();
+  clearExclusionCache();
   const active=new Set(state.settings.activePresets);
   on ? active.add(name) : active.delete(name);
   state.settings.activePresets=[...active];
@@ -1529,6 +1558,7 @@ function setPresetState(name,on){
 }
 function setManualExclusion(ids,on){
   migrateExclusionState();
+  clearExclusionCache();
   const manual=new Set(state.settings.manualExcluded), restored=new Set(state.settings.includedOverrides);
   const covered=new Set(state.settings.activePresets.flatMap(key=>PRESETS[key]||[]));
   for(const id of ids){
@@ -1601,8 +1631,7 @@ function loadLocal(){
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return false;
     const data = JSON.parse(raw);
-    if(data.customProducts) for(const cp of data.customProducts)
-      if(!prodById(cp.i)) PRODUCTS.push(cp);
+    if(data.customProducts) for(const cp of data.customProducts) addCustomProduct(cp);
     Object.assign(state.profile, data.profile||{});
     Object.assign(state.settings, data.settings||{});
     if(data.ui) Object.assign(state.ui, data.ui);
@@ -1618,7 +1647,49 @@ function loadLocal(){
 }
 
 const byId = id => document.getElementById(id);
-const prodById = id => PRODUCTS.find(p=>p.i===id);
+const PRODUCT_BY_ID = new Map(PRODUCTS.map(p=>[p.i,p]));
+const CUSTOM_CATS = new Set(Object.keys(CATS).filter(c=>c!=='snackProtein' && c!=='dish'));
+function prodById(id){ return PRODUCT_BY_ID.get(String(id)); }
+function escHtml(s){
+  return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function plainText(s, limit=120){
+  return String(s ?? '').replace(/<[^>]*>/g,' ').replace(/[<>]/g,'')
+    .replace(/\s+/g,' ').trim().slice(0,limit);
+}
+function sanitizeCustomProduct(cp){
+  if(!cp || typeof cp!=='object') return null;
+  const id = /^u[A-Za-z0-9_-]{1,42}$/.test(String(cp.i||'')) ? String(cp.i) : 'u'+Date.now()+Math.floor(Math.random()*10000);
+  const cat = CUSTOM_CATS.has(cp.c) ? cp.c : 'carb';
+  const n = plainText(cp.n, 60);
+  const k = Math.round(clampNum(plainText(cp.k, 20), 1, 900, 0)*10)/10;
+  if(!n || !k) return null;
+  const out = {
+    i:id, c:cat, n, k,
+    p:Math.round(clampNum(plainText(cp.p, 20), 0, 100, 0)*10)/10,
+    f:Math.round(clampNum(plainText(cp.f, 20), 0, 100, 0)*10)/10,
+    cb:Math.round(clampNum(plainText(cp.cb ?? cp.carb ?? cp.c, 20), 0, 100, 0)*10)/10,
+    custom:1
+  };
+  if(['omnivore','vegetarian','vegan'].includes(cp.diet)) out.diet = cp.diet;
+  if(cp.ml) out.ml = 1;
+  return out;
+}
+function addCustomProduct(cp){
+  const clean = sanitizeCustomProduct(cp);
+  if(!clean || prodById(clean.i)) return false;
+  PRODUCTS.push(clean);
+  PRODUCT_BY_ID.set(clean.i, clean);
+  QUALITY_CACHE.delete(clean.i);
+  return clean;
+}
+function removeCustomProducts(){
+  for(let i=PRODUCTS.length-1;i>=0;i--) if(PRODUCTS[i].custom){
+    PRODUCT_BY_ID.delete(PRODUCTS[i].i);
+    QUALITY_CACHE.delete(PRODUCTS[i].i);
+    PRODUCTS.splice(i,1);
+  }
+}
 const clampNum = (v, lo, hi, fb) => {
   const n = +String(v ?? '').replace(',', '.');
   return isFinite(n) ? Math.min(hi, Math.max(lo, n)) : fb;
@@ -1993,10 +2064,12 @@ function dayScore(tot, t){
   /* клітковина: недобір карається сильно, перебір — майже ні */
   const dfb = (tot.fb - t.fib)/Math.max(1,t.fib);
   const fibPenalty = state.settings.foodVolume==='compact' ? (dfb<0 ? 0.35 : 0.08) : (dfb<0 ? 1.2 : 0.12);
-  const sodiumLimit = qualityLimits(t).na;
-  const dna = Math.max(0, (tot.na - sodiumLimit)/sodiumLimit);
+  const limits = qualityLimits(t);
+  const dna = Math.max(0, ((+tot.na||0) - limits.na)/limits.na);
+  const dsf = Math.max(0, ((+tot.sf||0) - limits.sf)/limits.sf);
+  const dsug = Math.max(0, ((+tot.sug||0) - limits.sug)/limits.sug);
   return rel(tot.k,t.kcal,3) + rel(tot.p,t.prot,proteinWeight) + rel(tot.f,t.fat,2.6) + rel(tot.c,t.carb,1.6)
-       + fibPenalty*dfb*dfb + 0.18*dna*dna;
+       + fibPenalty*dfb*dfb + 0.40*dna*dna + 0.45*dsf*dsf + 0.30*dsug*dsug;
 }
 
 /* побудова дня з набору компонентів (без звернення до state) */
@@ -2098,6 +2171,56 @@ function randomDay(prevDay){
     return newComp(m.id, ci, prev);
   }));
 }
+function weeklyLimitedIds(day){
+  return new Set(day.flat().map(c=>c.prodId).filter(id=>{
+    const p = prodById(id);
+    return p && p.maxPerWeek;
+  }));
+}
+function exceedsWeeklyLimits(day, usage){
+  if(!usage) return false;
+  for(const id of weeklyLimitedIds(day)){
+    const p = prodById(id);
+    if((usage.get(id)||0) >= p.maxPerWeek) return true;
+  }
+  return false;
+}
+function addWeeklyUsage(day, usage){
+  if(!usage) return;
+  for(const id of weeklyLimitedIds(day)) usage.set(id, (usage.get(id)||0)+1);
+}
+function limitedReplacement(tpl, mealId, usage, currentId){
+  return pool(tpl.cat, mealId==='b').filter(p=>{
+    if(p.i===currentId) return false;
+    return !p.maxPerWeek || (usage.get(p.i)||0) < p.maxPerWeek;
+  });
+}
+function enforceWeeklyProductLimits(){
+  const usage = new Map();
+  for(const day of state.days){
+    const daySeen = new Set();
+    for(const meal of day) for(let ci=0; ci<meal.length; ci++){
+      const comp = meal[ci], p = prodById(comp.prodId);
+      if(!p || !p.maxPerWeek) continue;
+      if(daySeen.has(p.i)) continue;
+      if((usage.get(p.i)||0) >= p.maxPerWeek){
+        const tpl = MEAL_COMPS[comp.mealId] && MEAL_COMPS[comp.mealId][ci];
+        const repl = tpl ? limitedReplacement(tpl, comp.mealId, usage, p.i) : [];
+        if(repl.length){
+          const next = rnd(repl);
+          comp.prodId = next.i; comp.customG = null;
+          if(next.maxPerWeek && !daySeen.has(next.i)){
+            usage.set(next.i, (usage.get(next.i)||0)+1);
+            daySeen.add(next.i);
+          }
+        }
+      }else{
+        usage.set(p.i, (usage.get(p.i)||0)+1);
+        daySeen.add(p.i);
+      }
+    }
+  }
+}
 /* генеруємо кілька варіантів дня і лишаємо той, що найкраще лягає в БЖВ */
 function mealProteinPenalty(day, t){
   const coreMin = Math.min(30, Math.max(20, t.prot*0.18));
@@ -2115,18 +2238,19 @@ function mealProteinPenalty(day, t){
   }
   return score;
 }
-function genDay(dayIdx, prevDay){
+function genDay(dayIdx, prevDay, weeklyUsage=null){
   const t = calcTargets();
   let best = null, bestScore = Infinity;
   const tries = state.profile.diet==='vegan' ? 100 : 90;
   for(let i=0;i<tries;i++){
     const cand = randomDay(prevDay);
+    if(exceedsWeeklyLimits(cand, weeklyUsage)) continue;
     const built = buildDay(cand, t);
     const sc = dayScore(built.tot, t) + mealProteinPenalty(built, t);
     if(sc < bestScore){ bestScore = sc; best = cand; }
     if(bestScore < 0.002) break;         /* достатньо точно — далі не шукаємо */
   }
-  return best;
+  return best || randomDay(prevDay);
 }
 const cloneDay = day => day.map(meal=>meal.map(c=>({...c})));
 /* Вечеря дня N повторюється як обід дня N+1: обід і вечеря мають однаковий
@@ -2144,11 +2268,18 @@ function genWeek(){
     const n = mode==='rot2' ? 2 : 3, base = [];
     for(let i=0;i<n;i++) base.push(genDay(i, i>0?base[i-1]:null));
     state.days = Array.from({length:7}, (_,d)=>cloneDay(base[d%n]));
+    enforceWeeklyProductLimits();
     return;
   }
   state.days = [];
-  for(let d=0;d<7;d++) state.days.push(genDay(d, d>0?state.days[d-1]:null));
+  const weeklyUsage = new Map();
+  for(let d=0;d<7;d++){
+    const day = genDay(d, d>0?state.days[d-1]:null, weeklyUsage);
+    state.days.push(day);
+    addWeeklyUsage(day, weeklyUsage);
+  }
   if(mode==='batch') applyBatch();
+  enforceWeeklyProductLimits();
 }
 function safeGenWeek(showMessage=true){
   const reason = generationBlockReason();
@@ -2218,8 +2349,11 @@ function simpleFitPortions(p, base, lo, hi, cat){
 function simpleFitScore(day, t){
   const rel = (got,want,w) => { const d=(got-Math.max(1,want))/Math.max(1,want); return w*d*d; };
   const tot = day.tot;
+  const limits = qualityLimits(t);
+  const over = (got,want,w) => { const d=Math.max(0,((+got||0)-want)/Math.max(1,want)); return w*d*d; };
   return rel(tot.k,t.kcal,3.4) + rel(tot.p,t.prot,2.8) + rel(tot.f,t.fat,2.8)
        + rel(tot.c,t.carb,2.0) + (tot.fb<t.fib*0.9 ? rel(tot.fb,t.fib,0.8) : 0)
+       + over(tot.na,limits.na,0.35) + over(tot.sf,limits.sf,0.35) + over(tot.sug,limits.sug,0.25)
        + mealProteinPenalty(day,t);
 }
 function simpleFitDistance(day, t){
@@ -2752,7 +2886,7 @@ function renderDay(){
           Б <span class="mprot${lowP?' low':''}">${fmt(m.tot.p)} г</span> / Ж ${fmt(m.tot.f)} / В ${fmt(m.tot.c)} г</span>`}</div>
       ${m.items.map((it,ci)=>{
         const optTags = list => list.map(p=>
-          `<option value="${p.i}" ${p.i===it.p.i?'selected':''}>${p.n}</option>`).join('');
+          `<option value="${escHtml(p.i)}" ${p.i===it.p.i?'selected':''}>${escHtml(p.n)}</option>`).join('');
         const own = selectList(it.tpl.cat, it.p.i);
         const dishes = own.filter(p=>p.dish);
         const opts = optTags(own.filter(p=>!p.dish))
@@ -2762,12 +2896,12 @@ function renderDay(){
         const ua = unitApprox(it.p,it.g);
         const swaps = cl ? swapAlternatives(d,mi,ci,3) : [];
         const swapMenu = swaps.length ? `<details class="swap-menu"><summary title="Рівноцінна заміна">⇄ Замінити</summary>
-          <div class="swap-list">${swaps.map(x=>`<button type="button" class="swap-option" data-m="${mi}" data-c="${ci}" data-i="${x.p.i}">
-            <span>${window.nutriProductName?nutriProductName(x.p):x.p.n}</span><span>≈ ${x.g} г</span></button>`).join('')}</div></details>` : '';
+          <div class="swap-list">${swaps.map(x=>`<button type="button" class="swap-option" data-m="${mi}" data-c="${ci}" data-i="${escHtml(x.p.i)}">
+            <span>${escHtml(window.nutriProductName?nutriProductName(x.p):x.p.n)}</span><span>≈ ${x.g} г</span></button>`).join('')}</div></details>` : '';
         const row = cl
           ? `<div class="comp">
               <span class="cat cat-${it.tpl.cat}" title="${CATS[it.tpl.cat].name}">${CATS[it.tpl.cat].short||CATS[it.tpl.cat].name}</span>
-              <div class="pname">${it.p.n}${it.p.ml?' <span class="un">(напій)</span>':''}${it.p.dish?' <span class="un">(≈)</span>':''}${swapMenu}</div>
+              <div class="pname">${escHtml(it.p.n)}${it.p.ml?' <span class="un">(напій)</span>':''}${it.p.dish?' <span class="un">(≈)</span>':''}${swapMenu}</div>
               <span class="gstat">${it.g} ${unit}${ua?` <span class="un">(${ua.replace('≈ ','')})</span>`:''}</span>
               <span class="ck">${it.p.dish?'≈ ':''}${fmt(it.g*it.p.k/100)} ккал</span>
             </div>`
@@ -2781,7 +2915,7 @@ function renderDay(){
               <button type="button" class="reset-g" data-m="${mi}" data-c="${ci}"
                  title="Повернути авторозрахунок" ${custom?'':'style="visibility:hidden"'}>↺</button>
             </div>`;
-        return row + (it.p.rc ? `<div class="rcnote"><b>Як приготувати:</b> ${it.p.rc}</div>` : '');
+        return row + (it.p.rc ? `<div class="rcnote"><b>Як приготувати:</b> ${escHtml(it.p.rc)}</div>` : '');
       }).join('')}
     </div>`;}).join('');
   saveLocal();
@@ -2803,7 +2937,7 @@ function renderShop(){
       .sort((a,b)=>b.g-a.g);
     if(!items.length) return '';
     return `<div><h4>${CATS[c].name}</h4><ul>${items.map(x=>
-      `<li><span>${x.p.n}${x.p.ml?' (напій)':x.p.dry?' (суха вага)':x.p.raw?' (сира вага)':''}</span><b>${shopAmount(x.p,x.g)}</b></li>`).join('')}</ul></div>`;
+      `<li><span>${escHtml(x.p.n)}${x.p.ml?' (напій)':x.p.dry?' (суха вага)':x.p.raw?' (сира вага)':''}</span><b>${shopAmount(x.p,x.g)}</b></li>`).join('')}</ul></div>`;
   }).join('');
 }
 
@@ -2949,7 +3083,7 @@ function renderExcluded(){
   byId('exCount').textContent = ex.length ? `— ${ex.length}` : '';
   byId('exList').innerHTML = ex.map(id=>{
     const p = prodById(id); if(!p) return '';
-    return `<span>${p.n}<button data-i="${id}" title="Повернути продукт">✕</button></span>`;
+    return `<span>${escHtml(p.n)}<button data-i="${escHtml(id)}" title="Повернути продукт">✕</button></span>`;
   }).join('');
   for(const b of byId('exPresets').querySelectorAll('.preset')){
     b.classList.toggle('on', state.settings.activePresets.includes(b.dataset.set));
@@ -3099,8 +3233,7 @@ function loadFromFile(file){
   rd.onload = () => {
     try{
       const data = JSON.parse(rd.result);
-      if(data.customProducts) for(const cp of data.customProducts)
-        if(!prodById(cp.i)) PRODUCTS.push(cp);
+      if(data.customProducts) for(const cp of data.customProducts) addCustomProduct(cp);
       Object.assign(state.profile, data.profile||{});
       Object.assign(state.settings, data.settings||{});
       if(Array.isArray(data.days)) state.days = data.days;
@@ -3181,8 +3314,8 @@ function renderSodiumContextHint(){
 function renderTimeRow(){
   const def = defaultTimes(), cur = mealTimes();
   byId('timeRow').innerHTML = getPlan().map((m,i)=>
-    `<label>${m.name}<input type="text" class="tInp" data-i="${i}" value="${cur[i]||''}"
-       placeholder="${def[i]||''}"></label>`).join('');
+    `<label>${escHtml(m.name)}<input type="text" class="tInp" data-i="${i}" value="${escHtml(cur[i]||'')}"
+       placeholder="${escHtml(def[i]||'')}"></label>`).join('');
 }
 
 /* ============ ПОДІЛИТИСЯ ПОСИЛАННЯМ ============ */
@@ -3214,7 +3347,7 @@ async function unpackStateFromHash(){
       json = new TextDecoder().decode(buf);
     } else json = new TextDecoder().decode(bytes);
     const data = JSON.parse(json);
-    if(Array.isArray(data.c)) for(const cp of data.c) if(!prodById(cp.i)) PRODUCTS.push(cp);
+    if(Array.isArray(data.c)) for(const cp of data.c) addCustomProduct(cp);
     Object.assign(state.profile, data.p||{});
     Object.assign(state.settings, data.s||{});
     if(typeof data.n==='string') state.note = data.n;
@@ -3340,7 +3473,7 @@ byId('exSearch').addEventListener('input', e=>{
   const found = q.length<2 ? [] :
     PRODUCTS.filter(p=>!ex.has(p.i) && (p.n.toLowerCase().includes(q) || (window.nutriProductName?nutriProductName(p):p.n).toLowerCase().includes(q))).slice(0,8);
   byId('exMatches').innerHTML = found.map(p=>
-    `<button type="button" data-i="${p.i}">+ ${window.nutriProductName?nutriProductName(p):p.n}</button>`).join('');
+    `<button type="button" data-i="${escHtml(p.i)}">+ ${escHtml(window.nutriProductName?nutriProductName(p):p.n)}</button>`).join('');
 });
 byId('exMatches').addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
@@ -3470,11 +3603,12 @@ byId('btnAddProd').addEventListener('click', ()=>{
   const k = +byId('npK').value, p = +byId('npP').value||0,
         f = +byId('npF').value||0, c = +byId('npC').value||0;
   if(!n || !k){ alert('Вкажіть назву та калорійність.'); return; }
-  PRODUCTS.push({ i:'u'+Date.now(), c:byId('npCat').value, n, k, p, f, cb:c, custom:1 });
+  const added = addCustomProduct({ i:'u'+Date.now(), c:byId('npCat').value, n, k, p, f, cb:c, custom:1 });
+  if(!added){ alert('Перевірте назву та калорійність продукту.'); return; }
   byId('npName').value=''; byId('npK').value=''; byId('npP').value='';
   byId('npF').value=''; byId('npC').value='';
   renderDay();
-  alert(`Продукт «${n}» додано. Тепер він доступний у списках своєї категорії.`);
+  alert(`Продукт «${added.n}» додано. Тепер він доступний у списках своєї категорії.`);
 });
 
 /* ---- вага: додати / видалити ---- */
@@ -3520,7 +3654,7 @@ byId('btnNewClient').addEventListener('click', ()=>{
   if(!confirm('Очистити всі дані (анкету, меню, записи ваги та check-in) й почати з чистої анкети?\n' +
     'Порада: перед цим можна зберегти поточну програму у файл.')) return;
   try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
-  for(let i=PRODUCTS.length-1;i>=0;i--) if(PRODUCTS[i].custom) PRODUCTS.splice(i,1);
+  removeCustomProducts();
   Object.assign(state, DEFAULT_STATE());
   migrateSettings(); safeGenWeek(false); syncFormFromState(); renderExcluded(); renderAll();
 });

@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const LANG_KEY='nutri_language', E=window.NUTRI_EN||{};
-let language='uk', observer=null, busy=false;
+let language='uk', observer=null, busy=false, scheduled=false;
 const texts=new WeakMap(), attrs=new WeakMap();
 const hasUk=s=>/[А-Яа-яІіЇїЄєҐґ]/.test(s||'');
 const exactExtra={
@@ -217,6 +217,13 @@ function walk(root=document.documentElement){
     const b=document.getElementById('btnLang');if(b){b.textContent=language==='en'?'UA':'EN';b.title=language==='en'?'Українська':'English';b.setAttribute('aria-label',language==='en'?'Перейти на українську':'Switch to English')}
   }finally{busy=false;if(observer)observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true})}
 }
+function scheduleWalk(){
+  if(scheduled || busy) return;
+  scheduled=true;
+  const run=()=>{scheduled=false;walk()};
+  if(typeof requestAnimationFrame==='function')requestAnimationFrame(run);
+  else setTimeout(run,0);
+}
 function setLanguage(lang,persist=true){
   language=lang==='en'?'en':'uk';window.nutriLanguage=language;document.documentElement.lang=language;
   if(persist)try{localStorage.setItem(LANG_KEY,language)}catch(e){}
@@ -226,13 +233,13 @@ window.nutriT=(uk,en)=>language==='en'?en:uk;
 window.nutriTranslate=walk;
 window.nutriProductName=p=>language==='en'?(E[p.n]||p.n):p.n;
 try{language=localStorage.getItem(LANG_KEY)==='en'?'en':'uk'}catch(e){}
-observer=new MutationObserver(()=>walk());
+observer=new MutationObserver(()=>scheduleWalk());
 document.getElementById('btnLang').addEventListener('click',()=>{
   setLanguage(language==='en'?'uk':'en');
   if(typeof renderAll==='function')renderAll();
   if(typeof renderExcluded==='function')renderExcluded();
   if(typeof syncFormFromState==='function')syncFormFromState();
-  queueMicrotask(()=>walk());
+  queueMicrotask(()=>scheduleWalk());
 });
 const nativeAlert=window.alert.bind(window),nativeConfirm=window.confirm.bind(window),nativePrompt=window.prompt.bind(window),nativePrint=window.print.bind(window);
 window.alert=m=>nativeAlert(language==='en'?core(m):m);
@@ -242,5 +249,5 @@ window.print=()=>{if(language==='en')walk(document.getElementById('printView'));
 setLanguage(language,false);
 if(typeof renderAll==='function')renderAll();
 if(typeof renderExcluded==='function')renderExcluded();
-queueMicrotask(()=>walk());
+queueMicrotask(()=>scheduleWalk());
 })();

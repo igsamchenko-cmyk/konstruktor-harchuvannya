@@ -1,7 +1,7 @@
 /* Service worker: офлайн-робота додатку.
-   При оновленні index.html підвищуйте номер версії кешу (v33 → v34), щоб
+   При оновленні index.html підвищуйте номер версії кешу (v34 → v35), щоб
    користувачі отримали свіжу версію. */
-const CACHE = 'nutri-konstruktor-v33';
+const CACHE = 'nutri-konstruktor-v34';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png',
   './training-constructor-preview.jpg', './training-exercise-preview.webp',
@@ -26,8 +26,11 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
+        const sameOrigin = new URL(e.request.url).origin === self.location.origin;
+        if (sameOrigin && res.ok && res.type === 'basic') {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
+        }
         return res;
       })
       .catch(() => caches.match(e.request, { ignoreSearch: true })

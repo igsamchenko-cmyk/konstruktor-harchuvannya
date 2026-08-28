@@ -33,6 +33,10 @@ assert(html.includes('./i18n-adaptive.js'), 'adaptive translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-adaptive.js'), 'adaptive translations are cached offline');
 assert(html.includes('./i18n-checkin.js'), 'check-in translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-checkin.js'), 'check-in translations are cached offline');
+const swSource = fs.readFileSync('sw.js','utf8');
+assert(swSource.includes('res.ok') && swSource.includes("res.type === 'basic'"),
+  'service worker only runtime-caches successful same-origin app responses');
+assert(fs.existsSync('.github/workflows/safety.yml'), 'GitHub Actions safety workflow exists');
 const context = {
   console,
   setTimeout,
@@ -43,7 +47,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext('let __seed=123456789; Math.random=()=>((__seed=Math.imul(__seed,1664525)+1013904223>>>0)/4294967296);', context);
-vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, migrateSettings, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, selectList, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, portionUnit, dayScore, simpleFitCandidates, simpleFitScore, fitSimpleDay, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, normalizeCheckins, recentCheckin, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
+vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, escHtml, sanitizeCustomProduct, addCustomProduct, removeCustomProducts, excludedSet, migrateExclusionState, migrateSettings, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, selectList, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, enforceWeeklyProductLimits, gramBounds, portionUnit, dayScore, simpleFitCandidates, simpleFitScore, fitSimpleDay, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, normalizeCheckins, recentCheckin, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
 
 const a = context.api;
 const reset = () => {
@@ -51,6 +55,24 @@ const reset = () => {
   Object.assign(a.state, fresh);
 };
 const close = (got, want, tolerance) => Math.abs(got - want) <= tolerance;
+
+reset();
+a.removeCustomProducts();
+const unsafe = a.addCustomProduct({
+  i:'u_bad',
+  c:'sweet',
+  n:'<img src=x onerror=alert(1)> Дуже довга назва продукту, яка точно має обрізатися після шістдесяти символів',
+  k:'450<script>',
+  p:'bad',
+  f:'15',
+  cb:'70'
+});
+assert(unsafe, 'valid custom product can be imported after sanitization');
+assert(!/[<>]/.test(unsafe.n) && unsafe.n.length <= 60, 'custom product names are stripped and length-limited');
+assert.equal(unsafe.k, 450, 'custom calories are clamped through numeric parsing');
+assert(a.escHtml('"><script>alert(1)</script>') === '&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;',
+  'HTML escaping covers quotes and tag delimiters');
+a.removeCustomProducts();
 
 reset();
 a.state.settings.sodiumContext='invalid';
@@ -176,6 +198,18 @@ assert.deepEqual(a.gramBounds(cola), [150,600], 'soft drinks have drink-sized po
 assert(a.dayScore({k:1800,p:120,f:60,c:190,fb:25,na:3600}, {kcal:1800,prot:120,fat:60,carb:190,fib:25}) >
   a.dayScore({k:1800,p:120,f:60,c:190,fb:25,na:1800}, {kcal:1800,prot:120,fat:60,carb:190,fib:25}),
   'sodium excess is a one-sided day-score penalty');
+assert(a.dayScore({k:1800,p:120,f:60,c:190,fb:25,na:1800,sf:35,sug:20}, {kcal:1800,prot:120,fat:60,carb:190,fib:25}) >
+  a.dayScore({k:1800,p:120,f:60,c:190,fb:25,na:1800,sf:15,sug:20}, {kcal:1800,prot:120,fat:60,carb:190,fib:25}),
+  'saturated fat excess is part of day scoring');
+assert(a.dayScore({k:1800,p:120,f:60,c:190,fb:25,na:1800,sf:15,sug:80}, {kcal:1800,prot:120,fat:60,carb:190,fib:25}) >
+  a.dayScore({k:1800,p:120,f:60,c:190,fb:25,na:1800,sf:15,sug:20}, {kcal:1800,prot:120,fat:60,carb:190,fib:25}),
+  'free sugar excess is part of day scoring');
+
+reset();
+a.state.days = Array.from({length:7}, () => [[{mealId:'l',prodId:'p30',customG:null}]]);
+a.enforceWeeklyProductLimits();
+const liverDays = a.state.days.filter(day => day.flat().some(c => c.prodId==='p30')).length;
+assert(liverDays <= 1, 'weekly product limits cap beef liver to one day');
 
 reset();
 a.genWeek();
