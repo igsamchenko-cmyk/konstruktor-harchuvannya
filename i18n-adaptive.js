@@ -18,5 +18,12 @@ Object.assign(window.NUTRI_EN=window.NUTRI_EN||{}, {
   "Очікуваний коридор":"Expected range",
   "Тренд талії":"Waist trend",
   "Графік тренду ваги та талії":"Weight and waist trend chart",
-  "Талія має бути в межах 40–250 см або лишатися порожньою.":"Waist must be between 40 and 250 cm or left blank."
+  "Талія має бути в межах 40–250 см або лишатися порожньою.":"Waist must be between 40 and 250 cm or left blank.",
+  "Збалансоване меню · 3 дні":"Balanced menu · 3 days",
+  "Рекомендовано: три меню чергуються, тому раціон не набридає, а покупки й приготування залишаються простими.":"Recommended: three menus rotate, keeping meals familiar while shopping and cooking stay simple.",
+  "Просте меню · 2 дні":"Simple menu · 2 days",
+  "Два меню чергуються весь тиждень. Мінімум різних продуктів, найпростіші закупівля та приготування.":"Two menus alternate all week. The fewest different foods and the simplest shopping and cooking.",
+  "Різноманітне меню · 7 днів":"Varied menu · 7 days",
+  "Сім різних днів і ширше чергування продуктів. Потребує більше закупівель і приготування.":"Seven different days with broader food rotation. Requires more shopping and cooking.",
+  "У ручному режимі одна категорія має однаковий список у всіх прийомах їжі. Можна свідомо повторювати той самий продукт або скопіювати готовий день на весь тиждень.":"In manual mode, each category uses the same list at every meal. You can intentionally repeat the same food or copy a completed day across the whole week."
 });

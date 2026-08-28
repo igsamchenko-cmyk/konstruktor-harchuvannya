@@ -917,6 +917,8 @@
     (кнопка ↺ повертає авторозрахунок). У кінці кожного списку є група «Страви» —
     борщ і рагу серед овочів, вареники й деруни серед гарнірів, голубці й сирники серед білкових;
     їхні калорії приблизні (≈), бо залежать від рецепта.</p>
+  <p class="hint manual-choice-note">У ручному режимі одна категорія має однаковий список у всіх прийомах їжі.
+    Можна свідомо повторювати той самий продукт або скопіювати готовий день на весь тиждень.</p>
   <div class="toolbar">
     <div class="daytabs" id="dayTabs"></div>
     <span style="flex:1"></span>
@@ -1082,7 +1084,9 @@
    manualOnly=лише свідомий ручний вибір */
 const CATS = {
   protein:{name:'Білкові',        order:1, short:'Білок'},
-  snackProtein:{name:'Білкові перекуси', order:1.5, short:'Білковий перекус'},
+  /* Окремий ключ потрібен автогенератору для практичних перекусів, але в
+     ручному конструкторі це та сама категорія з тим самим набором продуктів. */
+  snackProtein:{name:'Білкові', order:1.5, short:'Білок'},
   carb:   {name:'Гарніри та крупи',order:2, short:'Гарнір'},
   dairy:  {name:'Молочні',        order:3, short:'Молочне'},
   fat:    {name:'Жири та горіхи', order:4, short:'Жири'},
@@ -1529,10 +1533,10 @@ function setManualExclusion(ids,on){
 const DAY_NAMES = ['Понеділок','Вівторок','Середа','Четвер','П’ятниця','Субота','Неділя'];
 const DAY_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
 const WEEK_MODES = {
-  vary : {n:'7 різних днів',   h:'Максимальне різноманіття. Готувати доведеться щодня.'},
-  rot2 : {n:'2 дні по черзі',  h:'Два меню чергуються весь тиждень — найпростіше в закупівлі.'},
-  rot3 : {n:'3 дні по черзі',  h:'Компроміс: різноманітно, але список покупок компактний.'},
-  batch: {n:'Готую на 2 порції',h:'Вечеря повторюється як обід наступного дня — готуєте раз, їсте двічі.'}
+  rot3 : {n:'Збалансоване меню · 3 дні', h:'Рекомендовано: три меню чергуються, тому раціон не набридає, а покупки й приготування залишаються простими.'},
+  rot2 : {n:'Просте меню · 2 дні',       h:'Два меню чергуються весь тиждень. Мінімум різних продуктів, найпростіші закупівля та приготування.'},
+  vary : {n:'Різноманітне меню · 7 днів',h:'Сім різних днів і ширше чергування продуктів. Потребує більше закупівель і приготування.'},
+  batch: {n:'Готую на 2 порції',         h:'Вечеря повторюється як обід наступного дня — готуєте раз, їсте двічі.'}
 };
 const DEFAULT_STATE = () => ({
   profile:{ name:'', sex:'f', age:30, ageRestricted:false, height:168, weight:70, waist:null, muscular:false,
@@ -1540,7 +1544,7 @@ const DEFAULT_STATE = () => ({
             health:{pregnancy:false,kidney:false,eatingDisorder:false,bariatric:false,diabetes:false,glp1:false} },
   settings:{ lossRate:0.35, gainRate:0.2, proteinPerKg:1.8, fatPct:27,
              meals:4, sweetPct:10, excluded:[], activePresets:[], manualExcluded:[], includedOverrides:[],
-             weekMode:'vary', foodVolume:'normal', sodiumContext:'standard', times:[] },
+             weekMode:'rot3', foodVolume:'normal', sodiumContext:'standard', times:[] },
   ui:{ mode:'pro', locked:false },
   note:'',          /* нотатка спеціаліста для клієнта */
   done:{},          /* відмічені прийоми: "день:прийом" -> true */
@@ -1681,6 +1685,15 @@ function categoryMatches(p, cat){
   if(cat==='protein') return (p.c==='protein' && !p.snackOnly) || !!(p.roles && p.roles.includes(cat));
   return p.c===cat || !!(p.roles && p.roles.includes(cat));
 }
+/* Автогенератор зберігає окремий практичний пул для перекусів, тоді як
+   ручний вибір дає однаковий повний список у кожному білковому слоті.
+   Людина може свідомо повторювати продукт або поставити його в будь-який
+   прийом їжі; дієта та явні виключення однаково залишаються чинними. */
+function manualCategoryMatches(p, cat){
+  if(cat==='protein' || cat==='snackProtein')
+    return categoryMatches(p,'protein') || categoryMatches(p,'snackProtein');
+  return categoryMatches(p,cat);
+}
 const POOL_FALLBACK = {sweet:['fruit'], snackProtein:['protein']};
 const pool = (cat, brkOnly) => {
   const ex = activeExcludedSet();
@@ -1695,7 +1708,7 @@ const rnd = arr => arr[Math.floor(Math.random()*arr.length)];
 /* список для випадаючого меню: без приправ, страви — окремою групою */
 function selectList(cat, keepId){
   const ex = activeExcludedSet();
-  const direct = PRODUCTS.filter(p=>categoryMatches(p,cat) && (!p.season || p.i===keepId)
+  const direct = PRODUCTS.filter(p=>manualCategoryMatches(p,cat) && (!p.season || p.i===keepId)
     && (!ex.has(p.i) || p.i===keepId) && (dietAllows(p) || p.i===keepId));
   if(direct.length) return direct;
   const fallback = new Set(pool(cat).map(p=>p.i));
@@ -1859,7 +1872,7 @@ function migrateSettings(){
     s.gainRate = Math.round((s.surplus!=null?s.surplus:12)/100*tdee*7/KCAL_PER_KG*20)/20;
   s.lossRate = Math.min(1, Math.max(0.2, +s.lossRate||0.35));
   s.gainRate = Math.min(0.4, Math.max(0.1, +s.gainRate||0.2));
-  if(!s.weekMode) s.weekMode = 'vary';
+  if(!s.weekMode) s.weekMode = 'rot3';
   if(!['normal','compact'].includes(s.foodVolume)) s.foodVolume = 'normal';
   if(!['standard','highSweat'].includes(s.sodiumContext)) s.sodiumContext = 'standard';
   if(!Array.isArray(s.times)) s.times = [];
@@ -2223,7 +2236,7 @@ function applyBatch(){
     state.days[d+1][li] = state.days[d][di].map(c=>({prodId:c.prodId, mealId:'l', customG:null}));
 }
 function genWeek(){
-  const mode = state.settings.weekMode || 'vary';
+  const mode = state.settings.weekMode || 'rot3';
   if(mode==='rot2' || mode==='rot3'){
     const n = mode==='rot2' ? 2 : 3, base = [];
     for(let i=0;i<n;i++) base.push(genDay(i, i>0?base[i-1]:null));
@@ -3254,7 +3267,7 @@ function syncFormFromState(){
   byId('sFoodVolume').value = s.foodVolume || 'normal';
   byId('sSodiumContext').value = s.sodiumContext || 'standard';
   renderSodiumContextHint();
-  byId('weekModeHint').textContent = (WEEK_MODES[s.weekMode]||WEEK_MODES.vary).h;
+  byId('weekModeHint').textContent = (WEEK_MODES[s.weekMode]||WEEK_MODES.rot3).h;
   syncPersonalSettings();
   renderTimeRow();
 }
@@ -3391,7 +3404,7 @@ bindSeg('sMeals', v=>{ state.settings.meals = +v; state.settings.times = [];
   safeGenWeek(); syncFormFromState(); renderAll(); });
 byId('sWeekMode').addEventListener('change', e=>{
   state.settings.weekMode = e.target.value;
-  byId('weekModeHint').textContent = (WEEK_MODES[e.target.value]||WEEK_MODES.vary).h;
+  byId('weekModeHint').textContent = (WEEK_MODES[e.target.value]||WEEK_MODES.rot3).h;
   safeGenWeek(); renderAll();
 });
 byId('sFoodVolume').addEventListener('change', e=>{
@@ -3417,7 +3430,7 @@ byId('sSweet').addEventListener('input', e=>{
 });
 byId('btnResetPersonal').addEventListener('click', ()=>{
   Object.assign(state.settings, {
-    lossRate:0.35, gainRate:0.2, meals:4, sweetPct:10, weekMode:'vary', foodVolume:'normal', times:[]
+    lossRate:0.35, gainRate:0.2, meals:4, sweetPct:10, weekMode:'rot3', foodVolume:'normal', times:[]
   });
   safeGenWeek(); syncFormFromState(); renderAll();
 });

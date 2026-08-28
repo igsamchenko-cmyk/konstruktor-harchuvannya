@@ -31,6 +31,10 @@ assert(fs.readFileSync('i18n-sprint2.js','utf8').includes('"Умови трен�
   'sodium exercise context has an English translation');
 assert(html.includes('./i18n-adaptive.js'), 'adaptive translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-adaptive.js'), 'adaptive translations are cached offline');
+assert(html.includes('manual-choice-note'), 'manual repetition freedom is explained in the menu builder');
+const adaptiveI18n = fs.readFileSync('i18n-adaptive.js','utf8');
+assert(adaptiveI18n.includes('"Збалансоване меню · 3 дні"') && adaptiveI18n.includes('"Просте меню · 2 дні"'),
+  'practical week-mode labels have English translations');
 assert(html.includes('./i18n-checkin.js'), 'check-in translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-checkin.js'), 'check-in translations are cached offline');
 const swSource = fs.readFileSync('sw.js','utf8');
@@ -123,7 +127,22 @@ assert(!a.pool('protein').some(p=>p.i==='p19'), 'egg whites are not selected aut
 assert(!a.pool('snackProtein').some(p=>p.i==='p19'), 'egg whites are not selected automatically as snack protein');
 assert(a.selectList('protein').some(p=>p.i==='p19'), 'egg whites remain available for deliberate manual selection');
 a.genWeek();
+const manualProteinIds = a.selectList('protein').map(p=>p.i).sort();
+const manualSnackProteinIds = a.selectList('snackProtein').map(p=>p.i).sort();
+assert.deepEqual(manualSnackProteinIds, manualProteinIds,
+  'every manual protein slot exposes the same product list');
+assert(a.selectList('protein').some(p=>p.i==='d02'),
+  'the shared manual protein list includes practical dairy snack proteins');
+assert(!a.pool('snackProtein').some(p=>p.i==='p01'),
+  'automatic snacks keep their practical narrower protein pool');
+
 assert(!a.state.days.flat(2).some(c=>c.prodId==='p19'), 'a generated week never inserts standalone egg whites');
+
+reset();
+assert.equal(a.state.settings.weekMode, 'rot3', 'new profiles default to the balanced three-menu week');
+delete a.state.settings.weekMode;
+a.migrateSettings();
+assert.equal(a.state.settings.weekMode, 'rot3', 'legacy profiles without a week mode migrate to balanced');
 
 reset();
 a.setPresetState('vegetarian', true);
