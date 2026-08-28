@@ -15,7 +15,7 @@ const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
 assert.equal(new Set(ids).size, ids.length, 'HTML ids remain unique');
 for (const id of ['fDiet','healthScreen','safetyWarn','poolWarn','btnGenWeek','btnShareClient','wWaist','wAdaptive',
   'ciDate','ciAdherence','ciHunger','ciEnergy','ciPerformance','btnAddCheckin','ciLatest','ciList',
-  'sSodiumContext','sodiumContextHint'])
+  'sSodiumContext','sodiumContextHint','btnAutoFit','autoFitMsg'])
   assert(ids.includes(id), 'required safety control exists: ' + id);
 assert(/id="fAge" min="18"/.test(html), 'age input exposes the adult-only limit');
 assert(html.includes('./i18n-safety.js'), 'safety translations are loaded');
@@ -43,7 +43,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext('let __seed=123456789; Math.random=()=>((__seed=Math.imul(__seed,1664525)+1013904223>>>0)/4294967296);', context);
-vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, migrateSettings, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, selectList, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, portionUnit, dayScore, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, normalizeCheckins, recentCheckin, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
+vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, migrateSettings, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, selectList, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, portionUnit, dayScore, simpleFitCandidates, simpleFitScore, fitSimpleDay, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, normalizeCheckins, recentCheckin, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
 
 const a = context.api;
 const reset = () => {
@@ -176,6 +176,27 @@ assert.deepEqual(a.gramBounds(cola), [150,600], 'soft drinks have drink-sized po
 assert(a.dayScore({k:1800,p:120,f:60,c:190,fb:25,na:3600}, {kcal:1800,prot:120,fat:60,carb:190,fib:25}) >
   a.dayScore({k:1800,p:120,f:60,c:190,fb:25,na:1800}, {kcal:1800,prot:120,fat:60,carb:190,fib:25}),
   'sodium excess is a one-sided day-score penalty');
+
+reset();
+a.genWeek();
+const simpleFatIds = new Set(['f02','f01','f03','f04','f21','f05','f07']);
+for (const meal of a.state.days[0]) meal.forEach((comp, ci) => {
+  if (a.MEAL_COMPS[comp.mealId][ci].cat === 'fat') {
+    comp.prodId = 'f10';
+    comp.customG = 5;
+  }
+});
+const simpleBefore = a.calcDay(0), simpleTarget = a.calcTargets();
+const simpleResult = a.fitSimpleDay(0);
+assert(simpleResult.changed, 'simple-food fit improves an imbalanced day');
+assert(a.simpleFitScore(a.calcDay(0), simpleTarget) < a.simpleFitScore(simpleBefore, simpleTarget),
+  'simple-food fit lowers the target deviation score');
+const fittedFatIds = [];
+for (const meal of a.state.days[0]) meal.forEach((comp, ci) => {
+  if (a.MEAL_COMPS[comp.mealId][ci].cat === 'fat') fittedFatIds.push(comp.prodId);
+});
+assert(fittedFatIds.some(id => simpleFatIds.has(id)), 'simple-food fit uses common fats first');
+assert(a.simpleFitCandidates('fat').every(p => simpleFatIds.has(p.i)), 'fat fitting candidates exclude chia and exotic fats');
 
 reset();
 const veg = a.PRODUCTS.find(p=>p.i==='v01');

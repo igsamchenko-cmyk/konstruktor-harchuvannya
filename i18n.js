@@ -67,6 +67,13 @@ Object.assign(E,{
 });
 Object.assign(E,{
   'Підказки балансу':'Balance hints',
+  'Дотягнути простими продуктами':'Balance with simple foods',
+  'М’яко дотягнути поточний день звичними продуктами':'Gently balance the current day with familiar foods',
+  'Дотягнуто простими продуктами.':'Balanced with simple foods.',
+  'День уже близько до норми.':'The day is already close to target.',
+  'Прості продукти або впираються в межі порцій, або не дадуть кращого балансу без ширшої перебудови меню.':'Simple foods either hit portion limits or will not improve the balance without a broader menu rebuild.',
+  'Найбільше відхилення:':'Largest deviation:',
+  'Порція':'Portion',
   'Баланс дня тримається красиво':'The day is nicely balanced',
   'День майже зібраний, залишились дрібні штрихи':'The day is almost set; just small tweaks left',
   'Є що підкрутити, але день легко врівноважити':'There is something to tune, but the day is easy to balance',

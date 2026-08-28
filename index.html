@@ -200,6 +200,10 @@
   .btn:hover{border-color:var(--accent);color:var(--accent-dark);transform:translateY(-1px)}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.primary:hover{background:var(--accent-dark);color:#fff}
+  .autofit-btn{border-color:rgba(31,122,74,.35);background:var(--accent-soft);color:var(--accent-dark)}
+  .autofit-msg{display:none;margin:-4px 0 14px;padding:10px 12px;border:1px solid var(--good);
+    border-left-width:4px;border-radius:8px;background:var(--accent-soft);font-size:13px;line-height:1.45;color:var(--ink-2)}
+  .autofit-msg b{color:var(--ink)}
 
   .daysum{border:1px solid var(--frame);border-radius:8px;background:var(--field);
     padding:14px 16px;margin-bottom:14px;box-shadow:0 8px 22px var(--shadow)}
@@ -860,12 +864,14 @@
     <div class="daytabs" id="dayTabs"></div>
     <span style="flex:1"></span>
     <button class="btn pro-only" id="btnGenDay">Згенерувати день</button>
+    <button class="btn autofit-btn pro-only" id="btnAutoFit" title="М’яко дотягнути поточний день звичними продуктами">Дотягнути простими продуктами</button>
     <button class="btn pro-only" id="btnCopyDay">Копіювати день на весь тиждень</button>
     <button class="btn primary pro-only" id="btnGenWeek">🎲 Згенерувати тиждень</button>
   </div>
   <div class="notice" id="poolWarn" style="display:none"></div>
   <div class="notice" id="clientNote" style="display:none"></div>
   <div class="daysum" id="daySummary"></div>
+  <div class="autofit-msg pro-only" id="autoFitMsg"></div>
   <div id="mealsWrap"></div>
   <p class="hint weighnote">⚖️ <b>Як зважувати.</b> Крупи, макарони та бобові — <b>сухими</b> (позначка «г сух.»);
     м'ясо, рибу та субпродукти — <b>сирими</b> (позначка «г сир.»): після приготування маса зменшується
@@ -2125,6 +2131,120 @@ function ensureDays(){
   if(!valid) safeGenWeek(false);
 }
 
+const SIMPLE_FIT_IDS = {
+  fat:['f02','f01','f03','f04','f21','f05','f07'],
+  carb:['c01','c02','c04','c11','c25','c26','c13','c10','c17','c18','c19'],
+  protein:['p01','p02','p18','p20','p21','p09','p10','vp01','vp02','vp03','c17','c18','c19'],
+  snackProtein:['p20','p21','d02','p18','vp05','vp01','vp02','vp03','c17','c18'],
+  dairy:['d02','d03','d01','d05'],
+  sweet:['s01','s07','s20','s21','s23']
+};
+const SIMPLE_FIT_CATS = new Set(['fat','carb','protein','snackProtein','dairy','sweet']);
+function simpleFitCandidates(cat, keepId){
+  const allowed = selectList(cat, keepId).filter(p=>!p.dish&&!p.season&&!p.manualOnly);
+  const ids = SIMPLE_FIT_IDS[cat] || [];
+  const picked = [];
+  for(const id of ids){
+    const p = allowed.find(x=>x.i===id);
+    if(p && !picked.some(x=>x.i===p.i)) picked.push(p);
+  }
+  const current = allowed.find(p=>p.i===keepId);
+  if(current && ids.includes(current.i) && !picked.some(p=>p.i===current.i)) picked.unshift(current);
+  return picked.slice(0,6);
+}
+function simpleFitPortion(p, g, lo, hi){
+  let x = Math.min(hi, Math.max(lo, g));
+  if(p.u) return snapUnitGrams(p, x, lo, hi);
+  const step = p.k>=300 ? 1 : 5;
+  return Math.min(hi, Math.max(lo, Math.round(x/step)*step));
+}
+function simpleFitPortions(p, base, lo, hi, cat){
+  const deltas = cat==='fat'
+    ? [-39,-26,-20,-13,-10,-7,-5,0,5,7,10,13,20,26,39]
+    : cat==='sweet'
+      ? [-80,-60,-40,-25,-15,-10,-5,0,5,10,15,25,40]
+      : [-100,-80,-60,-40,-25,-15,-10,0,10,15,25,40,60,80,100];
+  const out = new Set([lo, hi]);
+  for(const d of deltas) out.add(simpleFitPortion(p, base+d, lo, hi));
+  return [...out].filter(g=>g>=lo&&g<=hi).sort((a,b)=>a-b);
+}
+function simpleFitScore(day, t){
+  const rel = (got,want,w) => { const d=(got-Math.max(1,want))/Math.max(1,want); return w*d*d; };
+  const tot = day.tot;
+  return rel(tot.k,t.kcal,3.4) + rel(tot.p,t.prot,2.8) + rel(tot.f,t.fat,2.8)
+       + rel(tot.c,t.carb,2.0) + (tot.fb<t.fib*0.9 ? rel(tot.fb,t.fib,0.8) : 0)
+       + mealProteinPenalty(day,t);
+}
+function simpleFitDistance(day, t){
+  const rows = [
+    ['ккал', day.tot.k, t.kcal],
+    ['Б', day.tot.p, t.prot],
+    ['Ж', day.tot.f, t.fat],
+    ['В', day.tot.c, t.carb]
+  ];
+  const worst = rows.map(([n,got,want])=>({n,d:Math.abs(devPct(got,want))}))
+    .sort((a,b)=>b.d-a.d)[0];
+  return worst ? `${worst.n} ${Math.round(worst.d)}%` : '0%';
+}
+function fitMsgEscape(s){
+  return String(s).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+}
+function fitSimpleDay(di=state.activeDay){
+  const reason = generationBlockReason();
+  if(reason) return {changed:false, reason};
+  ensureDays();
+  const t = calcTargets(), before = calcDay(di);
+  const beforeScore = simpleFitScore(before,t), ops = [];
+  for(let pass=0; pass<8; pass++){
+    const current = calcDay(di);
+    let best = {score:simpleFitScore(current,t)};
+    for(let mi=0; mi<current.meals.length; mi++) for(let ci=0; ci<current.meals[mi].items.length; ci++){
+      const it = current.meals[mi].items[ci], comp = state.days[di] && state.days[di][mi] && state.days[di][mi][ci];
+      if(!comp || !SIMPLE_FIT_CATS.has(it.tpl.cat)) continue;
+      for(const p of simpleFitCandidates(it.tpl.cat,it.p.i)){
+        const [lo,hi] = gramBounds(p);
+        const kcal = it.g*it.p.k/100;
+        const base = p.i===it.p.i ? it.g : kcal/Math.max(1,p.k)*100;
+        for(const g of simpleFitPortions(p,base,lo,hi,it.tpl.cat)){
+          if(p.i===it.p.i && Math.abs(g-it.g)<0.5) continue;
+          const test = cloneDay(state.days[di]);
+          test[mi][ci] = {...test[mi][ci], prodId:p.i, customG:g};
+          const built = buildDay(test,t);
+          const sc = simpleFitScore(built,t);
+          if(sc < best.score - 0.00005) best = {score:sc,mi,ci,p,g,oldP:it.p,oldG:it.g};
+        }
+      }
+    }
+    if(best.mi==null) break;
+    state.days[di][best.mi][best.ci].prodId = best.p.i;
+    state.days[di][best.mi][best.ci].customG = best.g;
+    ops.push(best);
+  }
+  const after = calcDay(di), afterScore = simpleFitScore(after,t);
+  return {changed:afterScore < beforeScore - 0.00005, before, after, ops, beforeScore, afterScore};
+}
+function autoFitSimpleDay(){
+  const res = fitSimpleDay(state.activeDay);
+  if(res.reason){ alert(res.reason); return; }
+  const box = byId('autoFitMsg');
+  if(!res.changed || !res.ops.length){
+    state.ui.autoFitMsg = {day:state.activeDay, html:'<b>День уже близько до норми.</b> Прості продукти або впираються в межі порцій, або не дадуть кращого балансу без ширшої перебудови меню.'};
+  }else{
+    const lastBySlot = new Map();
+    for(const op of res.ops) lastBySlot.set(op.mi+':'+op.ci,op);
+    const moves = [...lastBySlot.values()].slice(0,4).map(op=>{
+      const unit = portionUnit(op.p);
+      const prefix = op.p.i===op.oldP.i ? '' : `${fitMsgEscape(op.oldP.n)} → `;
+      const diff = op.p.i===op.oldP.i ? op.g-op.oldG : op.g;
+      const signed = op.p.i===op.oldP.i && Math.abs(diff)>=0.5 ? ` (${diff>0?'+':'−'}${fmt(Math.abs(diff))} ${unit})` : '';
+      return `${prefix}${fitMsgEscape(op.p.n)} ${fmt(op.g)} ${unit}${signed}`;
+    }).join('; ');
+    state.ui.autoFitMsg = {day:state.activeDay,
+      html:`<b>Дотягнуто простими продуктами.</b> ${moves}. Найбільше відхилення: ${simpleFitDistance(res.before,calcTargets())} → ${simpleFitDistance(res.after,calcTargets())}.`};
+  }
+  renderDay(); renderShop();
+}
+
 const DAY_MS=86400000;
 function isoDay(iso){
   const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||''));
@@ -2408,7 +2528,7 @@ function renderSafety(t){
   pbox.style.display = pmsgs.length ? '' : 'none';
 
   const blocked = !!generationBlockReason();
-  for(const id of ['btnGenDay','btnGenWeek','btnCopyDay','btnShareClient']){
+  for(const id of ['btnGenDay','btnGenWeek','btnCopyDay','btnAutoFit','btnShareClient']){
     const el=byId(id); if(!el) continue;
     el.disabled = blocked;
     el.title = blocked ? generationBlockReason() : '';
@@ -2565,6 +2685,11 @@ function renderDay(){
     ${cl ? '' : `<div class="hint" style="margin-top:9px">Білок за прийомами: ${
       d.meals.map(m=>fmt(m.tot.p)).join(' / ')} г — для повноцінного синтезу м'язового
       білка основні прийоми мають давати 25–30 г.</div>`}`;
+  const fitBox = byId('autoFitMsg'), fitMsg = state.ui && state.ui.autoFitMsg;
+  if(fitBox){
+    fitBox.innerHTML = fitMsg && fitMsg.day===state.activeDay && !cl ? fitMsg.html : '';
+    fitBox.style.display = fitBox.innerHTML ? '' : 'none';
+  }
 
   const batch = state.settings.weekMode==='batch';
   byId('mealsWrap').innerHTML = d.meals.map((m,mi)=>{
@@ -3184,15 +3309,19 @@ byId('dayTabs').addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
   state.activeDay = +b.dataset.d; renderDayTabs(); renderDay();
 });
-byId('btnGenWeek').addEventListener('click', ()=>{ safeGenWeek(); renderAll(); });
+function clearAutoFitMsg(){ if(state.ui) delete state.ui.autoFitMsg; }
+byId('btnGenWeek').addEventListener('click', ()=>{ clearAutoFitMsg(); safeGenWeek(); renderAll(); });
 byId('btnGenDay').addEventListener('click', ()=>{
   const reason = generationBlockReason();
   if(reason){ alert(reason); renderAll(); return; }
+  clearAutoFitMsg();
   state.days[state.activeDay] = genDay(state.activeDay,
     state.activeDay>0 ? state.days[state.activeDay-1] : null);
   renderDay(); renderShop();
 });
+byId('btnAutoFit').addEventListener('click', autoFitSimpleDay);
 byId('btnCopyDay').addEventListener('click', ()=>{
+  clearAutoFitMsg();
   const src = state.days[state.activeDay];
   state.days = state.days.map(()=> src.map(meal=>meal.map(c=>({...c}))));
   renderDay(); renderShop();
@@ -3209,6 +3338,7 @@ function setManualGram(el, emptyAsZero=false){
   if(!raw && !emptyAsZero) return null;
   const g = raw ? +raw : 0;
   if(!isFinite(g)) return null;
+  clearAutoFitMsg();
   comp.customG = Math.min(900, Math.max(0, g));
   return {mi, ci};
 }
@@ -3241,6 +3371,7 @@ byId('mealsWrap').addEventListener('change', e=>{
   if(isNaN(mi) || isNaN(ci)) return;
   const comp = state.days[state.activeDay][mi][ci];
   if(el.classList.contains('selProd')){
+    clearAutoFitMsg();
     comp.prodId = el.value; comp.customG = null;
   } else if(el.classList.contains('inpG')){
     clearTimeout(gramInputTimer);
@@ -3261,6 +3392,7 @@ byId('mealsWrap').addEventListener('click', e=>{
     return;
   }
   const b = e.target.closest('.reset-g'); if(!b) return;
+  clearAutoFitMsg();
   state.days[state.activeDay][+b.dataset.m][+b.dataset.c].customG = null;
   renderDay(); renderShop();
 });
