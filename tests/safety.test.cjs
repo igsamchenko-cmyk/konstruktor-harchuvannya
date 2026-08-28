@@ -43,7 +43,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext('let __seed=123456789; Math.random=()=>((__seed=Math.imul(__seed,1664525)+1013904223>>>0)/4294967296);', context);
-vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, migrateSettings, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, selectList, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, normalizeCheckins, recentCheckin, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
+vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, migrateSettings, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, selectList, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, portionUnit, dayScore, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, normalizeCheckins, recentCheckin, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
 
 const a = context.api;
 const reset = () => {
@@ -62,6 +62,9 @@ a.state.profile.age = 14;
 a.sanitizeProfile();
 assert.equal(a.state.profile.age, 18, 'adult-only age floor');
 assert(a.medicalSafety().blocked, 'an imported under-18 profile remains blocked after normalization');
+a.state.profile.age = 30;
+a.sanitizeProfile();
+assert.equal(a.state.profile.ageRestricted, false, 'adult age clears the imported under-18 flag');
 
 reset();
 Object.assign(a.state.profile, {sex:'f', age:30, height:168, weight:70, lifestyle:0, training:0, goal:'loss'});
@@ -77,6 +80,10 @@ a.state.settings.proteinPerKg = 2.4;
 t = a.calcTargets();
 assert(t.calcW < 130 && t.calcW > 25*1.74*1.74, 'athletic adjusted weight is softened');
 assert(t.prot*4 <= t.kcal*0.35 + 4, 'protein cannot crowd out more than 35% energy');
+
+reset();
+Object.assign(a.state.profile, {sex:'f', age:28, height:170, weight:52, goal:'loss'});
+assert(a.medicalSafety().blocked, 'underweight fat-loss profile is a medical stop');
 
 reset();
 a.state.profile.health.kidney = true;
@@ -140,6 +147,8 @@ reset();
 a.state.profile.diet = 'vegan';
 assert(a.pool('protein').length >= 6, 'vegan protein pool has usable depth');
 assert(a.pool('snackProtein').length >= 3, 'vegan snack-protein pool has usable depth');
+const veganSweets = a.pool('sweet').filter(p=>p.c==='sweet');
+assert(veganSweets.length >= 8, 'vegan sweet pool has explicit sweet products, not just fruit fallback');
 for (const p of a.pool('protein')) assert(a.dietAllows(p), 'vegan pool contains only explicitly allowed foods');
 a.genWeek();
 for (let d=0; d<7; d++) {
@@ -159,6 +168,14 @@ assert(a.qualityNutrients(a.PRODUCTS.find(p=>p.i==='p23')).na > 1000, 'salted he
 assert(a.qualityNutrients(a.PRODUCTS.find(p=>p.i==='f03')).sf > a.qualityNutrients(a.PRODUCTS.find(p=>p.i==='f01')).sf,
   'butter has more saturated fat than olive oil');
 assert(a.qualityNutrients(a.PRODUCTS.find(p=>p.i==='s06')).sug > 50, 'honey is counted toward free sugars');
+assert(a.qualityNutrients(a.PRODUCTS.find(p=>p.i==='s51')).sug > 9, 'sweet soda is counted toward free sugars');
+
+const cola = a.PRODUCTS.find(p=>p.i==='s51');
+assert.equal(a.portionUnit(cola), 'мл', 'drinks use milliliters as their portion unit');
+assert.deepEqual(a.gramBounds(cola), [150,600], 'soft drinks have drink-sized portion bounds');
+assert(a.dayScore({k:1800,p:120,f:60,c:190,fb:25,na:3600}, {kcal:1800,prot:120,fat:60,carb:190,fib:25}) >
+  a.dayScore({k:1800,p:120,f:60,c:190,fb:25,na:1800}, {kcal:1800,prot:120,fat:60,carb:190,fib:25}),
+  'sodium excess is a one-sided day-score penalty');
 
 reset();
 const veg = a.PRODUCTS.find(p=>p.i==='v01');
@@ -212,6 +229,10 @@ assert.deepEqual([cleanCheckins[0].adherence,cleanCheckins[0].hunger,cleanChecki
 const rolling=a.rollingWeightPoints(weightSeries(-0.10),7);
 assert(rolling.length>=9&&Number.isFinite(a.robustWeeklyRate(rolling)),'rolling trend and robust slope are available');
 assert(rolling.some(x=>x.waist!=null),'waist measurements survive trend normalization');
+const fastWeights=weightSeries(-1.2);
+const fastFeedback=a.weightFeedback(fastWeights,trendTarget,[]);
+assert.equal(fastFeedback.code,'raise','too-fast loss can suggest a protective calorie increase without waiting for check-in');
+assert(fastFeedback.overFastLoss,'loss faster than 1% body weight/week is flagged');
 const longBand=a.expectedWeightAt(85,84,trendTarget),shortBand=a.expectedWeightAt(85,28,trendTarget);
 assert(longBand.hi-longBand.lo>shortBand.hi-shortBand.lo,'expected weight corridor widens over time');
 

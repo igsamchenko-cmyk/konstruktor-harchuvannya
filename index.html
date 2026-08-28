@@ -1015,7 +1015,8 @@
 <script>
 /* ============ БАЗА ПРОДУКТІВ (на 100 г) ============ */
 /* k=ккал, p=білки, f=жири, c=вуглеводи; brk=підходить для сніданку;
-   dry=вага в сухому вигляді; manualOnly=лише свідомий ручний вибір */
+   dry=вага в сухому вигляді; ml=порція вимірюється у мілілітрах;
+   manualOnly=лише свідомий ручний вибір */
 const CATS = {
   protein:{name:'Білкові',        order:1, short:'Білок'},
   snackProtein:{name:'Білкові перекуси', order:1.5, short:'Білковий перекус'},
@@ -1214,28 +1215,28 @@ const PRODUCTS = [
 {i:'r31',c:'fruit',n:'Фініки',k:277,p:2,f:0.5,cb:69,fb:6.7},
 {i:'r32',c:'fruit',n:'Інжир сушений',k:257,p:3.1,f:0.8,cb:58,fb:9.8},
 /* --- смаколики (гнучка дієта) --- */
-{i:'s01',c:'sweet',n:'Чорний шоколад 70%',k:546,p:7.9,f:38,cb:46,fb:10.9},
+{i:'s01',c:'sweet',n:'Чорний шоколад 70%',k:546,p:7.9,f:38,cb:46,fb:10.9,vegan:1},
 {i:'s02',c:'sweet',n:'Молочний шоколад',k:550,p:7,f:30,cb:59,fb:3.4},
 {i:'s03',c:'sweet',n:'Зефір',k:326,p:0.8,f:0.1,cb:79,u:33,un:'шт.',iw:1},
 {i:'s04',c:'sweet',n:'Мармелад',k:321,p:0.1,f:0,cb:79},
 {i:'s05',c:'sweet',n:'Пастила',k:310,p:0.5,f:0,cb:80},
 {i:'s06',c:'sweet',n:'Мед',k:329,p:0.8,f:0,cb:81,u:21,un:'ст. л.'},
-{i:'s07',c:'sweet',n:'Халва соняшникова',k:523,p:12,f:30,cb:54,fb:4.5},
+{i:'s07',c:'sweet',n:'Халва соняшникова',k:523,p:12,f:30,cb:54,fb:4.5,vegan:1},
 {i:'s08',c:'sweet',n:'Печиво вівсяне',k:437,p:6.5,f:14,cb:71,u:18,un:'шт.',iw:1,fb:3},
 {i:'s09',c:'sweet',n:'Морозиво пломбір',k:227,p:3.7,f:15,cb:20},
 {i:'s10',c:'sweet',n:'Круасан',k:406,p:8,f:21,cb:46,fb:2.6},
 {i:'s11',c:'sweet',n:'Чізкейк',k:321,p:5.5,f:22,cb:25,fb:0.6},
 {i:'s12',c:'sweet',n:'Цукерки шоколадні',k:540,p:5,f:32,cb:57,fb:2},
 {i:'s13',c:'sweet',n:'Вафлі',k:460,p:4,f:20,cb:66,fb:1.5},
-{i:'s14',c:'sweet',n:'Сушені банани (чипси)',k:519,p:2.3,f:34,cb:50,fb:3},
+{i:'s14',c:'sweet',n:'Сушені банани (чипси)',k:519,p:2.3,f:34,cb:50,fb:3,vegan:1},
 {i:'s15',c:'sweet',n:'Чипси картопляні',k:520,p:6,f:34,cb:50,fb:4.4},
 {i:'s16',c:'sweet',n:'Сирок глазурований',k:407,p:8.5,f:26,cb:32,u:45,un:'шт.',iw:1},
 {i:'s17',c:'sweet',n:'Згущене молоко',k:320,p:7.2,f:8.5,cb:56,gb:[15,60]},
-{i:'s18',c:'sweet',n:'Варення вишневе',k:256,p:0.5,f:0.2,cb:63},
-{i:'s19',c:'sweet',n:'Повидло яблучне',k:250,p:0.4,f:0.2,cb:62},
-{i:'s20',c:'sweet',n:'Пряники',k:364,p:5,f:3,cb:77,u:20,un:'шт.',iw:1,fb:1.5},
-{i:'s21',c:'sweet',n:'Сушки',k:339,p:11,f:1.3,cb:73,u:10,un:'шт.',iw:1,fb:2.5},
-{i:'s22',c:'sweet',n:'Бублик з маком',k:336,p:10,f:4,cb:65,fb:2.5},
+{i:'s18',c:'sweet',n:'Варення вишневе',k:256,p:0.5,f:0.2,cb:63,vegan:1},
+{i:'s19',c:'sweet',n:'Повидло яблучне',k:250,p:0.4,f:0.2,cb:62,vegan:1},
+{i:'s20',c:'sweet',n:'Пряники',k:364,p:5,f:3,cb:77,u:20,un:'шт.',iw:1,fb:1.5,vegan:1},
+{i:'s21',c:'sweet',n:'Сушки',k:339,p:11,f:1.3,cb:73,u:10,un:'шт.',iw:1,fb:2.5,vegan:1},
+{i:'s22',c:'sweet',n:'Бублик з маком',k:336,p:10,f:4,cb:65,fb:2.5,vegan:1},
 {i:'s23',c:'sweet',n:'Печиво «Марія»',k:400,p:7.5,f:8.5,cb:74,u:7,un:'шт.',iw:1,fb:2},
 {i:'s24',c:'sweet',n:'Ірис',k:387,p:3,f:7.7,cb:76},
 {i:'s25',c:'sweet',n:'Торт «Київський»',k:435,p:6,f:22,cb:53,fb:2},
@@ -1250,6 +1251,31 @@ const PRODUCTS = [
 {i:'s34',c:'sweet',n:'Макарон',k:440,p:7,f:18,cb:62,u:18,un:'шт.',iw:1,fb:2.5},
 {i:'s35',c:'sweet',n:'Донат',k:410,p:5.5,f:22,cb:48,u:55,un:'шт.',fb:1.5},
 {i:'s36',c:'sweet',n:'Тістечко «Картопля»',k:390,p:5,f:19,cb:50,u:70,un:'шт.',fb:1.8},
+{i:'s37',c:'sweet',n:'Snickers',k:481,p:8.6,f:22.5,cb:60.5,u:50,un:'батончик',iw:1,fb:2.3,sug:51.8,sf:7.9,na:252},
+{i:'s38',c:'sweet',n:'Mars',k:449,p:4.4,f:16.5,cb:70.2,u:51,un:'батончик',iw:1,fb:0.8,sug:58,sf:8,na:210},
+{i:'s39',c:'sweet',n:'Twix',k:502,p:4.9,f:24.9,cb:64.8,u:50,un:'пач.',iw:1,fb:1.4,sug:49,sf:14,na:260},
+{i:'s40',c:'sweet',n:'KitKat',k:514,p:7.8,f:26.8,cb:59,u:42,un:'батончик',iw:1,fb:2.5,sug:45.7,sf:15,na:56},
+{i:'s41',c:'sweet',n:'Bounty',k:488,p:3.7,f:26,cb:58,u:57,un:'батончик',iw:1,fb:3.7,sug:48,sf:21,na:125},
+{i:'s42',c:'sweet',n:'Kinder Bueno',k:572,p:8.6,f:37.3,cb:49.5,u:43,un:'пач.',iw:1,fb:1.8,sug:41,sf:17,na:160},
+{i:'s43',c:'sweet',n:'Oreo',k:474,p:5.3,f:19.5,cb:68.7,u:11,un:'шт.',iw:1,fb:2.5,sug:38,sf:5.6,na:430},
+{i:'s44',c:'sweet',n:'M&M’s з арахісом',k:516,p:10.3,f:26.3,cb:56.4,u:45,un:'порц.',fb:2.8,sug:50,sf:11,na:60},
+{i:'s45',c:'sweet',n:'Milka молочний шоколад',k:530,p:6,f:29,cb:59,u:90,un:'плитка',iw:1,fb:2.5,sug:52,sf:18,na:90},
+{i:'s46',c:'sweet',n:'Nutella',k:539,p:6.3,f:30.9,cb:57.5,u:15,un:'ст. л.',fb:0,sug:56,sf:10.6,na:40},
+{i:'s47',c:'sweet',n:'Попкорн солодкий',k:420,p:6,f:14,cb:68,u:30,un:'порц.',fb:6,sug:30,sf:4,na:320,vegan:1},
+{i:'s48',c:'sweet',n:'Батончик мюслі',k:390,p:6,f:10,cb:68,u:35,un:'батончик',iw:1,fb:5,sug:26,sf:4,na:180},
+{i:'s49',c:'sweet',n:'Батончик протеїновий шоколадний',k:360,p:30,f:11,cb:35,u:60,un:'батончик',iw:1,fb:7,sug:12,sf:6,na:250},
+{i:'s50',c:'sweet',n:'Кукурудзяні палички солодкі',k:468,p:6,f:16,cb:75,u:30,un:'пач.',fb:3,sug:28,sf:3,na:250,vegan:1},
+{i:'s51',c:'sweet',n:'Coca-Cola',k:43,p:0,f:0,cb:10.6,u:330,un:'банка',iw:1,ml:1,gb:[150,600],sug:10.6,sf:0,na:10,vegan:1,manualOnly:1},
+{i:'s52',c:'sweet',n:'Pepsi',k:43,p:0,f:0,cb:10.7,u:330,un:'банка',iw:1,ml:1,gb:[150,600],sug:10.7,sf:0,na:5,vegan:1,manualOnly:1},
+{i:'s53',c:'sweet',n:'Fanta апельсин',k:48,p:0,f:0,cb:12,u:330,un:'банка',iw:1,ml:1,gb:[150,600],sug:12,sf:0,na:6,vegan:1,manualOnly:1},
+{i:'s54',c:'sweet',n:'Sprite',k:40,p:0,f:0,cb:10,u:330,un:'банка',iw:1,ml:1,gb:[150,600],sug:10,sf:0,na:7,vegan:1,manualOnly:1},
+{i:'s55',c:'sweet',n:'Лимонад солодкий',k:42,p:0,f:0,cb:10.5,u:250,un:'склянка',ml:1,gb:[150,600],sug:10.5,sf:0,na:10,vegan:1,manualOnly:1},
+{i:'s56',c:'sweet',n:'Холодний чай солодкий',k:30,p:0,f:0,cb:7.2,u:500,un:'пляшка',iw:1,ml:1,gb:[150,750],sug:7.2,sf:0,na:5,vegan:1,manualOnly:1},
+{i:'s57',c:'sweet',n:'Сік мультифрукт',k:48,p:0.3,f:0.1,cb:11.2,u:200,un:'склянка',ml:1,gb:[100,500],sug:10.5,sf:0,na:4,vegan:1,manualOnly:1},
+{i:'s58',c:'sweet',n:'Нектар фруктовий',k:52,p:0.2,f:0.1,cb:13,u:200,un:'склянка',ml:1,gb:[100,500],sug:12.5,sf:0,na:4,vegan:1,manualOnly:1},
+{i:'s59',c:'sweet',n:'Енергетичний напій класичний',k:45,p:0,f:0,cb:11.2,u:250,un:'банка',iw:1,ml:1,gb:[150,500],sug:11.2,sf:0,na:80,vegan:1,manualOnly:1},
+{i:'s60',c:'sweet',n:'Кава 3-в-1',k:420,p:3.5,f:10,cb:78,u:20,un:'стік',iw:1,fb:0,sug:48,sf:8,na:180},
+{i:'s61',c:'sweet',n:'Какао готове солодке',k:76,p:3.2,f:2.6,cb:10,u:200,un:'склянка',ml:1,gb:[150,400],sug:9,sf:1.6,na:60},
 /* --- готові страви: живуть у своїх категоріях, позначені dish:1 (КБЖВ приблизні) --- */
 {i:'m01',c:'veg',n:'Борщ з яловичиною',k:58,p:3.2,f:2.8,cb:5,dish:1,fb:1.5,rc:'Бульйон на яловичині (300 г м’яса на 3 л), картопля, капуста, буряк тушкований з томатом і краплею оцту, морква з цибулею. Вихід ≈ 3,5 л.'},
 {i:'m02',c:'veg',n:'Борщ пісний',k:43,p:1.2,f:2.1,cb:5.2,dish:1,fb:1.6,rc:'Те саме без м’яса, на овочевому відварі; заправка — 2 ст. л. олії на каструлю. Вихід ≈ 3 л.'},
@@ -1364,10 +1390,11 @@ function gramBounds(p){
   const sc = SCALABLE[p.dish ? 'dish' : p.c] ? PORTION_SCALE : 1;
   if(state.settings.foodVolume==='compact' && !p.dish && (p.c==='veg' || (p.c==='fruit' && p.k<150)))
     return [Math.max(40,Math.round(lo*0.7)), Math.min(180,Math.round(hi*0.72))];
-  return [lo, Math.min(500, Math.round(hi*sc))];  /* абсолютна стеля порції */
+  return [lo, Math.min(p.ml?750:500, Math.round(hi*sc))];  /* абсолютна стеля порції */
 }
 function rawBounds(p){
   if(p.gb) return p.gb;                              /* ручне уточнення */
+  if(p.ml) return p.k>=60 ? [100,350] : [150,600];    /* напої */
   if(p.dish) return p.k<100 ? [150,450] : [80,350];  /* супи vs другі страви */
   switch(p.c){
     case 'veg':   return p.season ? [5,40] : [80,280];
@@ -1390,9 +1417,11 @@ const PRESETS = {
     'p23','p24','p25','p26','p27','p28','p29','p30','p31','p32','p33','p34','p35','p36','p37','p38','p39',
     'm01','m07','m09','m10','m11','m12','m17','m18','f15','f16'],
   lactose: ['d01','d02','d03','d04','d05','d06','d07','d08','d09','d10','d11','d12','d13','p20','p21',
-    'f03','f13','f23','f24','f25','f26','s02','s09','s11','s16','s17','s24','s25','s26','s27','s28','s29','s30','s31','s32','s35','s36','m04','m08','m14','m15'],
+    'f03','f13','f23','f24','f25','f26','s02','s09','s11','s16','s17','s24','s25','s26','s27','s28','s29','s30','s31','s32','s35','s36',
+    's37','s38','s39','s40','s41','s42','s44','s45','s46','s48','s49','s60','s61','m04','m08','m14','m15'],
   gluten: ['c04','c05','c08','c09','c10','c13','c14','c15','c20','c22','c23','c25','c26','c27',
-    's08','s10','s13','s20','s21','s22','s23','s25','s26','s27','s28','s29','s30','s31','s32','s33','s35','s36','m03','m04','m05','m06','m14','m18']
+    's08','s10','s13','s20','s21','s22','s23','s25','s26','s27','s28','s29','s30','s31','s32','s33','s35','s36',
+    's39','s40','s43','s48','m03','m04','m05','m06','m14','m18']
 };
 
 /* Пресети, ручні виключення та точкові повернення зберігаються окремо.
@@ -1545,7 +1574,7 @@ function sanitizeProfile(){
   const pr = state.profile;
   pr.sex = pr.sex==='m' ? 'm' : 'f';
   const rawAge = +String(pr.age ?? '').replace(',', '.');
-  if(isFinite(rawAge) && rawAge<18) pr.ageRestricted = true;
+  pr.ageRestricted = isFinite(rawAge) && rawAge<18;
   pr.age = Math.round(clampNum(pr.age, 18, 90, 30));
   pr.height = Math.round(clampNum(pr.height, 120, 220, 168));
   pr.weight = Math.round(clampNum(pr.weight, 35, 250, 70)*10)/10;
@@ -1606,6 +1635,7 @@ function medicalSafety(){
   const active = Object.keys(HEALTH_LABELS).filter(k=>!!h[k]);
   const labels = active.map(k=>HEALTH_LABELS[k]);
   if(state.profile.ageRestricted || (+state.profile.age||0)<18) labels.unshift('вік до 18 років');
+  if(state.profile.goal==='loss' && bmiOf(state.profile)<18.5) labels.unshift('ІМТ нижче 18,5 при цілі схуднення');
   return {blocked:labels.length>0, active, labels};
 }
 function menuPoolReport(){
@@ -1784,6 +1814,9 @@ function unitApprox(p, g, whole){
   if(p.iw && !whole && Math.abs(g-n*p.u) > p.u*0.22) return '';
   return `≈ ${niceUnitCount(n)} ${p.un}`;
 }
+function portionUnit(p){
+  return p.ml ? 'мл' : p.dry ? 'г сух.' : p.raw ? 'г сир.' : 'г';
+}
 function snapUnitGrams(p, g, lo, hi){
   if(!p.u) return g;
   const step = p.iw ? 1 : 0.5;
@@ -1801,7 +1834,9 @@ function inputGramStep(p){
 }
 /* вага для списку покупок: кілограми + побутова міра, де вона є */
 function shopAmount(p, g){
-  const base = g>=1000 ? (g/1000).toFixed(1).replace('.',',')+' кг' : Math.round(g)+' г';
+  const base = p.ml
+    ? (g>=1000 ? (g/1000).toFixed(1).replace('.',',')+' л' : Math.round(g)+' мл')
+    : (g>=1000 ? (g/1000).toFixed(1).replace('.',',')+' кг' : Math.round(g)+' г');
   const u = unitApprox(p, g, true);
   return u ? `${base} <span class="un">(${u.replace('≈ ','')})</span>` : base;
 }
@@ -1905,8 +1940,10 @@ function dayScore(tot, t){
   /* клітковина: недобір карається сильно, перебір — майже ні */
   const dfb = (tot.fb - t.fib)/Math.max(1,t.fib);
   const fibPenalty = state.settings.foodVolume==='compact' ? (dfb<0 ? 0.35 : 0.08) : (dfb<0 ? 1.2 : 0.12);
+  const sodiumLimit = qualityLimits(t).na;
+  const dna = Math.max(0, (tot.na - sodiumLimit)/sodiumLimit);
   return rel(tot.k,t.kcal,3) + rel(tot.p,t.prot,proteinWeight) + rel(tot.f,t.fat,2.6) + rel(tot.c,t.carb,1.6)
-       + fibPenalty*dfb*dfb;
+       + fibPenalty*dfb*dfb + 0.18*dna*dna;
 }
 
 /* побудова дня з набору компонентів (без звернення до state) */
@@ -2017,7 +2054,7 @@ function mealProteinPenalty(day, t){
     const min = ['b','l','d'].includes(meal.def.id) ? coreMin
               : ['s1','s2'].includes(meal.def.id) ? snackMin : 0;
     if(min && meal.tot.p<min){
-      const d=(min-meal.tot.p)/min; score += 1.4*d*d;
+      const d=(min-meal.tot.p)/min; score += 3.2*d*d;
     }
     if(meal.tot.p>50){
       const d=(meal.tot.p-50)/50; score += 0.35*d*d;
@@ -2028,7 +2065,7 @@ function mealProteinPenalty(day, t){
 function genDay(dayIdx, prevDay){
   const t = calcTargets();
   let best = null, bestScore = Infinity;
-  const tries = state.profile.diet==='vegan' ? 80 : 60;
+  const tries = state.profile.diet==='vegan' ? 100 : 90;
   for(let i=0;i<tries;i++){
     const cand = randomDay(prevDay);
     const built = buildDay(cand, t);
@@ -2164,12 +2201,13 @@ function forecastRange(t,weeks){ return expectedWeightAt(state.profile.weight,we
 function weightFeedback(entries=state.weights,t=calcTargets(),checkins=state.checkins){
   const ws=normalizeWeightEntries(entries), points=rollingWeightPoints(ws,7);
   const spanDays=ws.length>1?ws[ws.length-1].t-ws[0].t:0;
-  const actualRate=robustWeeklyRate(points);
+  const actualRate=robustWeeklyRate(ws);
   const expectedRate=t.pace.dir*t.realRate;
   const tolerance=t.pace.dir===0?0.15:Math.max(0.12,Math.abs(expectedRate)*0.35);
   const ready=ws.length>=3&&spanDays>=14&&actualRate!=null;
   const mature=ws.length>=4&&spanDays>=21&&actualRate!=null;
   const checkin=recentCheckin(checkins,ws.length?ws[ws.length-1].t:null,10);
+  const overFastLoss = ready && actualRate<0 && Math.abs(actualRate)/Math.max(1,ws[ws.length-1].w)>0.01;
   let code='collecting', adjustment=0, blocked=false;
   if(ready){
     const delta=actualRate-expectedRate;
@@ -2180,16 +2218,16 @@ function weightFeedback(entries=state.weights,t=calcTargets(),checkins=state.che
       adjustment=Math.sign(raw)*Math.min(150,Math.max(100,Math.round(Math.abs(raw)/50)*50));
       if(adjustment<0&&(t.belowBmr||t.clamped||medicalSafety().blocked)){
         adjustment=0; blocked=true; code='safetyReview';
-      }else if(!checkin){
+      }else if(adjustment<0&&!checkin){
         adjustment=0; code='checkinNeeded';
-      }else if(checkin.adherence<80){
+      }else if(adjustment<0&&checkin.adherence<80){
         adjustment=0; code='adherenceReview';
       }else if(adjustment<0&&(checkin.hunger>=4||checkin.energy<=2||checkin.performance<=2)){
         adjustment=0; code='recoveryReview';
       }else code=adjustment>0?'raise':'lower';
     }
   }
-  return {ws,points,spanDays,actualRate,expectedRate,tolerance,ready,mature,code,adjustment,blocked,checkin};
+  return {ws,points,spanDays,actualRate,expectedRate,tolerance,ready,mature,code,adjustment,blocked,checkin,overFastLoss};
 }
 
 /* Три близькі за поживністю альтернативи для швидкої клієнтської заміни. */
@@ -2547,7 +2585,7 @@ function renderDay(){
         const dishes = own.filter(p=>p.dish);
         const opts = optTags(own.filter(p=>!p.dish))
           + (dishes.length ? `<optgroup label="Страви (≈)">${optTags(dishes)}</optgroup>` : '');
-        const unit = it.p.dry ? 'г сух.' : it.p.raw ? 'г сир.' : 'г';
+        const unit = portionUnit(it.p);
         const custom = it.mc.customG!=null;
         const ua = unitApprox(it.p,it.g);
         const swaps = cl ? swapAlternatives(d,mi,ci,3) : [];
@@ -2557,7 +2595,7 @@ function renderDay(){
         const row = cl
           ? `<div class="comp">
               <span class="cat" title="${CATS[it.tpl.cat].name}">${CATS[it.tpl.cat].short||CATS[it.tpl.cat].name}</span>
-              <div class="pname">${it.p.n}${it.p.dish?' <span class="un">(≈)</span>':''}${swapMenu}</div>
+              <div class="pname">${it.p.n}${it.p.ml?' <span class="un">(напій)</span>':''}${it.p.dish?' <span class="un">(≈)</span>':''}${swapMenu}</div>
               <span class="gstat">${it.g} ${unit}${ua?` <span class="un">(${ua.replace('≈ ','')})</span>`:''}</span>
               <span class="ck">${it.p.dish?'≈ ':''}${fmt(it.g*it.p.k/100)} ккал</span>
             </div>`
@@ -2565,7 +2603,7 @@ function renderDay(){
               <span class="cat" title="${CATS[it.tpl.cat].name}">${CATS[it.tpl.cat].short||CATS[it.tpl.cat].name}</span>
               <select data-m="${mi}" data-c="${ci}" class="selProd" aria-label="Продукт">${opts}</select>
               <span class="gwrap"><input type="number" class="inpG" data-m="${mi}" data-c="${ci}"
-                 value="${it.g}" min="0" max="900" step="${inputGramStep(it.p)}" aria-label="Грами"><span class="un"><span>${unit}</span>${
+                 value="${it.g}" min="0" max="900" step="${inputGramStep(it.p)}" aria-label="Порція"><span class="un"><span>${unit}</span>${
                    ua ? '<b>'+ua+'</b>' : ''}</span></span>
               <span class="ck">${it.p.dish?'≈ ':''}${fmt(it.g*it.p.k/100)} ккал</span>
               <button type="button" class="reset-g" data-m="${mi}" data-c="${ci}"
@@ -2593,7 +2631,7 @@ function renderShop(){
       .sort((a,b)=>b.g-a.g);
     if(!items.length) return '';
     return `<div><h4>${CATS[c].name}</h4><ul>${items.map(x=>
-      `<li><span>${x.p.n}${x.p.dry?' (суха вага)':x.p.raw?' (сира вага)':''}</span><b>${shopAmount(x.p,x.g)}</b></li>`).join('')}</ul></div>`;
+      `<li><span>${x.p.n}${x.p.ml?' (напій)':x.p.dry?' (суха вага)':x.p.raw?' (сира вага)':''}</span><b>${shopAmount(x.p,x.g)}</b></li>`).join('')}</ul></div>`;
   }).join('');
 }
 
@@ -2662,6 +2700,8 @@ function renderWeight(){
         <div class="wa-action">Орієнтир для спеціаліста: <b>${verb} калорійність приблизно на ${amount} ккал/день</b>, потім спостерігати ще 2–3 тижні.</div>
         Перед корекцією звірте дотримання меню, кроки, тренування, сіль, цикл і однакові умови зважування. Застосунок нічого не змінює автоматично.</div>`;
     }
+    if(fb.overFastLoss) adaptive += `<div class="wadapt bad"><div class="wa-head"><b>Темп схуднення зависокий</b>${rates}</div>
+      Фактичне зниження перевищує 1% маси тіла на тиждень. Це не ціль для героїзму: підніміть калорійність або зменшіть дефіцит після перевірки самопочуття.</div>`;
   }
   byId('wAdaptive').innerHTML=adaptive;
   /* список записів */
@@ -2816,10 +2856,10 @@ function buildPrintView(){
       m.items.forEach((it,ix)=>{
         html += `<tr>${ix===0?`<td class="meal" rowspan="${m.items.length}">${m.def.name}<br>
             <span style="font-weight:400;color:#52514e">${mealTimes()[d.meals.indexOf(m)]||''} · ${fmt(m.tot.k)} ккал</span></td>`:''}
-          <td>${esc(it.p.n)}${it.p.dry?' <span style="color:#52514e">(суха вага)</span>':
+          <td>${esc(it.p.n)}${it.p.ml?' <span style="color:#52514e">(напій)</span>':it.p.dry?' <span style="color:#52514e">(суха вага)</span>':
               it.p.raw?' <span style="color:#52514e">(сира вага)</span>':''}${
             it.p.dish?' <span style="color:#52514e">(≈)</span>':''}</td>
-          <td class="n">${it.g} г${unitApprox(it.p,it.g)?` <span style="color:#52514e">(${unitApprox(it.p,it.g)})</span>`:''}</td><td class="n">${it.p.dish?'≈':''}${fmt(it.g*it.p.k/100)}</td></tr>`;
+          <td class="n">${it.g} ${portionUnit(it.p)}${unitApprox(it.p,it.g)?` <span style="color:#52514e">(${unitApprox(it.p,it.g)})</span>`:''}</td><td class="n">${it.p.dish?'≈':''}${fmt(it.g*it.p.k/100)}</td></tr>`;
       });
     }
     html += `</tbody></table></div>`;
@@ -2839,8 +2879,10 @@ function buildPrintView(){
     if(!items.length) return '';
     return `<div class="shopcat"><b>${CATS[c].name}</b>` + items.map(x=>{
       const u = unitApprox(x.p, x.g, true);
-      return `<div><span>${esc(x.p.n)}${x.p.dry?' (суха вага)':x.p.raw?' (сира вага)':''}</span><span>${
-        x.g>=1000 ? (x.g/1000).toFixed(1).replace('.',',')+' кг' : Math.round(x.g)+' г'}${
+      return `<div><span>${esc(x.p.n)}${x.p.ml?' (напій)':x.p.dry?' (суха вага)':x.p.raw?' (сира вага)':''}</span><span>${
+        x.p.ml
+          ? (x.g>=1000 ? (x.g/1000).toFixed(1).replace('.',',')+' л' : Math.round(x.g)+' мл')
+          : (x.g>=1000 ? (x.g/1000).toFixed(1).replace('.',',')+' кг' : Math.round(x.g)+' г')}${
         u?' · '+u.replace('≈ ',''):''}</span></div>`;
     }).join('') + `</div>`;
   }).join('') + `</div>`;

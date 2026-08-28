@@ -41,6 +41,31 @@ Object.assign(E,{
   'Тістечко «Картопля»':'Kartoshka cake pop'
 });
 Object.assign(E,{
+  'M&M’s з арахісом':'Peanut M&M’s',
+  'Milka молочний шоколад':'Milka milk chocolate',
+  'Попкорн солодкий':'Sweet popcorn',
+  'Батончик мюслі':'Muesli bar',
+  'Батончик протеїновий шоколадний':'Chocolate protein bar',
+  'Кукурудзяні палички солодкі':'Sweet corn puffs',
+  'Fanta апельсин':'Fanta orange',
+  'Лимонад солодкий':'Sweet lemonade',
+  'Холодний чай солодкий':'Sweet iced tea',
+  'Сік мультифрукт':'Multifruit juice',
+  'Нектар фруктовий':'Fruit nectar',
+  'Енергетичний напій класичний':'Classic energy drink',
+  'Кава 3-в-1':'3-in-1 coffee',
+  'Какао готове солодке':'Sweet ready-to-drink cocoa',
+  'батончик':'bar',
+  'пач.':'pack',
+  'порц.':'serving',
+  'плитка':'bar',
+  'банка':'can',
+  'пляшка':'bottle',
+  'склянка':'glass',
+  'стік':'stick',
+  '(напій)':'(drink)'
+});
+Object.assign(E,{
   'Підказки балансу':'Balance hints',
   'Баланс дня тримається красиво':'The day is nicely balanced',
   'День майже зібраний, залишились дрібні штрихи':'The day is almost set; just small tweaks left',
@@ -90,7 +115,7 @@ function core(value){
     ['вагітність або грудне вигодовування','pregnancy or breastfeeding'],['захворювання нирок','kidney disease'],
     ['РХП зараз або в анамнезі','current or previous eating disorder'],['баріатрична операція','bariatric surgery'],
     ['діабет або цукрознижувальна терапія','diabetes or glucose-lowering medication'],['препарати GLP-1','GLP-1 medication'],
-    ['вік до 18 років','age under 18'],
+    ['вік до 18 років','age under 18'],['ІМТ нижче 18,5 при цілі схуднення','BMI below 18.5 with a fat-loss goal'],
     ['Меню не генерується:','The menu cannot be generated:'],['немає дозволених продуктів у категоріях','there are no allowed foods in these categories'],
     ['Виключення не будуть обійдені автоматично.','Exclusions will never be bypassed automatically.'],
     ['Мало варіантів для ротації:','Few options for rotation:'],
@@ -106,7 +131,7 @@ function core(value){
     ['Це стартова оцінка:','This is a starting estimate:'],['через 2–3 тижні звірте з фактичною динамікою ваги','compare it with the actual weight trend after 2–3 weeks'],['в розділі «Прогрес»','in the “Progress” section'],['і за потреби скоригуйте дефіцит або профіцит.','and adjust the deficit or surplus if needed.'],
     ['розрахункової ваги','calculation weight'],['м’язова статура врахована','athletic build considered'],['М’язова статура','Athletic build'],['Розрахункова вага','Calculation weight'],['Норми білка та жирів рахуються на скориговану вагу:','Protein and fat targets use an adjusted weight:'],
     ['Талія','Waist'],['до зросту','height ratio'],['ІМТ','BMI'],['Калорії та БЖВ у нормі','Calories and macros are on target'],['Невелике відхилення:','Small deviation:'],['Значне відхилення:','Large deviation:'],
-    ["З'їдено",'Eaten'],['вчорашня вечеря, лише розігріти',"yesterday's dinner, reheat only"],['Страви (≈)','Dishes (≈)'],['г сух.','g dry'],['г сир.','g raw'],['(суха вага)','(dry weight)'],['(сира вага)','(raw weight)'],
+    ["З'їдено",'Eaten'],['вчорашня вечеря, лише розігріти',"yesterday's dinner, reheat only"],['Страви (≈)','Dishes (≈)'],['г сух.','g dry'],['г сир.','g raw'],['мл','ml'],['(суха вага)','(dry weight)'],['(сира вага)','(raw weight)'],['(напій)','(drink)'],
     ['Ціль:','Goal:'],['схуднення','fat loss'],['у референсі','within reference'],['Розподіл калорій:','Calorie distribution:'],['очікуваний темп','expected rate'],['Рідина:','Fluids:'],['на день','per day'],[' р.',' y.o.'],['за весь час','overall'],['Зараз:','Current:'],['Початок:','Start:'],['Додайте перший запис ваги — і тут з’явиться графік динаміки.','Add your first weight entry to see a trend chart.'],['Додайте ще один запис — і побачите графік динаміки.','Add one more entry to see the trend chart.'],
     ['Як приготувати:','How to prepare:'],['Повернути авторозрахунок','Restore automatic calculation'],['Повернути продукт','Restore food'],['Видалити запис','Delete entry'],['будь-коли','any time'],['ст. л.','tbsp'],['скиб.','slices'],['шт.','pcs'],["(позначка «g dry»); м'ясо, рибу та субпродукти —",'(marked “g dry”); meat, fish and offal —']
   ];
@@ -118,6 +143,7 @@ function core(value){
   s=s.replace(/кг\/тиждень/g,'kg/week').replace(/ккал/g,'kcal');
   s=s.replace(/(?<![А-Яа-яІіЇїЄєҐґ])кг(?![А-Яа-яІіЇїЄєҐґ])/g,'kg');
   s=s.replace(/(?<![А-Яа-яІіЇїЄєҐґ])г(?![А-Яа-яІіЇїЄєҐґ])/g,'g');
+  s=s.replace(/(?<![А-Яа-яІіЇїЄєҐґ])мл(?![А-Яа-яІіЇїЄєҐґ])/g,'ml');
   s=s.replace(/(?<![А-Яа-яІіЇїЄєҐґ])л(?![А-Яа-яІіЇїЄєҐґ])/g,'L');
   s=s.replace(/(?<![А-Яа-яІіЇїЄєҐґ])см(?![А-Яа-яІіЇїЄєҐґ])/g,'cm');
   s=s.replace(/Це на (.*?) kcal менше за ваші добові витрати — темп, за якого вага знижується поступово, без втрати м’язів\./,'This is $1 kcal below daily expenditure — a gradual rate designed to preserve muscle.');

@@ -10,6 +10,8 @@ Object.assign(window.NUTRI_EN=window.NUTRI_EN||{}, {
   "Не знижуйте калорійність автоматично":"Do not reduce calories automatically",
   "Поточний розрахунок уже біля захисної межі або потребує медичного погодження. Перегляньте активність, дотримання плану й стан здоров’я зі спеціалістом.":"The current target is already near a protective floor or needs clinical review. Review activity, adherence and health status with a qualified professional.",
   "Темп відрізняється від запланованого":"The trend differs from the plan",
+  "Темп схуднення зависокий":"Weight loss is too fast",
+  "Фактичне зниження перевищує 1% маси тіла на тиждень. Це не ціль для героїзму: підніміть калорійність або зменшіть дефіцит після перевірки самопочуття.":"Actual loss is above 1% of body weight per week. This is not a hero target: raise calories or reduce the deficit after reviewing wellbeing.",
   "Перед корекцією звірте дотримання меню, кроки, тренування, сіль, цикл і однакові умови зважування. Застосунок нічого не змінює автоматично.":"Before adjusting, review menu adherence, steps, training, salt intake, menstrual cycle and consistent weighing conditions. The app changes nothing automatically.",
   "Зважування":"Weigh-ins",
   "7-денний тренд":"7-day trend",
