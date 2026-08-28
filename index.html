@@ -352,7 +352,7 @@
       gap:7px 10px;padding:12px 14px}
     .comp .cat{grid-area:cat;justify-self:start;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em;padding:4px 8px}
     .comp .ck{grid-area:ck;font-weight:600;color:var(--ink-2)}
-    .comp select{grid-area:sel;font-size:15px;padding:10px 10px}
+    .comp select,.comp .product-select-btn{grid-area:sel;font-size:15px;padding:10px 10px}
     .comp .gwrap{grid-area:g;display:grid;grid-template-columns:minmax(0,1fr) 84px;align-items:center;gap:8px}
     .comp .gwrap input{font-size:15px;padding:10px;text-align:left}
     .comp .reset-g{grid-area:rst;align-self:center;font-size:18px;padding:6px 4px}
@@ -368,7 +368,47 @@
   .comp .cat-veg,.comp .cat-fruit{color:var(--produce-dark);background:var(--produce-soft)}
   .comp .cat-fat{color:var(--berry-dark);background:var(--berry-soft)}
   .comp .cat-dairy{color:var(--accent-dark);background:var(--accent-soft)}
-  .comp select{min-width:0}
+  .comp select,.product-select-btn{min-width:0}
+  .product-select-btn{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;
+    min-height:38px;padding:8px 10px;border:1px solid var(--hairline);border-radius:8px;
+    background:var(--field);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+  .product-select-btn:hover{border-color:var(--frame)}
+  .product-select-btn:focus-visible,.product-select-btn[aria-expanded="true"]{
+    outline:3px solid color-mix(in srgb,var(--card-accent,var(--accent)) 22%,transparent);
+    outline-offset:1px;border-color:var(--card-accent,var(--accent))}
+  .product-select-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .product-select-chevron{flex:0 0 auto;color:var(--muted);font-size:15px;transition:transform .16s ease}
+  .product-select-btn[aria-expanded="true"] .product-select-chevron{transform:rotate(180deg)}
+  .product-picker{position:fixed;z-index:1000;display:flex;flex-direction:column;
+    width:min(520px,calc(100vw - 24px));max-height:min(460px,calc(100dvh - 24px));
+    overflow:hidden;border:1px solid var(--frame);border-radius:12px;background:var(--field);
+    color:var(--ink);box-shadow:0 18px 50px rgba(0,0,0,.34)}
+  .product-picker[hidden]{display:none}
+  .product-picker-head{display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:8px;
+    padding:10px;border-bottom:1px solid var(--hairline);background:var(--surface)}
+  .product-picker-search{width:100%;min-width:0;padding:9px 11px;border:1px solid var(--hairline);
+    border-radius:8px;background:var(--field);color:var(--ink);font:inherit}
+  .product-picker-search:focus{outline:3px solid color-mix(in srgb,var(--accent) 22%,transparent);
+    outline-offset:1px;border-color:var(--accent)}
+  .product-picker-close{border:1px solid var(--hairline);border-radius:8px;background:var(--field);
+    color:var(--ink-2);font:inherit;font-size:22px;line-height:1;cursor:pointer}
+  .product-picker-list{min-height:70px;overflow:auto;overscroll-behavior:contain;
+    scrollbar-gutter:stable;padding:6px}
+  .product-group-title{padding:8px 10px 5px;color:var(--muted);font-size:11px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase}
+  .product-option{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;
+    padding:9px 10px;border:0;border-radius:7px;background:transparent;color:var(--ink);
+    font:inherit;text-align:left;cursor:pointer}
+  .product-option:hover,.product-option:focus-visible{background:var(--accent-soft);outline:none}
+  .product-option[aria-selected="true"]{background:var(--accent-soft);color:var(--accent-dark);font-weight:700}
+  .product-option .product-kcal{flex:0 0 auto;color:var(--muted);font-size:12px;font-weight:500;
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .product-picker-empty{padding:24px 12px;text-align:center;color:var(--muted)}
+  @media(max-width:520px){
+    .product-picker{left:max(10px,env(safe-area-inset-left))!important;
+      right:max(10px,env(safe-area-inset-right))!important;bottom:max(10px,env(safe-area-inset-bottom))!important;
+      top:auto!important;width:auto!important;max-height:min(68dvh,520px)!important;border-radius:14px}
+  }
   .gwrap{display:contents}
   .gwrap input{min-width:0;text-align:right;font-variant-numeric:tabular-nums}
   .gwrap .un{display:flex;min-height:38px;flex-direction:column;justify-content:center;
@@ -1142,6 +1182,14 @@
 <p class="unlock client-only" id="unlockRow">
   <a href="#" id="btnUnlock">Я спеціаліст — відкрити налаштування</a></p>
 </main>
+<div class="product-picker" id="productPicker" hidden role="dialog" aria-modal="false" aria-label="Вибір продукту">
+  <div class="product-picker-head">
+    <input class="product-picker-search" id="productPickerSearch" type="search"
+      placeholder="Знайти продукт" autocomplete="off">
+    <button class="product-picker-close" id="productPickerClose" type="button" aria-label="Закрити">×</button>
+  </div>
+  <div class="product-picker-list" id="productPickerList" role="listbox"></div>
+</div>
 <div id="printView"></div>
 <script>
 /* ============ БАЗА ПРОДУКТІВ (на 100 г) ============ */
@@ -1187,6 +1235,13 @@ const PRODUCTS = [
 {i:'p34',c:'protein',n:'Фарш індичий',k:161,p:20,f:9,cb:0,raw:1},
 {i:'p35',c:'protein',n:'Шинка куряча',k:151,p:16,f:9,cb:1.5},
 {i:'p36',c:'protein',n:'Буженина запечена',k:233,p:16,f:19,cb:1},
+{i:'p37',c:'protein',n:'Куряче стегно без шкіри',k:149,p:19,f:8,cb:0,raw:1,uaCommon:1},
+{i:'p38',c:'protein',n:'Сардини у власному соку',k:185,p:24.6,f:10,cb:0,maxPerWeek:2,uaCommon:1},
+{i:'p39',c:'protein',n:'Сир кисломолочний 9%',k:159,p:16,f:9,cb:2,brk:1,uaCommon:1},
+{i:'p08',c:'protein',n:'Печінка куряча',k:136,p:19,f:6,cb:1,raw:1,manualOnly:1,uaCommon:1},
+{i:'p30',c:'protein',n:'Печінка яловича',k:127,p:20,f:3.6,cb:4,raw:1,maxPerWeek:1,manualOnly:1,uaCommon:1},
+{i:'p31',c:'protein',n:'Серця курячі',k:159,p:16,f:10,cb:0.8,raw:1,manualOnly:1,uaCommon:1},
+{i:'p32',c:'protein',n:'Шлуночки курячі',k:114,p:18,f:4.2,cb:0.6,raw:1,manualOnly:1,uaCommon:1},
 {i:'vp07',c:'protein',n:'Сочевиця варена',k:116,p:9,f:0.4,cb:20,fb:7.9,vegan:1,veganOnly:1,roles:['snackProtein'],gb:[80,350]},
 {i:'vp08',c:'protein',n:'Нут консервований',k:164,p:8.9,f:2.6,cb:27,fb:7.6,vegan:1,veganOnly:1,roles:['snackProtein'],gb:[80,320]},
 {i:'vp09',c:'protein',n:'Квасоля консервована',k:127,p:8.7,f:0.5,cb:23,fb:6.4,vegan:1,veganOnly:1,roles:['snackProtein'],gb:[80,350]},
@@ -1220,6 +1275,10 @@ const PRODUCTS = [
 {i:'c26',c:'carb',n:'Батон пшеничний',k:264,p:7.5,f:2.9,cb:51,brk:1,u:25,un:'скиб.',iw:1,fb:2.3},
 {i:'c27',c:'carb',n:'Галети',k:392,p:9.7,f:10,cb:66,u:13,un:'шт.',iw:1,fb:3},
 {i:'c28',c:'carb',n:'Гарбузова каша на воді',k:63,p:1.5,f:0.8,cb:12,brk:1,fb:1.3,gb:[100,400]},
+{i:'c29',c:'carb',n:'Рис пропарений',k:349,p:7,f:0.6,cb:79,dry:1,fb:1.4,uaCommon:1},
+{i:'c30',c:'carb',n:'Макарони звичайні',k:344,p:10.4,f:1.1,cb:71.5,dry:1,fb:3,uaCommon:1},
+{i:'c31',c:'carb',n:'Картопля печена',k:93,p:2.5,f:0.1,cb:21,fb:2.2,uaCommon:1},
+{i:'c32',c:'carb',n:'Кукурудза консервована',k:86,p:3,f:1.4,cb:16,fb:2.7,manualOnly:1,gb:[50,250],uaCommon:1},
 /* --- молочні --- */
 {i:'d01',c:'dairy',n:'Кефір 2,5%',k:53,p:2.9,f:2.5,cb:4},
 {i:'d02',c:'dairy',n:'Йогурт грецький 2%',k:66,p:8,f:2,cb:4.7,brk:1},
@@ -1231,6 +1290,10 @@ const PRODUCTS = [
 {i:'d09',c:'dairy',n:'Сметана 20%',k:206,p:2.8,f:20,cb:3.4,add:1,u:20,un:'ст. л.'},
 {i:'d10',c:'dairy',n:'Вершки 10%',k:118,p:3,f:10,cb:4,add:1},
 {i:'d13',c:'dairy',n:'Сиркова маса з родзинками',k:343,p:7,f:23,cb:29,brk:1,add:1,u:50,un:'шт.',iw:1,fb:0.6,gb:[50,100]},
+{i:'d14',c:'dairy',n:'Кефір 1%',k:40,p:3,f:1,cb:4,uaCommon:1},
+{i:'d15',c:'dairy',n:'Молоко 1,5%',k:45,p:3,f:1.5,cb:4.7,brk:1,uaCommon:1},
+{i:'d16',c:'dairy',n:'Ряжанка 4%',k:67,p:3,f:4,cb:4.2,uaCommon:1},
+{i:'d17',c:'dairy',n:'Йогурт питний без цукру',k:63,p:3.5,f:2.5,cb:6.5,brk:1,uaCommon:1},
 /* --- жири та горіхи --- */
 {i:'f01',c:'fat',n:'Олія оливкова',k:898,p:0,f:99.8,cb:0,oil:1,u:13,un:'ст. л.'},
 {i:'f02',c:'fat',n:'Олія соняшникова',k:899,p:0,f:99.9,cb:0,oil:1,u:13,un:'ст. л.'},
@@ -1251,6 +1314,7 @@ const PRODUCTS = [
 {i:'f24',c:'fat',n:'Сир адигейський',k:240,p:19,f:18,cb:1.5},
 {i:'f25',c:'fat',n:'Сир сулугуні',k:286,p:20,f:22,cb:0.4},
 {i:'f26',c:'fat',n:'Сирок плавлений',k:257,p:13,f:22,cb:2},
+{i:'f27',c:'fat',n:'Масло вершкове 72,5%',k:661,p:0.8,f:72.5,cb:1.3,oil:1,uaCommon:1},
 /* --- овочі та зелень --- */
 {i:'v01',c:'veg',n:'Огірок',k:15,p:0.7,f:0.1,cb:2.8,fb:0.7},
 {i:'v02',c:'veg',n:'Помідор',k:20,p:1.1,f:0.2,cb:3.7,fb:1.2},
@@ -1279,6 +1343,10 @@ const PRODUCTS = [
 {i:'v28',c:'veg',n:'Горошок зелений',k:73,p:5,f:0.2,cb:13,fb:5.5,gb:[50,200]},
 {i:'v33',c:'veg',n:'Кабачкова ікра',k:97,p:1.2,f:7,cb:7.4,fb:2.3,gb:[30,150]},
 {i:'v34',c:'veg',n:'Томатна паста',k:82,p:4.3,f:0.5,cb:19,season:1,fb:4},
+{i:'v35',c:'veg',n:'Капуста пекінська',k:16,p:1.2,f:0.2,cb:2,fb:1.2,uaCommon:1},
+{i:'v36',c:'veg',n:'Овочева суміш заморожена',k:45,p:2.5,f:0.5,cb:7,fb:3,uaCommon:1},
+{i:'v37',c:'veg',n:'Буряк сирий',k:43,p:1.6,f:0.2,cb:9.6,fb:2.8,uaCommon:1},
+{i:'v38',c:'veg',n:'Капуста червонокачанна',k:31,p:1.4,f:0.2,cb:7.4,fb:2.1,uaCommon:1},
 /* --- фрукти та ягоди --- */
 {i:'r01',c:'fruit',n:'Яблуко',k:47,p:0.4,f:0.4,cb:9.8,brk:1,fb:2.4},
 {i:'r02',c:'fruit',n:'Банан',k:89,p:1.5,f:0.2,cb:21,brk:1,fb:2.6},
@@ -1305,6 +1373,8 @@ const PRODUCTS = [
 {i:'r23',c:'fruit',n:'Смородина червона',k:43,p:0.6,f:0.2,cb:7.7,brk:1,fb:4.3},
 {i:'r30',c:'fruit',n:'Родзинки',k:281,p:2.9,f:0.6,cb:66,fb:3.7},
 {i:'r31',c:'fruit',n:'Фініки',k:277,p:2,f:0.5,cb:69,fb:6.7},
+{i:'r32',c:'fruit',n:'Лимон',k:29,p:1.1,f:0.3,cb:6.5,fb:2.8,manualOnly:1,gb:[20,150],uaCommon:1},
+{i:'r33',c:'fruit',n:'Суміш ягід заморожена',k:45,p:1,f:0.4,cb:9,fb:4,brk:1,uaCommon:1},
 /* --- смаколики (гнучка дієта) --- */
 {i:'s01',c:'sweet',n:'Чорний шоколад 70%',k:546,p:7.9,f:38,cb:46,fb:10.9,vegan:1},
 {i:'s02',c:'sweet',n:'Молочний шоколад',k:550,p:7,f:30,cb:59,fb:3.4},
@@ -1390,8 +1460,8 @@ const PRODUCTS = [
    продуктах. Явні значення для солоних/перероблених позицій мають пріоритет,
    решта оцінюється консервативно за категорією та складом. */
 const SODIUM_OVERRIDES = {
-  p15:300,p23:1200,p29:650,p35:900,p36:800,
-  c13:430,c14:450,c15:520,c25:600,c26:500,c27:600,
+  p15:300,p23:1200,p29:650,p35:900,p36:800,p38:400,
+  c13:430,c14:450,c15:520,c25:600,c26:500,c27:600,c32:250,
   d13:110,f13:650,f14:735,f22:635,f23:1200,f24:700,f25:1000,f26:1100,
   v17:650,v27:1100,v33:450,v34:590,s15:525,s21:450,s22:430,s23:380,
   m01:320,m02:280,m03:420,m04:360,m05:180,m06:300,m07:350,m08:260,m09:330,
@@ -1504,14 +1574,14 @@ function rawBounds(p){
 
 /* ============ ВИКЛЮЧЕННЯ: НАБОРИ ПРЕСЕТІВ ============ */
 const PRESETS = {
-  fish: ['p09','p10','p11','p12','p13','p14','p15','p23','p24','p29','m17'],
+  fish: ['p09','p10','p11','p12','p13','p14','p15','p23','p24','p29','p38','m17'],
   vegetarian: ['p01','p02','p03','p04','p05','p07','p09','p10','p11','p12','p13','p14','p15',
-    'p23','p24','p29','p33','p34','p35','p36',
+    'p08','p23','p24','p29','p30','p31','p32','p33','p34','p35','p36','p37','p38',
     'm01','m07','m09','m10','m11','m12','m17','m18'],
-  lactose: ['d01','d02','d03','d04','d05','d06','d08','d09','d10','d13','p20','p21',
-    'f03','f13','f23','f24','f25','f26','s02','s09','s11','s16','s17','s24','s25','s26','s27','s28','s29','s30','s31','s32','s35','s36',
+  lactose: ['d01','d02','d03','d04','d05','d06','d08','d09','d10','d13','d14','d15','d16','d17','p20','p21','p39',
+    'f03','f13','f23','f24','f25','f26','f27','s02','s09','s11','s16','s17','s24','s25','s26','s27','s28','s29','s30','s31','s32','s35','s36',
     's37','s38','s39','s40','s41','s42','s44','s45','s46','s48','s49','s60','s61','m04','m08','m14','m15'],
-  gluten: ['c04','c05','c08','c09','c10','c13','c14','c15','c20','c22','c23','c25','c26','c27',
+  gluten: ['c04','c05','c08','c09','c10','c13','c14','c15','c20','c22','c23','c25','c26','c27','c30',
     's08','s10','s13','s20','s21','s22','s23','s25','s26','s27','s28','s29','s30','s31','s32','s35','s36',
     's39','s40','s43','s48','m03','m04','m05','m06','m14','m18']
 };
@@ -2924,12 +2994,7 @@ function renderDay(){
              : `<span class="mk">${fmt(m.tot.k)} ккал (ціль ~${fmt(m.mealKcal)}) ·
           Б <span class="mprot${lowP?' low':''}">${fmt(m.tot.p)} г</span> / Ж ${fmt(m.tot.f)} / В ${fmt(m.tot.c)} г</span>`}</div>
       ${m.items.map((it,ci)=>{
-        const optTags = list => list.map(p=>
-          `<option value="${escHtml(p.i)}" ${p.i===it.p.i?'selected':''}>${escHtml(p.n)}</option>`).join('');
-        const own = selectList(it.tpl.cat, it.p.i);
-        const dishes = own.filter(p=>p.dish);
-        const opts = optTags(own.filter(p=>!p.dish))
-          + (dishes.length ? `<optgroup label="Страви (≈)">${optTags(dishes)}</optgroup>` : '');
+        const productLabel = window.nutriProductName ? nutriProductName(it.p) : it.p.n;
         const unit = portionUnit(it.p);
         const custom = it.mc.customG!=null;
         const ua = unitApprox(it.p,it.g);
@@ -2946,7 +3011,10 @@ function renderDay(){
             </div>`
           : `<div class="comp ${custom?'custom':''}">
               <span class="cat cat-${it.tpl.cat}" title="${CATS[it.tpl.cat].name}">${CATS[it.tpl.cat].short||CATS[it.tpl.cat].name}</span>
-              <select data-m="${mi}" data-c="${ci}" class="selProd" aria-label="Продукт">${opts}</select>
+              <button type="button" data-m="${mi}" data-c="${ci}" data-cat="${it.tpl.cat}"
+                class="product-select-btn" aria-label="Вибрати продукт" aria-haspopup="listbox" aria-expanded="false">
+                <span class="product-select-label">${escHtml(productLabel)}</span>
+                <span class="product-select-chevron" aria-hidden="true">⌄</span></button>
               <span class="gwrap"><input type="number" class="inpG" data-m="${mi}" data-c="${ci}"
                  value="${it.g}" min="0" max="900" step="${inputGramStep(it.p)}" aria-label="Порція"><span class="un"><span>${unit}</span>${
                    ua ? '<b>'+ua+'</b>' : ''}</span></span>
@@ -3577,6 +3645,127 @@ function scheduleGramRender(focus){
   }, 180);
 }
 
+/* Власний вибір продукту замість нативного <select>: браузерні списки не
+   дозволяють надійно обмежити висоту й можуть виходити за межі вікна. */
+let productPickerCtx = null;
+const productPicker = byId('productPicker');
+const productPickerSearch = byId('productPickerSearch');
+const productPickerList = byId('productPickerList');
+function pickerText(uk,en){ return window.nutriLanguage==='en' ? en : uk; }
+function pickerProductName(p){ return window.nutriProductName ? nutriProductName(p) : p.n; }
+function closeProductPicker(restoreFocus){
+  if(!productPickerCtx) return;
+  const anchor = productPickerCtx.anchor;
+  anchor.setAttribute('aria-expanded','false');
+  productPicker.hidden = true;
+  productPickerCtx = null;
+  productPickerSearch.value = '';
+  if(restoreFocus && anchor.isConnected) anchor.focus({preventScroll:true});
+}
+function renderProductPickerOptions(revealSelected){
+  if(!productPickerCtx) return;
+  const q = productPickerSearch.value.trim().toLocaleLowerCase('uk-UA');
+  const all = selectList(productPickerCtx.cat, productPickerCtx.keepId);
+  const filtered = q ? all.filter(p=>pickerProductName(p).toLocaleLowerCase('uk-UA').includes(q)) : all;
+  const regular = filtered.filter(p=>!p.dish);
+  const dishes = filtered.filter(p=>p.dish);
+  const optionHtml = p => '<button type="button" class="product-option" role="option" data-i="' +
+    escHtml(p.i) + '" aria-selected="' + (p.i===productPickerCtx.keepId?'true':'false') + '">' +
+    '<span>' + escHtml(pickerProductName(p)) + '</span><span class="product-kcal">' +
+    fmt(p.k) + ' ' + pickerText('ккал / 100 г','kcal / 100 g') + '</span></button>';
+  const groupHtml = (label,items) => items.length
+    ? '<div class="product-group-title">' + label + '</div>' + items.map(optionHtml).join('')
+    : '';
+  productPickerList.innerHTML = regular.length || dishes.length
+    ? groupHtml(pickerText('Продукти','Foods'),regular) +
+      groupHtml(pickerText('Готові страви (≈)','Prepared dishes (≈)'),dishes)
+    : '<div class="product-picker-empty">' + pickerText('Нічого не знайдено','No products found') + '</div>';
+  if(revealSelected) requestAnimationFrame(()=>{
+    const selected = productPickerList.querySelector('[aria-selected="true"]');
+    if(selected) selected.scrollIntoView({block:'nearest'});
+  });
+}
+function positionProductPicker(){
+  if(!productPickerCtx || !productPickerCtx.anchor.isConnected){ closeProductPicker(false); return; }
+  productPicker.style.left = '';
+  productPicker.style.right = '';
+  productPicker.style.top = '';
+  productPicker.style.bottom = '';
+  productPicker.style.width = '';
+  productPicker.style.maxHeight = '';
+  if(window.matchMedia('(max-width:520px)').matches) return;
+  const vv = window.visualViewport;
+  const vx = vv ? vv.offsetLeft : 0;
+  const vy = vv ? vv.offsetTop : 0;
+  const vw = vv ? vv.width : document.documentElement.clientWidth;
+  const vh = vv ? vv.height : document.documentElement.clientHeight;
+  const rect = productPickerCtx.anchor.getBoundingClientRect();
+  const width = Math.min(520, vw-24, Math.max(320,rect.width));
+  const left = Math.max(vx+12,Math.min(rect.left,vx+vw-width-12));
+  const below = vy+vh-rect.bottom-8;
+  const above = rect.top-vy-8;
+  productPicker.style.left = left+'px';
+  productPicker.style.width = width+'px';
+  if(Math.max(below,above)<180){
+    productPicker.style.top = (vy+12)+'px';
+    productPicker.style.maxHeight = Math.max(120,vh-24)+'px';
+  } else if(below>=280 || below>=above){
+    productPicker.style.top = (rect.bottom+6)+'px';
+    productPicker.style.maxHeight = Math.min(460,below)+'px';
+  } else {
+    const maxHeight = Math.min(460,above);
+    productPicker.style.top = Math.max(vy+12,rect.top-6-maxHeight)+'px';
+    productPicker.style.maxHeight = maxHeight+'px';
+  }
+}
+function openProductPicker(anchor){
+  closeProductPicker(false);
+  productPickerCtx = {
+    anchor,
+    day:state.activeDay,
+    mi:+anchor.dataset.m,
+    ci:+anchor.dataset.c,
+    cat:anchor.dataset.cat,
+    keepId:state.days[state.activeDay][+anchor.dataset.m][+anchor.dataset.c].prodId
+  };
+  anchor.setAttribute('aria-expanded','true');
+  productPicker.hidden = false;
+  productPickerSearch.value = '';
+  renderProductPickerOptions(true);
+  positionProductPicker();
+  requestAnimationFrame(()=>productPickerSearch.focus({preventScroll:true}));
+}
+productPickerSearch.addEventListener('input',()=>renderProductPickerOptions(false));
+productPickerSearch.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'){
+    const first=productPickerList.querySelector('.product-option');
+    if(first){ e.preventDefault(); first.focus(); }
+  }
+});
+byId('productPickerClose').addEventListener('click',()=>closeProductPicker(true));
+productPickerList.addEventListener('click',e=>{
+  const option=e.target.closest('.product-option');
+  if(!option || !productPickerCtx) return;
+  const ctx=productPickerCtx;
+  const allowed=selectList(ctx.cat,ctx.keepId).some(p=>p.i===option.dataset.i);
+  const comp=state.days[ctx.day] && state.days[ctx.day][ctx.mi] && state.days[ctx.day][ctx.mi][ctx.ci];
+  if(!allowed || !comp){ closeProductPicker(false); return; }
+  clearAutoFitMsg();
+  comp.prodId=option.dataset.i;
+  comp.customG=null;
+  closeProductPicker(false);
+  renderDay();
+  renderShop();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape' && productPickerCtx){ e.preventDefault(); closeProductPicker(true); }
+});
+document.addEventListener('pointerdown',e=>{
+  if(!productPickerCtx || productPicker.contains(e.target) || productPickerCtx.anchor.contains(e.target)) return;
+  closeProductPicker(false);
+});
+window.addEventListener('resize',positionProductPicker);
+if(window.visualViewport) window.visualViewport.addEventListener('resize',positionProductPicker);
 byId('mealsWrap').addEventListener('input', e=>{
   const el = e.target;
   if(!el.classList.contains('inpG')) return;
@@ -3605,6 +3794,11 @@ byId('mealsWrap').addEventListener('change', e=>{
   renderDay();
 });
 byId('mealsWrap').addEventListener('click', e=>{
+  const productButton=e.target.closest('.product-select-btn');
+  if(productButton){
+    openProductPicker(productButton);
+    return;
+  }
   const swap=e.target.closest('.swap-option');
   if(swap){
     if(applyClientSwap(+swap.dataset.m,+swap.dataset.c,swap.dataset.i)){ renderDay(); renderShop(); }

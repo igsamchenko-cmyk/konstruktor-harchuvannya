@@ -15,7 +15,7 @@ const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
 assert.equal(new Set(ids).size, ids.length, 'HTML ids remain unique');
 for (const id of ['fDiet','healthScreen','safetyWarn','poolWarn','btnGenWeek','btnShareClient','wWaist','wAdaptive',
   'ciDate','ciAdherence','ciHunger','ciEnergy','ciPerformance','btnAddCheckin','ciLatest','ciList',
-  'sSodiumContext','sodiumContextHint','btnAutoFit','autoFitMsg'])
+  'sSodiumContext','sodiumContextHint','btnAutoFit','autoFitMsg','productPicker','productPickerSearch','productPickerClose','productPickerList'])
   assert(ids.includes(id), 'required safety control exists: ' + id);
 assert(/id="fAge" min="18"/.test(html), 'age input exposes the adult-only limit');
 assert(html.includes('./i18n-safety.js'), 'safety translations are loaded');
@@ -38,6 +38,12 @@ assert(fs.readFileSync('i18n-sprint2.js','utf8').includes('"Умови трен�
 assert(html.includes('./i18n-adaptive.js'), 'adaptive translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-adaptive.js'), 'adaptive translations are cached offline');
 assert(html.includes('manual-choice-note'), 'manual repetition freedom is explained in the menu builder');
+assert(html.includes('class="product-select-btn"') && !html.includes('class="selProd"'),
+  'meal rows use the bounded custom product picker instead of an unbounded native select');
+assert(/\.product-picker\{position:fixed/.test(html) && /max-height:min\(460px,calc\(100dvh - 24px\)\)/.test(html),
+  'product picker is viewport-bound and scrollable');
+assert(html.includes('function positionProductPicker()') && html.includes("productPickerSearch.addEventListener('input'"),
+  'product picker supports viewport-aware placement and live search');
 const adaptiveI18n = fs.readFileSync('i18n-adaptive.js','utf8');
 assert(adaptiveI18n.includes('"Збалансоване меню · 3 дні"') && adaptiveI18n.includes('"Просте меню · 2 дні"'),
   'practical week-mode labels have English translations');
@@ -192,17 +198,32 @@ assert.equal(a.excludedSet().size, 0, 'legacy partial preset can be fully cleare
 
 reset();
 const unavailableIds = new Set([
-  'p06','p08','p16','p17','p25','p26','p27','p28','p30','p31','p32','p37','p38','p39','p40',
+  'p06','p16','p17','p25','p26','p27','p28','p40',
   'p22','vp01','vp02','vp03','vp04','vp05','vp06','c06','c12','d07','d11','d12','f10','f12','f15','f16','f17','f18','f20',
-  'v15','v25','v26','v29','v30','v31','v32','r24','r25','r26','r27','r28','r29','r32','s14','s33','s34'
+  'v15','v25','v26','v29','v30','v31','v32','r24','r25','r26','r27','r28','r29','s14','s33','s34'
 ]);
-const unavailableNames = /Кролик|Печінка|Серця|Шлуночки|Креветки|Кальмар|Товстолобик|^Сом$|Горбуша|Ковбаса|Сосиски|Тушонка|перепелині|Тофу|Темпе|Сейтан|Едамаме|соєв|Кіноа|Батат|Айран|Простокваша|козяче|чіа|Авокадо|Сало|Смалець|Олія лляна|Олія гарбузова|Кунжут|Спаржа|Редька|Патисон|Гриби білі|Лисички|Опеньки|мариновані|Аґрус|Ожина|Журавлина|Обліпиха|Калина|Айва|Інжир|Сушені банани|Пахлава|Макарон(?!и)/i;
+const unavailableNames = /Кролик|Креветки|Кальмар|Товстолобик|^Сом$|Горбуша|Ковбаса|Сосиски|Тушонка|перепелині|Тофу|Темпе|Сейтан|Едамаме|соєв|Кіноа|Батат|Айран|Простокваша|козяче|чіа|Авокадо|Сало|Смалець|Олія лляна|Олія гарбузова|Кунжут|Спаржа|Редька|Патисон|Гриби білі|Лисички|Опеньки|мариновані|Аґрус|Ожина|Журавлина|Обліпиха|Калина|Айва|Інжир|Сушені банани|Пахлава|Макарон(?!и)/i;
 assert(!a.PRODUCTS.some(p => unavailableIds.has(p.i) || unavailableNames.test(p.n)),
   'hard-to-buy exotic products are removed from the visible food database');
 assert(!a.selectList('protein').some(p => unavailableIds.has(p.i) || unavailableNames.test(p.n)),
   'protein selector contains no removed exotic products');
 assert(!a.simpleFitCandidates('protein').some(p => unavailableIds.has(p.i) || unavailableNames.test(p.n)),
   'simple-food fitting contains no removed exotic products');
+const uaEverydayIds = ['p37','p38','p39','p08','p30','p31','p32','c29','c30','c31','c32',
+  'd14','d15','d16','d17','f27','v35','v36','v37','v38','r32','r33'];
+for(const id of uaEverydayIds)
+  assert(a.PRODUCTS.some(p=>p.i===id), 'expanded Ukrainian grocery base contains ' + id);
+for(const id of ['p08','p30','p31','p32']){
+  const item=a.PRODUCTS.find(p=>p.i===id);
+  assert(item.manualOnly, id + ' remains a deliberate manual choice');
+  assert(a.selectList('protein').some(p=>p.i===id), id + ' is searchable in manual protein choices');
+  assert(!a.pool('protein').some(p=>p.i===id), id + ' is never inserted automatically');
+}
+assert(a.PRESETS.fish.includes('p38') && a.PRESETS.vegetarian.includes('p38'),
+  'new fish respects fish and vegetarian exclusions');
+assert(['p39','d14','d15','d16','d17','f27'].every(id=>a.PRESETS.lactose.includes(id)),
+  'new dairy foods respect the lactose exclusion');
+assert(a.PRESETS.gluten.includes('c30'), 'regular pasta respects the gluten exclusion');
 
 reset();
 a.state.profile.diet = 'vegan';

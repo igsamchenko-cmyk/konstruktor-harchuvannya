@@ -28,3 +28,4 @@ Object.assign(window.NUTRI_EN=window.NUTRI_EN||{}, {
   "У ручному режимі одна категорія має однаковий список у всіх прийомах їжі. Можна свідомо повторювати той самий продукт або скопіювати готовий день на весь тиждень.":"In manual mode, each category uses the same list at every meal. You can intentionally repeat the same food or copy a completed day across the whole week.",
   "Розподіл калорій":"Calorie distribution"
 });
+Object.assign(window.NUTRI_EN,{"Вибір продукту":"Choose a product","Знайти продукт":"Search foods","Закрити":"Close","Вибрати продукт":"Choose a product","Продукти":"Foods","Готові страви (≈)":"Prepared dishes (≈)","Нічого не знайдено":"No products found"});
