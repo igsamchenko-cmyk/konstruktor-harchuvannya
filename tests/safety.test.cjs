@@ -166,8 +166,18 @@ a.setPresetState('vegetarian', false);
 assert.equal(a.excludedSet().size, 0, 'legacy partial preset can be fully cleared after migration');
 
 reset();
+const unavailableIds = new Set(['p22','vp01','vp02','vp03','vp04','vp05','vp06','c06','c12','f10','f12']);
+const unavailableNames = /Тофу|Темпе|Сейтан|Едамаме|соєв|Кіноа|Батат|чіа|Авокадо/i;
+assert(!a.PRODUCTS.some(p => unavailableIds.has(p.i) || unavailableNames.test(p.n)),
+  'hard-to-buy exotic products are removed from the visible food database');
+assert(!a.selectList('protein').some(p => unavailableIds.has(p.i) || unavailableNames.test(p.n)),
+  'protein selector contains no removed exotic products');
+assert(!a.simpleFitCandidates('protein').some(p => unavailableIds.has(p.i) || unavailableNames.test(p.n)),
+  'simple-food fitting contains no removed exotic products');
+
+reset();
 a.state.profile.diet = 'vegan';
-assert(a.pool('protein').length >= 6, 'vegan protein pool has usable depth');
+assert(a.pool('protein').length >= 4, 'vegan protein pool keeps accessible legume options');
 assert(a.pool('snackProtein').length >= 3, 'vegan snack-protein pool has usable depth');
 const veganSweets = a.pool('sweet').filter(p=>p.c==='sweet');
 assert(veganSweets.length >= 8, 'vegan sweet pool has explicit sweet products, not just fruit fallback');
@@ -216,7 +226,7 @@ a.genWeek();
 const simpleFatIds = new Set(['f02','f01','f03','f04','f21','f05','f07']);
 for (const meal of a.state.days[0]) meal.forEach((comp, ci) => {
   if (a.MEAL_COMPS[comp.mealId][ci].cat === 'fat') {
-    comp.prodId = 'f10';
+    comp.prodId = 'f07';
     comp.customG = 5;
   }
 });
