@@ -14,7 +14,8 @@ const progressRender = inline[1].slice(progressStart,progressEnd);
 const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
 assert.equal(new Set(ids).size, ids.length, 'HTML ids remain unique');
 for (const id of ['fDiet','healthScreen','safetyWarn','poolWarn','btnGenWeek','btnShareClient','wWaist','wAdaptive',
-  'ciDate','ciAdherence','ciHunger','ciEnergy','ciPerformance','btnAddCheckin','ciLatest','ciList'])
+  'ciDate','ciAdherence','ciHunger','ciEnergy','ciPerformance','btnAddCheckin','ciLatest','ciList',
+  'sSodiumContext','sodiumContextHint'])
   assert(ids.includes(id), 'required safety control exists: ' + id);
 assert(/id="fAge" min="18"/.test(html), 'age input exposes the adult-only limit');
 assert(html.includes('./i18n-safety.js'), 'safety translations are loaded');
@@ -25,6 +26,9 @@ assert(html.includes('<details class="quality pro-only">'), 'detailed quality me
 assert(/class="notice pro-only" id="macroWarn"/.test(html), 'technical macro warnings are specialist-only');
 assert(fs.readFileSync('i18n-sprint2.js','utf8').includes('"Детальна оцінка якості раціону"'),
   'specialist quality disclosure has an English translation');
+assert(html.includes('class="m-ring"'), 'macro summary uses large circular gauges');
+assert(fs.readFileSync('i18n-sprint2.js','utf8').includes('"Умови тренування для оцінки натрію"'),
+  'sodium exercise context has an English translation');
 assert(html.includes('./i18n-adaptive.js'), 'adaptive translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-adaptive.js'), 'adaptive translations are cached offline');
 assert(html.includes('./i18n-checkin.js'), 'check-in translations are loaded');
@@ -39,7 +43,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext('let __seed=123456789; Math.random=()=>((__seed=Math.imul(__seed,1664525)+1013904223>>>0)/4294967296);', context);
-vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, selectList, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, normalizeCheckins, recentCheckin, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
+vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, excludedSet, migrateExclusionState, migrateSettings, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, selectList, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, gramBounds, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, normalizeCheckins, recentCheckin, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
 
 const a = context.api;
 const reset = () => {
@@ -47,6 +51,11 @@ const reset = () => {
   Object.assign(a.state, fresh);
 };
 const close = (got, want, tolerance) => Math.abs(got - want) <= tolerance;
+
+reset();
+a.state.settings.sodiumContext='invalid';
+a.migrateSettings();
+assert.equal(a.state.settings.sodiumContext,'standard','invalid sodium context migrates to the safe default');
 
 reset();
 a.state.profile.age = 14;
