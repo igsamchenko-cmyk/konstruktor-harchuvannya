@@ -292,6 +292,28 @@
   .m-val b{font-weight:750}
   .m-row.near .m-val{color:var(--warn-text)}
   .m-row.off .m-val{color:var(--critical)}
+  /* --- пояснення норм при наведенні, фокусі або дотику --- */
+  .has-tooltip{position:relative;cursor:help}
+  .has-tooltip::after{content:attr(data-tip);position:absolute;z-index:120;top:calc(100% + 8px);left:0;
+    width:max-content;max-width:min(320px,calc(100vw - 40px));padding:10px 12px;border:1px solid var(--frame);
+    border-radius:9px;background:var(--ink);color:var(--paper);box-shadow:0 12px 30px rgba(0,0,0,.28);
+    font-size:12.5px;font-weight:500;line-height:1.45;letter-spacing:0;text-align:left;white-space:normal;
+    opacity:0;visibility:hidden;transform:translateY(-4px);pointer-events:none;transition:opacity .15s,transform .15s,visibility .15s}
+  .has-tooltip:hover::after,.has-tooltip:focus::after,.has-tooltip:focus-visible::after{
+    opacity:1;visibility:visible;transform:none}
+  .has-tooltip:focus-visible{outline:3px solid color-mix(in srgb,var(--card-accent,var(--accent)) 24%,transparent);outline-offset:2px}
+  .m-row.has-tooltip,.quality-item.has-tooltip,.tile.has-tooltip,.split.has-tooltip{overflow:visible}
+  .m-row.has-tooltip .m-name::after,.quality-item.has-tooltip .qh>span:first-child::after,
+  .tile.has-tooltip .lbl::after,.split.has-tooltip .shead>span:first-child::after{
+    content:"ⓘ";margin-left:3px;color:var(--muted);font-size:11px;font-weight:700}
+  .macros .m-row:nth-child(n+3)::after,.quality-grid .quality-item:last-child::after,
+  .tiles .tile:nth-child(4n)::after{right:0;left:auto}
+  @media(max-width:900px){
+    .macros .m-row:nth-child(even)::after,.tiles .tile:nth-child(even)::after{right:0;left:auto}
+  }
+  @media(max-width:560px){
+    .has-tooltip::after{max-width:calc(100vw - 48px)}
+  }
   @media(max-width:900px){.macros{grid-template-columns:repeat(2,minmax(150px,1fr))}}
   @media(max-width:420px){
     .m-row{padding:8px;gap:9px}
@@ -471,8 +493,10 @@
     border-radius:9px 9px 13px 13px;background:var(--field)}
   .scale-screen{position:absolute;left:37px;top:48px;z-index:4;width:38px;padding:4px 2px;border-radius:4px;
     background:#15221e;color:#b9f3df;font:800 10px/1 ui-monospace,monospace;text-align:center}
-  .scale-tare{position:absolute;left:48px;top:73px;z-index:4;width:16px;height:5px;border-radius:3px;background:var(--muted)}
-  .weigh-frame:nth-child(2) .scale-tare{animation:tarePress 6s infinite 2s}
+  .scale-unit,.scale-power{position:absolute;top:72px;z-index:4;height:9px;padding:0;border:1px solid var(--frame);
+    border-radius:3px;background:var(--track);color:var(--ink-2);font-size:5px;font-weight:700;line-height:7px;text-align:center}
+  .scale-unit{left:26px;width:22px}.scale-power{left:51px;width:48px}
+  .weigh-frame:nth-child(2) .scale-power{animation:tarePress 6s infinite 2s}
   .food-dots{position:absolute;left:32px;top:4px;z-index:5;width:48px;height:24px;opacity:0}
   .weigh-frame:nth-child(3) .food-dots{opacity:1;animation:foodDrop 6s infinite 4s}
   .food-dots i{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--produce);box-shadow:0 1px 2px rgba(0,0,0,.2)}
@@ -495,7 +519,7 @@
   @keyframes tarePress{0%,100%{transform:none;background:var(--muted)}8%,18%{transform:translateY(2px);background:var(--kitchen)}}
   @keyframes foodDrop{0%{transform:translateY(-13px);opacity:0}9%,75%{transform:none;opacity:1}100%{opacity:0}}
   @media(prefers-reduced-motion:reduce){.weigh-frame,.weigh-frame:nth-child(2),.weigh-frame:nth-child(3),
-    .weigh-frame:nth-child(2) .scale-tare,.weigh-frame:nth-child(3) .food-dots{animation:none}.weigh-frame:nth-child(3) .food-dots{opacity:1}}
+    .weigh-frame:nth-child(2) .scale-power,.weigh-frame:nth-child(3) .food-dots{animation:none}.weigh-frame:nth-child(3) .food-dots{opacity:1}}
   @media(max-width:640px){
     .weigh-guide-card{grid-template-columns:44px minmax(0,1fr);gap:11px}.weigh-guide-action{grid-column:2}
     .weigh-guide-icon{transform:scale(.88);transform-origin:left center}
@@ -1293,7 +1317,7 @@
       <div>
         <p class="weigh-dialog-eyebrow">Кухонні ваги · 3 кроки</p>
         <h3 id="weighDialogTitle">Як правильно зважувати продукт</h3>
-        <p class="weigh-dialog-subject" id="weighDialogSubject">Обнулення тари прибирає вагу тарілки або миски з результату.</p>
+        <p class="weigh-dialog-subject" id="weighDialogSubject">Кнопка «ОД.» перемикає одиниці, а «ВВІМК./ТАРА» вмикає ваги та обнуляє тару.</p>
       </div>
       <button type="button" class="weigh-dialog-close" id="weighDialogClose" aria-label="Закрити">×</button>
     </header>
@@ -1309,20 +1333,20 @@
       <div class="weigh-diagram" aria-live="polite">
         <article class="weigh-frame">
           <div class="mini-scale" aria-hidden="true"><span class="scale-bowl"></span><span class="scale-pan"></span>
-            <span class="scale-body"></span><span class="scale-screen" id="weighScreen1">186 г</span><span class="scale-tare"></span></div>
+            <span class="scale-body"></span><span class="scale-screen" id="weighScreen1">186 г</span><span class="scale-unit">ОД.</span><span class="scale-power">ВВІМК./ТАРА</span></div>
           <span class="weigh-step-no">1</span>
           <div><b id="weighStepTitle1">Поставте порожню ємність</b><p id="weighStepText1">Тарілка або миска вже стоїть на вагах.</p></div>
         </article>
         <article class="weigh-frame">
           <div class="mini-scale" aria-hidden="true"><span class="scale-bowl"></span><span class="scale-pan"></span>
-            <span class="scale-body"></span><span class="scale-screen" id="weighScreen2">0 г</span><span class="scale-tare"></span></div>
+            <span class="scale-body"></span><span class="scale-screen" id="weighScreen2">0 г</span><span class="scale-unit">ОД.</span><span class="scale-power">ВВІМК./ТАРА</span></div>
           <span class="weigh-step-no">2</span>
-          <div><b id="weighStepTitle2">Натисніть TARE / 0</b><p id="weighStepText2">Вага ємності більше не враховується.</p></div>
+          <div><b id="weighStepTitle2">Натисніть «ВВІМК./ТАРА»</b><p id="weighStepText2">Вага ємності більше не враховується.</p></div>
         </article>
         <article class="weigh-frame">
           <div class="mini-scale" aria-hidden="true"><span class="food-dots"><i></i><i></i><i></i><i></i></span>
             <span class="scale-bowl"></span><span class="scale-pan"></span><span class="scale-body"></span>
-            <span class="scale-screen" id="weighScreen3">100 г</span><span class="scale-tare"></span></div>
+            <span class="scale-screen" id="weighScreen3">100 г</span><span class="scale-unit">ОД.</span><span class="scale-power">ВВІМК./ТАРА</span></div>
           <span class="weigh-step-no">3</span>
           <div><b id="weighStepTitle3">Додайте продукт</b><p id="weighStepText3">Зупиніться на кількості, вказаній у меню.</p></div>
         </article>
@@ -2823,6 +2847,57 @@ const num1 = x => (Math.round(x*10)/10).toFixed(1).replace('.',window.nutriLangu
 /* темп: 0,35 лишається 0,35, а 0,40 стає 0,4 */
 const numR = x => x.toFixed(2).replace(/0$/,'').replace('.',window.nutriLanguage==='en'?'.':',');
 const num2 = x => x.toFixed(2).replace('.',window.nutriLanguage==='en'?'.':',');
+function nutritionHelp(kind,t){
+  const tr=(uk,en)=>window.nutriT?nutriT(uk,en):uk;
+  const calcLabel=t.adjusted
+    ? tr('розрахункової ваги','calculation weight')
+    : tr('фактичної ваги','actual body weight');
+  if(kind==='kcal') return tr(
+    `BMR ${fmt(t.bmr)} ккал — оцінка витрат у спокої. З урахуванням руху й тренувань виходить ≈${fmt(t.tdee)} ккал, а ціль і темп змінюють план до ${fmt(t.kcal)} ккал. Через 2–3 тижні цифру слід звірити з трендом ваги.`,
+    `BMR ${fmt(t.bmr)} kcal estimates resting needs. Movement and training bring expenditure to ≈${fmt(t.tdee)} kcal; the goal and selected rate set the plan at ${fmt(t.kcal)} kcal. Recheck it against the weight trend after 2–3 weeks.`);
+  if(kind==='protein') return tr(
+    `Орієнтир: ${state.settings.proteinPerKg} г/кг × ${num1(t.calcW)} кг ${calcLabel}. Така кількість підтримує ситість, відновлення й збереження м’язів; застосунок додатково не дозволяє білку витіснити жири та вуглеводи.`,
+    `Guide: ${state.settings.proteinPerKg} g/kg × ${num1(t.calcW)} kg of ${calcLabel}. This supports satiety, recovery and muscle retention; the app also prevents protein from crowding out fat and carbohydrates.`);
+  if(kind==='fat') return tr(
+    `Базово ${state.settings.fatPct}% калорійності, але не нижче ${t.fatMin} г: щонайменше 0,6 г/кг розрахункової ваги та не менше 40 г. Це захищає надто низький рівень жирів і засвоєння жиророзчинних вітамінів.`,
+    `The starting point is ${state.settings.fatPct}% of calories, but never below ${t.fatMin} g: at least 0.6 g/kg of calculation weight and no less than 40 g. This avoids an excessively low fat intake and supports absorption of fat-soluble vitamins.`);
+  if(kind==='carb') return tr(
+    `Вуглеводи отримують решту калорій після білка та жирів. Це не жорстка окрема норма: значення допомагає забезпечити енергію, зручні порції й збалансувати меню в межах загальної калорійності.`,
+    `Carbohydrates receive the calories left after protein and fat. This is not a separate rigid requirement: it supports energy, practical portions and a balanced menu within the total calorie target.`);
+  if(kind==='fiber') return tr(
+    `Мінімальний орієнтир — 14 г клітковини на кожні 1000 ккал, округлений до цілих грамів. Він підтримує ситість і роботу травної системи; різко збільшувати клітковину не варто.`,
+    `The minimum guide is 14 g of fiber per 1,000 kcal, rounded to whole grams. It supports satiety and digestive function; fiber should not be increased abruptly.`);
+  return tr(
+    'Білки й вуглеводи дають приблизно 4 ккал на грам, жири — 9 ккал. Смуга показує частку енергії, а не просто співвідношення грамів.',
+    'Protein and carbohydrate provide about 4 kcal per gram; fat provides 9 kcal. The bar shows the share of energy, not merely the ratio of grams.');
+}
+function qualityMetricHelp(kind,t,highSweat=false){
+  const tr=(uk,en)=>window.nutriT?nutriT(uk,en):uk;
+  if(kind==='sodium'&&highSweat) return tr(
+    'Загальний орієнтир ВООЗ для дорослих — менше 2000 мг натрію на добу. Під час тривалого навантаження, спеки або рясного потовиділення додаткове відновлення натрію залежить від фактичних втрат поту, тому застосунок не встановлює універсальну підвищену межу.',
+    'The general WHO guide for adults is below 2,000 mg sodium per day. During prolonged exercise, heat or heavy sweating, additional replacement depends on actual sweat losses, so the app does not set one universal higher limit.');
+  if(kind==='sodium') return tr(
+    'Орієнтир ВООЗ для дорослих — менше 2000 мг натрію на добу, що приблизно відповідає 5 г кухонної солі з усіх джерел. Це популяційна межа, а не персональний медичний припис.',
+    'The WHO guide for adults is below 2,000 mg sodium per day, roughly equivalent to 5 g of salt from all sources. This is a population guideline, not an individual medical prescription.');
+  if(kind==='satfat') return tr(
+    `Межа ${fmt(qualityLimits(t).sf)} г відповідає 10% добової енергії. ВООЗ радить не перевищувати цю частку й переважно замінювати насичені жири ненасиченими.`,
+    `The ${fmt(qualityLimits(t).sf)} g limit equals 10% of daily energy. WHO recommends not exceeding this share and primarily replacing saturated fat with unsaturated fat.`);
+  return tr(
+    `Межа ${fmt(qualityLimits(t).sug)} г відповідає 10% добової енергії. Йдеться про додані цукри, мед, сиропи та соки — не про природні цукри у цілих фруктах і звичайному молоці.`,
+    `The ${fmt(qualityLimits(t).sug)} g limit equals 10% of daily energy. It refers to added sugars, honey, syrups and juices, not naturally occurring sugars in whole fruit or plain milk.`);
+}
+function setHelpTooltip(el,text,label){
+  if(!el) return;
+  el.classList.add('has-tooltip');
+  el.tabIndex=0;
+  el.dataset.tip=text;
+  el.setAttribute('role','note');
+  el.setAttribute('aria-label',(label?label+'. ':'')+text);
+}
+function tooltipAttrs(text,label){
+  const aria=(label?label+'. ':'')+text;
+  return `tabindex="0" role="note" data-tip="${escHtml(text)}" aria-label="${escHtml(aria)}"`;
+}
 function applyMode(){
   document.body.setAttribute('data-mode', isClient() ? 'client' : 'pro');
   byId('btnMode').textContent = isClient() ? '⚙️' : '👤';
@@ -2838,6 +2913,14 @@ function applyMode(){
 }
 function renderTargets(){
   const t = calcTargets();
+  const helpLabel=window.nutriT?nutriT('Чому така норма?','Why this target?'):'Чому така норма?';
+  setHelpTooltip(byId('tKcal2').closest('.tile'),nutritionHelp('kcal',t),helpLabel);
+  setHelpTooltip(byId('tProt').closest('.tile'),nutritionHelp('protein',t),helpLabel);
+  setHelpTooltip(byId('tFat').closest('.tile'),nutritionHelp('fat',t),helpLabel);
+  setHelpTooltip(byId('tCarb').closest('.tile'),nutritionHelp('carb',t),helpLabel);
+  setHelpTooltip(byId('tFib').closest('.tile'),nutritionHelp('fiber',t),helpLabel);
+  setHelpTooltip(byId('sBar').closest('.split'),nutritionHelp('split',t),
+    window.nutriT?nutriT('Як читати розподіл?','How to read this distribution?'):'Як читати розподіл?');
   byId('tKcal').textContent = fmt(t.kcal);
   byId('tKcal2').textContent = fmt(t.kcal);
   byId('tKcalSub').textContent = `BMR ${fmt(t.bmr)} · Витрати ${fmt(t.tdee)} ккал`;
@@ -2978,12 +3061,12 @@ function renderDayTabs(){
 function devPct(got, target){ return target>0 ? (got-target)/target*100 : 0; }
 function devText(d){ return `${d>0?'+':'−'}${Math.abs(d).toFixed(0)}%`; }
 
-function macroRow(name, colorVar, got, target, unit, plain){
+function macroRow(kind,name,colorVar,got,target,unit,plain,t){
   const pct = target>0 ? Math.min(130, got/target*100) : 0;
   const d = devPct(got,target), a = Math.abs(d);
   const cls = plain ? '' : (a>10 ? 'off' : (a>5 ? 'near' : ''));
   const mark = (!plain && a>5) ? ` <b>${devText(d)}</b>` : '';
-  return `<div class="m-row ${cls}">
+  const help=nutritionHelp(kind,t); return `<div class="m-row ${cls} has-tooltip" ${tooltipAttrs(help,name)}>
     <div class="m-ring" style="--m-pct:${Math.min(100,pct)};--m-color:var(${colorVar})">
       <div class="m-center"><strong>${fmt(got)}</strong><span>${unit}</span></div>
     </div>
@@ -2998,18 +3081,19 @@ function qualitySummary(tot,t){
   const lim=qualityLimits(t);
   const highSweat=state.settings.sodiumContext==='highSweat';
   const rows=[
-    {name:highSweat?'Натрій у меню':'Натрій',got:tot.na,max:highSweat?null:lim.na,unit:'мг'},
-    {name:'Насичені жири',got:tot.sf,max:lim.sf,unit:'г'},
-    {name:'Вільні цукри',got:tot.sug,max:lim.sug,unit:'г'}
+    {kind:'sodium',name:highSweat?'Натрій у меню':'Натрій',got:tot.na,max:highSweat?null:lim.na,unit:'мг'},
+    {kind:'satfat',name:'Насичені жири',got:tot.sf,max:lim.sf,unit:'г'},
+    {kind:'sugar',name:'Вільні цукри',got:tot.sug,max:lim.sug,unit:'г'}
   ];
   const cards=rows.map(x=>{
-    if(x.max==null) return `<div class="quality-item ok">
+    const help=qualityMetricHelp(x.kind,t,highSweat);
+    if(x.max==null) return `<div class="quality-item ok has-tooltip" ${tooltipAttrs(help,x.name)}>
       <div class="qh"><span>${x.name}</span><span class="qv">≈ ${fmt(x.got)} ${x.unit}</span></div>
       <div class="hint" style="margin-top:7px">Базовий раціон + індивідуальне відновлення під час тривалого навантаження</div>
     </div>`;
     const pct=x.got/Math.max(1,x.max)*100;
     const cls=pct>100?'bad':pct>80?'warn':'ok';
-    return `<div class="quality-item ${cls}">
+    return `<div class="quality-item ${cls} has-tooltip" ${tooltipAttrs(help,x.name)}>
       <div class="qh"><span>${x.name}</span><span class="qv">≈ ${fmt(x.got)} / ${fmt(x.max)} ${x.unit}</span></div>
       <div class="qbar"><div class="qfill" style="width:${Math.min(100,pct)}%"></div></div>
     </div>`;
@@ -3110,10 +3194,10 @@ function renderDay(){
            : devBadge(d.tot, t)}
     </div>
     <div class="macros">
-      ${macroRow('Білки','--s-prot',d.tot.p,t.prot,'г',cl)}
-      ${macroRow('Жири','--s-fat',d.tot.f,t.fat,'г',cl)}
-      ${macroRow('Вуглеводи','--s-carb',d.tot.c,t.carb,'г',cl)}
-      ${macroRow('Клітковина','--s-fib',d.tot.fb,t.fib,'г',cl)}
+      ${macroRow('protein','Білки','--s-prot',d.tot.p,t.prot,'г',cl,t)}
+      ${macroRow('fat','Жири','--s-fat',d.tot.f,t.fat,'г',cl,t)}
+      ${macroRow('carb','Вуглеводи','--s-carb',d.tot.c,t.carb,'г',cl,t)}
+      ${macroRow('fiber','Клітковина','--s-fib',d.tot.fb,t.fib,'г',cl,t)}
     </div>
     ${qualitySummary(d.tot,t)}
     ${cl ? '' : balanceHints(d.tot, t)}
@@ -3794,11 +3878,11 @@ function scheduleGramRender(focus){
 /* ---- наочний довідник зі зважування продуктів ---- */
 const WEIGH_GUIDES = {
   basics:{
-    subject:['Обнулення тари прибирає вагу тарілки або миски з результату.','Taring removes the plate or bowl weight from the result.'],
+    subject:['Кнопка «ОД.» перемикає одиниці, а «ВВІМК./ТАРА» вмикає ваги та обнуляє тару.','The UNIT button changes units; ON/TARE turns the scale on and tares the container.'],
     screens:['186 г','0 г','100 г'],
     steps:[
       ['Поставте порожню ємність','Тарілка або миска вже стоїть на вагах.','Place an empty container','Put the plate or bowl on the scale.'],
-      ['Натисніть TARE / 0','Вага ємності більше не враховується.','Press TARE / 0','The container weight is now excluded.'],
+      ['Натисніть «ВВІМК./ТАРА»','Вага ємності більше не враховується.','Press TARE / 0','The container weight is now excluded.'],
       ['Додайте продукт','Зупиніться на кількості, вказаній у меню.','Add the food','Stop at the amount shown in the menu.']
     ],
     rule:['Порівнюйте цифру на вагах з грамами у відповідному рядку меню.','Match the scale reading to the grams shown in the relevant menu row.'],
@@ -3809,7 +3893,7 @@ const WEIGH_GUIDES = {
     screens:['186 г','0 г','70 г'],
     steps:[
       ['Поставте суху миску','Вона має бути чистою та без води.','Place a dry bowl','It should be clean and contain no water.'],
-      ['Обнуліть тару','На дисплеї має з’явитися 0 г.','Tare the container','The display should read 0 g.'],
+      ['Обнуліть тару кнопкою «ВВІМК./ТАРА»','На дисплеї має з’явитися 0 г.','Tare the container','The display should read 0 g.'],
       ['Насипте сухий продукт','Відміряйте грами з позначкою «г сух.».','Add the dry food','Measure the amount marked “g dry”.']
     ],
     rule:['70 г сухої гречки — це саме 70 г до варіння, а не вага готової каші.','70 g of dry buckwheat means 70 g before cooking, not the cooked weight.'],
@@ -3820,7 +3904,7 @@ const WEIGH_GUIDES = {
     screens:['186 г','0 г','150 г'],
     steps:[
       ['Підготуйте продукт','Приберіть кістки та неїстівні частини, якщо вони не входять у порцію.','Prepare the food','Remove bones and inedible parts unless they are included in the portion.'],
-      ['Поставте тарілку й обнуліть','Промокніть зайву рідину та натисніть TARE / 0.','Place the plate and tare','Pat away excess liquid and press TARE / 0.'],
+      ['Поставте тарілку й обнуліть','Промокніть зайву рідину та натисніть «ВВІМК./ТАРА».','Place the plate and tare','Pat away excess liquid and press TARE / 0.'],
       ['Зважте сирим','Відміряйте грами з позначкою «г сир.».','Weigh it raw','Measure the amount marked “g raw”.']
     ],
     rule:['150 г сирого філе — це вага до запікання, варіння або смаження.','150 g of raw fillet is the weight before baking, boiling or frying.'],
@@ -3831,7 +3915,7 @@ const WEIGH_GUIDES = {
     screens:['186 г','0 г','180 г'],
     steps:[
       ['Підготуйте їстівну частину','Помийте продукт, приберіть кісточку, хвостик або неїстівну шкірку.','Prepare the edible portion','Wash it and remove the stone, stem or inedible peel.'],
-      ['Обнуліть тарілку','Поставте порожню тарілку та натисніть TARE / 0.','Tare the plate','Place the empty plate on the scale and press TARE / 0.'],
+      ['Обнуліть тарілку','Поставте порожню тарілку та натисніть «ВВІМК./ТАРА».','Tare the plate','Place the empty plate on the scale and press TARE / 0.'],
       ['Додайте очищений продукт','Відміряйте потрібну їстівну кількість.','Add the prepared food','Measure the required edible amount.']
     ],
     rule:['Для банана не рахуйте шкірку, а для яблука зі шкіркою — рахуйте все, що фактично з’їсте.','Do not count a banana peel; for an apple eaten with the peel, count everything you actually eat.'],
@@ -3842,7 +3926,7 @@ const WEIGH_GUIDES = {
     screens:['520 г','0 г','−10 г'],
     steps:[
       ['Поставте пляшку на ваги','Кришка має бути на пляшці, зовнішня поверхня — сухою.','Place the bottle on the scale','Keep the cap on and make sure the outside is dry.'],
-      ['Натисніть TARE / 0','Не переставляйте пляшку до використання продукту.','Press TARE / 0','Do not move the bottle until after pouring.'],
+      ['Натисніть «ВВІМК./ТАРА»','Не переставляйте пляшку до використання продукту.','Press TARE / 0','Do not move the bottle until after pouring.'],
       ['Налийте й поверніть пляшку','Мінус 10 г означає, що використано 10 г продукту.','Pour, then return the bottle','A reading of −10 g means that 10 g was used.']
     ],
     rule:['Для олії орієнтуйтесь на грами з меню: кухонна ложка часто дає неточну кількість.','For oil, follow the grams in the menu: a household spoon is often imprecise.'],

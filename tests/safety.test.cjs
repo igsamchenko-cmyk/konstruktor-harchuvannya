@@ -62,6 +62,18 @@ assert(html.includes('class="weigh-help-btn"') && html.includes("openWeighGuide(
   'every rendered food row can open contextual weighing help');
 assert(/@keyframes weighFrame/.test(html) && /prefers-reduced-motion:reduce/.test(html),
   'the weighing diagram is animated and respects reduced-motion preferences');
+const weighingI18n = fs.readFileSync('i18n-weighing.js','utf8');
+assert(html.includes('class="scale-unit">ОД.</span>') && html.includes('class="scale-power">ВВІМК./ТАРА</span>'),
+  'the scale diagram uses common Ukrainian two-button labels');
+assert(!html.includes('class="scale-tare"') && weighingI18n.includes('"ВВІМК./ТАРА":"ON/TARE"'),
+  'the obsolete anonymous tare control is removed and the new labels are translated');
+assert(html.includes('function nutritionHelp(kind,t)') && html.includes('function qualityMetricHelp(kind,t,highSweat=false)'),
+  'nutrition and quality targets have contextual explanations');
+assert(html.includes("setHelpTooltip(byId('tKcal2').closest('.tile')") &&
+  html.includes("macroRow('protein','Білки'") && html.includes('quality-item ${cls} has-tooltip'),
+  'target cards, macro rings and specialist quality metrics expose tooltips');
+assert(html.includes('.has-tooltip:hover::after,.has-tooltip:focus::after'),
+  'tooltips work with both pointer hover and keyboard or touch focus');
 const swSource = fs.readFileSync('sw.js','utf8');
 assert(swSource.includes('res.ok') && swSource.includes("res.type === 'basic'"),
   'service worker only runtime-caches successful same-origin app responses');
