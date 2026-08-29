@@ -413,6 +413,100 @@
   .gwrap input{min-width:0;text-align:right;font-variant-numeric:tabular-nums}
   .gwrap .un{display:flex;min-height:38px;flex-direction:column;justify-content:center;
     font-size:12.5px;line-height:1.35;color:var(--ink-2);white-space:nowrap}
+  .unit-line{display:inline-flex;align-items:center;gap:5px}
+  .weigh-help-btn{display:inline-grid;place-items:center;width:21px;height:21px;flex:0 0 21px;
+    padding:0;border:1px solid color-mix(in srgb,var(--kitchen) 48%,var(--hairline));border-radius:50%;
+    background:var(--kitchen-soft);color:var(--kitchen-dark);font:inherit;font-size:12px;font-weight:800;line-height:1;cursor:pointer}
+  .weigh-help-btn:hover,.weigh-help-btn:focus-visible{border-color:var(--kitchen);outline:2px solid
+    color-mix(in srgb,var(--kitchen) 24%,transparent);outline-offset:1px}
+  .gstat .weigh-help-btn{margin-left:6px;vertical-align:middle}
+
+  /* --- наочний довідник зі зважування продуктів --- */
+  .weigh-guide-card{display:grid;grid-template-columns:52px minmax(0,1fr) auto;align-items:center;gap:14px;
+    width:100%;margin-top:16px;padding:13px 15px;border:1px solid color-mix(in srgb,var(--kitchen) 42%,var(--frame));
+    border-radius:11px;background:linear-gradient(110deg,var(--kitchen-soft),var(--field) 62%);
+    color:var(--ink);font:inherit;text-align:left;cursor:pointer;box-shadow:0 6px 18px var(--shadow)}
+  .weigh-guide-card:hover{border-color:var(--kitchen)}
+  .weigh-guide-card:focus-visible{outline:3px solid color-mix(in srgb,var(--kitchen) 28%,transparent);outline-offset:2px}
+  .weigh-guide-icon{position:relative;display:grid;place-items:end center;width:52px;height:45px}
+  .weigh-guide-icon::before{content:"";width:42px;height:25px;border:2px solid var(--kitchen);border-radius:7px 7px 10px 10px;
+    background:var(--field);box-shadow:inset 0 -8px 0 var(--kitchen-soft)}
+  .weigh-guide-icon::after{content:"0 g";position:absolute;bottom:5px;color:var(--kitchen-dark);font-family:inherit;font-size:9px;font-weight:800;line-height:1}
+  .weigh-guide-pan{position:absolute;top:2px;width:46px;height:8px;border:2px solid var(--kitchen);border-radius:50%;background:var(--surface)}
+  .weigh-guide-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .weigh-guide-copy b{font-size:14px;color:var(--ink)}
+  .weigh-guide-copy span{font-size:13px;line-height:1.4;color:var(--ink-2)}
+  .weigh-guide-action{font-size:13px;font-weight:750;color:var(--kitchen-dark);white-space:nowrap}
+
+  .weigh-dialog{width:min(860px,calc(100vw - 24px));max-height:min(760px,calc(100dvh - 24px));
+    padding:0;border:1px solid var(--frame);border-radius:16px;background:var(--paper);color:var(--ink);
+    box-shadow:0 26px 90px rgba(0,0,0,.42);overflow:hidden}
+  .weigh-dialog::backdrop{background:rgba(8,14,12,.72);backdrop-filter:blur(4px)}
+  .weigh-dialog-shell{display:flex;max-height:min(760px,calc(100dvh - 24px));flex-direction:column}
+  .weigh-dialog-head{display:grid;grid-template-columns:minmax(0,1fr) 40px;gap:12px;padding:18px 20px 13px;
+    border-bottom:1px solid var(--hairline);background:linear-gradient(120deg,var(--kitchen-soft),var(--surface))}
+  .weigh-dialog-eyebrow{margin:0 0 4px;color:var(--kitchen-dark);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  .weigh-dialog h3{margin:0;font-size:23px;line-height:1.18}
+  .weigh-dialog-subject{margin:6px 0 0;color:var(--ink-2);font-size:13.5px;line-height:1.4}
+  .weigh-dialog-close{width:38px;height:38px;padding:0;border:1px solid var(--hairline);border-radius:9px;
+    background:var(--field);color:var(--ink-2);font:inherit;font-size:24px;line-height:1;cursor:pointer}
+  .weigh-dialog-close:hover{border-color:var(--kitchen);color:var(--ink)}
+  .weigh-tabs{display:flex;gap:7px;padding:12px 20px 4px;overflow-x:auto;scrollbar-width:thin}
+  .weigh-tab{flex:0 0 auto;padding:7px 11px;border:1px solid var(--hairline);border-radius:999px;background:var(--field);
+    color:var(--ink-2);font:inherit;font-size:12.5px;font-weight:700;line-height:1.2;cursor:pointer}
+  .weigh-tab[aria-selected="true"]{border-color:var(--kitchen);background:var(--kitchen-soft);color:var(--kitchen-dark)}
+  .weigh-dialog-body{padding:14px 20px 20px;overflow:auto;overscroll-behavior:contain}
+  .weigh-diagram{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px;margin:0 0 16px}
+  .weigh-frame{position:relative;min-width:0;padding:14px 10px 11px;border:1px solid var(--hairline);border-radius:12px;
+    background:linear-gradient(180deg,var(--surface),var(--field));text-align:center;animation:weighFrame 6s infinite}
+  .weigh-frame:nth-child(2){animation-delay:2s}.weigh-frame:nth-child(3){animation-delay:4s}
+  .weigh-frame:not(:last-child)::after{content:"→";position:absolute;right:-23px;top:50%;transform:translateY(-50%);
+    color:var(--kitchen);font-size:22px;font-weight:800}
+  .mini-scale{position:relative;width:112px;height:90px;margin:0 auto 9px}
+  .scale-pan{position:absolute;left:15px;top:22px;width:82px;height:9px;border:2px solid var(--kitchen);
+    border-radius:50%;background:var(--surface);z-index:2}
+  .scale-bowl{position:absolute;left:24px;top:4px;width:64px;height:30px;border:2px solid var(--kitchen);
+    border-top:0;border-radius:0 0 31px 31px;background:color-mix(in srgb,var(--kitchen-soft) 70%,transparent);z-index:3}
+  .scale-body{position:absolute;left:20px;top:30px;width:72px;height:52px;border:2px solid var(--frame);
+    border-radius:9px 9px 13px 13px;background:var(--field)}
+  .scale-screen{position:absolute;left:37px;top:48px;z-index:4;width:38px;padding:4px 2px;border-radius:4px;
+    background:#15221e;color:#b9f3df;font:800 10px/1 ui-monospace,monospace;text-align:center}
+  .scale-tare{position:absolute;left:48px;top:73px;z-index:4;width:16px;height:5px;border-radius:3px;background:var(--muted)}
+  .weigh-frame:nth-child(2) .scale-tare{animation:tarePress 6s infinite 2s}
+  .food-dots{position:absolute;left:32px;top:4px;z-index:5;width:48px;height:24px;opacity:0}
+  .weigh-frame:nth-child(3) .food-dots{opacity:1;animation:foodDrop 6s infinite 4s}
+  .food-dots i{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--produce);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .food-dots i:nth-child(1){left:3px;top:11px}.food-dots i:nth-child(2){left:16px;top:5px}.food-dots i:nth-child(3){left:29px;top:12px}.food-dots i:nth-child(4){left:39px;top:3px}
+  .weigh-dialog[data-topic="dry"] .food-dots i{width:7px;height:5px;border-radius:60% 20%;background:#d7aa57}
+  .weigh-dialog[data-topic="raw"] .food-dots i{width:13px;height:8px;border-radius:45%;background:#d7776d}
+  .weigh-dialog[data-topic="produce"] .food-dots i{background:var(--produce)}
+  .weigh-dialog[data-topic="liquid"] .food-dots i{width:7px;height:11px;border-radius:60% 60% 65% 65%;background:#69aee6}
+  .weigh-dialog[data-topic="dish"] .food-dots i{width:14px;height:8px;border-radius:4px;background:var(--kitchen)}
+  .weigh-step-no{display:inline-grid;place-items:center;width:23px;height:23px;margin-bottom:6px;border-radius:50%;
+    background:var(--kitchen-soft);color:var(--kitchen-dark);font-size:12px;font-weight:800}
+  .weigh-frame b{display:block;font-size:13.5px;line-height:1.3}
+  .weigh-frame p{margin:5px 0 0;color:var(--muted);font-size:12.5px;line-height:1.35}
+  .weigh-rule{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;padding:12px 14px;
+    border:1px solid color-mix(in srgb,var(--kitchen) 36%,var(--hairline));border-radius:10px;background:var(--kitchen-soft)}
+  .weigh-rule-mark{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;background:var(--kitchen);color:#fff;font-weight:900}
+  .weigh-rule b{display:block;margin-bottom:3px;font-size:13.5px}.weigh-rule span{color:var(--ink-2);font-size:13px;line-height:1.45}
+  .weigh-caution{margin:11px 2px 0;color:var(--muted);font-size:12.5px;line-height:1.45}
+  @keyframes weighFrame{0%,27%,100%{border-color:var(--hairline);transform:none}6%,21%{border-color:var(--kitchen);transform:translateY(-2px);box-shadow:0 8px 18px var(--shadow)}}
+  @keyframes tarePress{0%,100%{transform:none;background:var(--muted)}8%,18%{transform:translateY(2px);background:var(--kitchen)}}
+  @keyframes foodDrop{0%{transform:translateY(-13px);opacity:0}9%,75%{transform:none;opacity:1}100%{opacity:0}}
+  @media(prefers-reduced-motion:reduce){.weigh-frame,.weigh-frame:nth-child(2),.weigh-frame:nth-child(3),
+    .weigh-frame:nth-child(2) .scale-tare,.weigh-frame:nth-child(3) .food-dots{animation:none}.weigh-frame:nth-child(3) .food-dots{opacity:1}}
+  @media(max-width:640px){
+    .weigh-guide-card{grid-template-columns:44px minmax(0,1fr);gap:11px}.weigh-guide-action{grid-column:2}
+    .weigh-guide-icon{transform:scale(.88);transform-origin:left center}
+    .weigh-dialog{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);border-radius:14px}
+    .weigh-dialog-shell{max-height:calc(100dvh - 16px)}.weigh-dialog-head{padding:15px 15px 12px}
+    .weigh-dialog h3{font-size:20px}.weigh-tabs{padding:10px 15px 3px}.weigh-dialog-body{padding:12px 15px 17px}
+    .weigh-diagram{grid-template-columns:1fr;gap:10px}.weigh-frame{display:grid;grid-template-columns:100px 28px minmax(0,1fr);
+      align-items:center;text-align:left;padding:8px 10px}.weigh-frame:not(:last-child)::after{content:"↓";right:auto;left:49px;top:auto;bottom:-19px;z-index:6}
+    .mini-scale{width:112px;height:90px;margin:-6px 0 -7px;transform:scale(.78);transform-origin:left center}
+    .weigh-frame p{margin-top:3px}
+  }
   .comp .ck{font-size:13px;color:var(--ink-2);font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
   .reset-g{border:0;background:none;cursor:pointer;font-size:15px;color:var(--muted);padding:2px}
   .reset-g:hover{color:var(--accent-dark)}
@@ -1038,9 +1132,12 @@
   <div class="daysum" id="daySummary"></div>
   <div class="autofit-msg pro-only" id="autoFitMsg"></div>
   <div id="mealsWrap"></div>
-  <p class="hint weighnote">⚖️ <b>Як зважувати.</b> Крупи, макарони та бобові — <b>сухими</b> (позначка «г сух.»);
-    м'ясо, рибу та субпродукти — <b>сирими</b> (позначка «г сир.»): після приготування маса зменшується
-    на 25–30% у м'яса та ~20% у риби, а крупи важчають утричі. Овочі та фрукти — очищеними.</p>
+  <button type="button" class="weigh-guide-card" id="btnWeighGuide" aria-haspopup="dialog">
+    <span class="weigh-guide-icon" aria-hidden="true"><span class="weigh-guide-pan"></span></span>
+    <span class="weigh-guide-copy"><b>Як правильно зважувати продукти</b>
+      <span>Коротка анімована інструкція для круп, м’яса, овочів, рідин і готових страв.</span></span>
+    <span class="weigh-guide-action">Переглянути схему →</span>
+  </button>
 </section>
 
 <!-- ======== КРОК 4 ======== -->
@@ -1190,6 +1287,54 @@
   </div>
   <div class="product-picker-list" id="productPickerList" role="listbox"></div>
 </div>
+<dialog class="weigh-dialog" id="weighDialog" data-topic="basics" aria-labelledby="weighDialogTitle">
+  <div class="weigh-dialog-shell">
+    <header class="weigh-dialog-head">
+      <div>
+        <p class="weigh-dialog-eyebrow">Кухонні ваги · 3 кроки</p>
+        <h3 id="weighDialogTitle">Як правильно зважувати продукт</h3>
+        <p class="weigh-dialog-subject" id="weighDialogSubject">Обнулення тари прибирає вагу тарілки або миски з результату.</p>
+      </div>
+      <button type="button" class="weigh-dialog-close" id="weighDialogClose" aria-label="Закрити">×</button>
+    </header>
+    <nav class="weigh-tabs" aria-label="Тип продукту">
+      <button type="button" class="weigh-tab" data-topic="basics" aria-selected="true">Основи</button>
+      <button type="button" class="weigh-tab" data-topic="dry" aria-selected="false">Крупи</button>
+      <button type="button" class="weigh-tab" data-topic="raw" aria-selected="false">М’ясо й риба</button>
+      <button type="button" class="weigh-tab" data-topic="produce" aria-selected="false">Овочі й фрукти</button>
+      <button type="button" class="weigh-tab" data-topic="liquid" aria-selected="false">Олія й рідини</button>
+      <button type="button" class="weigh-tab" data-topic="dish" aria-selected="false">Готова страва</button>
+    </nav>
+    <div class="weigh-dialog-body">
+      <div class="weigh-diagram" aria-live="polite">
+        <article class="weigh-frame">
+          <div class="mini-scale" aria-hidden="true"><span class="scale-bowl"></span><span class="scale-pan"></span>
+            <span class="scale-body"></span><span class="scale-screen" id="weighScreen1">186 г</span><span class="scale-tare"></span></div>
+          <span class="weigh-step-no">1</span>
+          <div><b id="weighStepTitle1">Поставте порожню ємність</b><p id="weighStepText1">Тарілка або миска вже стоїть на вагах.</p></div>
+        </article>
+        <article class="weigh-frame">
+          <div class="mini-scale" aria-hidden="true"><span class="scale-bowl"></span><span class="scale-pan"></span>
+            <span class="scale-body"></span><span class="scale-screen" id="weighScreen2">0 г</span><span class="scale-tare"></span></div>
+          <span class="weigh-step-no">2</span>
+          <div><b id="weighStepTitle2">Натисніть TARE / 0</b><p id="weighStepText2">Вага ємності більше не враховується.</p></div>
+        </article>
+        <article class="weigh-frame">
+          <div class="mini-scale" aria-hidden="true"><span class="food-dots"><i></i><i></i><i></i><i></i></span>
+            <span class="scale-bowl"></span><span class="scale-pan"></span><span class="scale-body"></span>
+            <span class="scale-screen" id="weighScreen3">100 г</span><span class="scale-tare"></span></div>
+          <span class="weigh-step-no">3</span>
+          <div><b id="weighStepTitle3">Додайте продукт</b><p id="weighStepText3">Зупиніться на кількості, вказаній у меню.</p></div>
+        </article>
+      </div>
+      <div class="weigh-rule">
+        <span class="weigh-rule-mark" aria-hidden="true">✓</span>
+        <div><b id="weighRuleTitle">Головне правило</b><span id="weighRuleText">Порівнюйте цифру на вагах з грамами у відповідному рядку меню.</span></div>
+      </div>
+      <p class="weigh-caution" id="weighCaution">Якщо на упаковці вказані інші дані на 100 г, використовуйте етикетку конкретного продукту.</p>
+    </div>
+  </div>
+</dialog>
 <div id="printView"></div>
 <script>
 /* ============ БАЗА ПРОДУКТІВ (на 100 г) ============ */
@@ -3006,7 +3151,8 @@ function renderDay(){
           ? `<div class="comp">
               <span class="cat cat-${it.tpl.cat}" title="${CATS[it.tpl.cat].name}">${CATS[it.tpl.cat].short||CATS[it.tpl.cat].name}</span>
               <div class="pname">${escHtml(it.p.n)}${it.p.ml?' <span class="un">(напій)</span>':''}${it.p.dish?' <span class="un">(≈)</span>':''}${swapMenu}</div>
-              <span class="gstat">${it.g} ${unit}${ua?` <span class="un">(${ua.replace('≈ ','')})</span>`:''}</span>
+              <span class="gstat">${it.g} ${unit}${ua?` <span class="un">(${ua.replace('≈ ','')})</span>`:''}<button type="button"
+                class="weigh-help-btn" data-m="${mi}" data-c="${ci}" aria-label="Як зважувати цей продукт" title="Як зважувати">?</button></span>
               <span class="ck">${it.p.dish?'≈ ':''}${fmt(it.g*it.p.k/100)} ккал</span>
             </div>`
           : `<div class="comp ${custom?'custom':''}">
@@ -3016,8 +3162,8 @@ function renderDay(){
                 <span class="product-select-label">${escHtml(productLabel)}</span>
                 <span class="product-select-chevron" aria-hidden="true">⌄</span></button>
               <span class="gwrap"><input type="number" class="inpG" data-m="${mi}" data-c="${ci}"
-                 value="${it.g}" min="0" max="900" step="${inputGramStep(it.p)}" aria-label="Порція"><span class="un"><span>${unit}</span>${
-                   ua ? '<b>'+ua+'</b>' : ''}</span></span>
+                 value="${it.g}" min="0" max="900" step="${inputGramStep(it.p)}" aria-label="Порція"><span class="un"><span class="unit-line"><span>${unit}</span>
+                   <button type="button" class="weigh-help-btn" data-m="${mi}" data-c="${ci}" aria-label="Як зважувати цей продукт" title="Як зважувати">?</button></span>${ua ? '<b>'+ua+'</b>' : ''}</span></span>
               <span class="ck">${it.p.dish?'≈ ':''}${fmt(it.g*it.p.k/100)} ккал</span>
               <button type="button" class="reset-g" data-m="${mi}" data-c="${ci}"
                  title="Повернути авторозрахунок" ${custom?'':'style="visibility:hidden"'}>↺</button>
@@ -3645,6 +3791,121 @@ function scheduleGramRender(focus){
   }, 180);
 }
 
+/* ---- наочний довідник зі зважування продуктів ---- */
+const WEIGH_GUIDES = {
+  basics:{
+    subject:['Обнулення тари прибирає вагу тарілки або миски з результату.','Taring removes the plate or bowl weight from the result.'],
+    screens:['186 г','0 г','100 г'],
+    steps:[
+      ['Поставте порожню ємність','Тарілка або миска вже стоїть на вагах.','Place an empty container','Put the plate or bowl on the scale.'],
+      ['Натисніть TARE / 0','Вага ємності більше не враховується.','Press TARE / 0','The container weight is now excluded.'],
+      ['Додайте продукт','Зупиніться на кількості, вказаній у меню.','Add the food','Stop at the amount shown in the menu.']
+    ],
+    rule:['Порівнюйте цифру на вагах з грамами у відповідному рядку меню.','Match the scale reading to the grams shown in the relevant menu row.'],
+    caution:['Якщо на упаковці вказані інші дані на 100 г, використовуйте етикетку конкретного продукту.','If the package shows different values per 100 g, use the label of that specific product.']
+  },
+  dry:{
+    subject:['Крупи, макарони та бобові зважуйте сухими — до додавання води.','Weigh grains, pasta and legumes dry, before adding water.'],
+    screens:['186 г','0 г','70 г'],
+    steps:[
+      ['Поставте суху миску','Вона має бути чистою та без води.','Place a dry bowl','It should be clean and contain no water.'],
+      ['Обнуліть тару','На дисплеї має з’явитися 0 г.','Tare the container','The display should read 0 g.'],
+      ['Насипте сухий продукт','Відміряйте грами з позначкою «г сух.».','Add the dry food','Measure the amount marked “g dry”.']
+    ],
+    rule:['70 г сухої гречки — це саме 70 г до варіння, а не вага готової каші.','70 g of dry buckwheat means 70 g before cooking, not the cooked weight.'],
+    caution:['Після варіння крупа може важити у 2–3 рази більше через воду, але калорій вона від цього не отримує.','After cooking, grains may weigh two to three times more because of water, but water adds no calories.']
+  },
+  raw:{
+    subject:['М’ясо, рибу та субпродукти зважуйте сирими до термічної обробки.','Weigh meat, fish and offal raw, before cooking.'],
+    screens:['186 г','0 г','150 г'],
+    steps:[
+      ['Підготуйте продукт','Приберіть кістки та неїстівні частини, якщо вони не входять у порцію.','Prepare the food','Remove bones and inedible parts unless they are included in the portion.'],
+      ['Поставте тарілку й обнуліть','Промокніть зайву рідину та натисніть TARE / 0.','Place the plate and tare','Pat away excess liquid and press TARE / 0.'],
+      ['Зважте сирим','Відміряйте грами з позначкою «г сир.».','Weigh it raw','Measure the amount marked “g raw”.']
+    ],
+    rule:['150 г сирого філе — це вага до запікання, варіння або смаження.','150 g of raw fillet is the weight before baking, boiling or frying.'],
+    caution:['Після приготування м’ясо зазвичай втрачає 20–30% маси через воду. Не порівнюйте готову вагу із сирою нормою напряму.','Meat commonly loses 20–30% of its weight during cooking. Do not compare cooked weight directly with a raw target.']
+  },
+  produce:{
+    subject:['Овочі та фрукти зважуйте в тому вигляді, у якому будете їх їсти.','Weigh vegetables and fruit in the form in which you will eat them.'],
+    screens:['186 г','0 г','180 г'],
+    steps:[
+      ['Підготуйте їстівну частину','Помийте продукт, приберіть кісточку, хвостик або неїстівну шкірку.','Prepare the edible portion','Wash it and remove the stone, stem or inedible peel.'],
+      ['Обнуліть тарілку','Поставте порожню тарілку та натисніть TARE / 0.','Tare the plate','Place the empty plate on the scale and press TARE / 0.'],
+      ['Додайте очищений продукт','Відміряйте потрібну їстівну кількість.','Add the prepared food','Measure the required edible amount.']
+    ],
+    rule:['Для банана не рахуйте шкірку, а для яблука зі шкіркою — рахуйте все, що фактично з’їсте.','Do not count a banana peel; for an apple eaten with the peel, count everything you actually eat.'],
+    caution:['Для заморожених овочів використовуйте вагу самого продукту без льоду та зайвої води.','For frozen vegetables, use the food weight without loose ice or excess water.']
+  },
+  liquid:{
+    subject:['Олію, мед і соуси найточніше контролювати методом різниці ваги.','Oil, honey and sauces are easiest to track accurately by weight difference.'],
+    screens:['520 г','0 г','−10 г'],
+    steps:[
+      ['Поставте пляшку на ваги','Кришка має бути на пляшці, зовнішня поверхня — сухою.','Place the bottle on the scale','Keep the cap on and make sure the outside is dry.'],
+      ['Натисніть TARE / 0','Не переставляйте пляшку до використання продукту.','Press TARE / 0','Do not move the bottle until after pouring.'],
+      ['Налийте й поверніть пляшку','Мінус 10 г означає, що використано 10 г продукту.','Pour, then return the bottle','A reading of −10 g means that 10 g was used.']
+    ],
+    rule:['Для олії орієнтуйтесь на грами з меню: кухонна ложка часто дає неточну кількість.','For oil, follow the grams in the menu: a household spoon is often imprecise.'],
+    caution:['Напої з позначкою «мл» можна відміряти мірною склянкою; для густих соусів точнішими будуть ваги.','Drinks marked “ml” can be measured in a measuring cup; scales are more accurate for thick sauces.']
+  },
+  dish:{
+    subject:['Для домашньої страви спочатку визначте вагу всього готового виходу, потім — своєї порції.','For a homemade dish, first find the total cooked yield, then weigh your portion.'],
+    screens:['986 г','0 г','800 г'],
+    steps:[
+      ['Зважте порожній посуд','Запишіть вагу каструлі або обнуліть її до готування.','Weigh the empty cookware','Record the pot weight or tare it before cooking.'],
+      ['Зважте готову страву','Відніміть вагу каструлі — отримаєте чистий вихід.','Weigh the finished dish','Subtract the pot weight to get the net cooked yield.'],
+      ['Відкладіть свою порцію','Поставте тарілку, обнуліть і відміряйте грами з меню.','Serve your portion','Tare a plate and measure the grams shown in the menu.']
+    ],
+    rule:['Якщо вихід страви 800 г, а ви відклали 200 г, це чверть усіх інгредієнтів і калорій рецепта.','If the cooked yield is 800 g and your serving is 200 g, that is one quarter of all recipe ingredients and calories.'],
+    caution:['Позначка ≈ нагадує: калорійність готової страви залежить від фактичного рецепта та кінцевого виходу.','The ≈ mark is a reminder that a prepared dish depends on its actual recipe and final cooked yield.']
+  }
+};
+const weighDialog = byId('weighDialog');
+let weighReturnFocus = null;
+function weighTopicForProduct(p){
+  if(!p) return 'basics';
+  if(p.dish) return 'dish';
+  if(p.ml) return 'liquid';
+  if(p.dry) return 'dry';
+  if(p.raw) return 'raw';
+  if(p.c==='veg'||p.c==='fruit') return 'produce';
+  return 'basics';
+}
+function renderWeighGuide(topic='basics',p=null){
+  const guide=WEIGH_GUIDES[topic]||WEIGH_GUIDES.basics;
+  const tr=(uk,en)=>window.nutriT?nutriT(uk,en):uk;
+  weighDialog.dataset.topic=topic;
+  byId('weighDialogTitle').textContent=tr('Як правильно зважувати продукт','How to weigh food correctly');
+  const productName=p?(window.nutriProductName?nutriProductName(p):p.n):'';
+  byId('weighDialogSubject').textContent=(productName?productName+' · ':'')+tr(...guide.subject);
+  for(let i=0;i<3;i++){
+    byId('weighScreen'+(i+1)).textContent=tr(guide.screens[i],guide.screens[i].replace(' г',' g'));
+    byId('weighStepTitle'+(i+1)).textContent=tr(guide.steps[i][0],guide.steps[i][2]);
+    byId('weighStepText'+(i+1)).textContent=tr(guide.steps[i][1],guide.steps[i][3]);
+  }
+  byId('weighRuleTitle').textContent=tr('Головне правило','Key rule');
+  byId('weighRuleText').textContent=tr(...guide.rule);
+  byId('weighCaution').textContent=tr(...guide.caution);
+  weighDialog.querySelectorAll('.weigh-tab').forEach(tab=>
+    tab.setAttribute('aria-selected',String(tab.dataset.topic===topic)));
+}
+function openWeighGuide(topic='basics',p=null,trigger=null){
+  weighReturnFocus=trigger||document.activeElement;
+  renderWeighGuide(topic,p);
+  if(typeof weighDialog.showModal==='function') weighDialog.showModal();
+  else weighDialog.setAttribute('open','');
+}
+function closeWeighGuide(){
+  if(typeof weighDialog.close==='function'&&weighDialog.open) weighDialog.close();
+  else weighDialog.removeAttribute('open');
+}
+byId('btnWeighGuide').addEventListener('click',e=>openWeighGuide('basics',null,e.currentTarget));
+byId('weighDialogClose').addEventListener('click',closeWeighGuide);
+weighDialog.querySelector('.weigh-tabs').addEventListener('click',e=>{
+  const tab=e.target.closest('.weigh-tab'); if(tab) renderWeighGuide(tab.dataset.topic);
+});
+weighDialog.addEventListener('click',e=>{ if(e.target===weighDialog) closeWeighGuide(); });
+weighDialog.addEventListener('close',()=>{ if(weighReturnFocus?.isConnected) weighReturnFocus.focus(); });
 /* Власний вибір продукту замість нативного <select>: браузерні списки не
    дозволяють надійно обмежити висоту й можуть виходити за межі вікна. */
 let productPickerCtx = null;
@@ -3794,6 +4055,13 @@ byId('mealsWrap').addEventListener('change', e=>{
   renderDay();
 });
 byId('mealsWrap').addEventListener('click', e=>{
+  const weighButton=e.target.closest('.weigh-help-btn');
+  if(weighButton){
+    const meal=calcDay(state.activeDay).meals[+weighButton.dataset.m];
+    const item=meal&&meal.items[+weighButton.dataset.c];
+    openWeighGuide(weighTopicForProduct(item?.p),item?.p,weighButton);
+    return;
+  }
   const productButton=e.target.closest('.product-select-btn');
   if(productButton){
     openProductPicker(productButton);
@@ -3964,6 +4232,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
 <script src="./i18n-sprint2.js"></script>
 <script src="./i18n-adaptive.js"></script>
 <script src="./i18n-checkin.js"></script>
+<script src="./i18n-weighing.js"></script>
 <script src="./i18n.js"></script>
 </body>
 </html>

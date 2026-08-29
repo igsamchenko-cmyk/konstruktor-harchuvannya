@@ -49,6 +49,19 @@ assert(adaptiveI18n.includes('"Збалансоване меню · 3 дні"') 
   'practical week-mode labels have English translations');
 assert(html.includes('./i18n-checkin.js'), 'check-in translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-checkin.js'), 'check-in translations are cached offline');
+assert(html.includes('./i18n-weighing.js'), 'weighing-guide translations are loaded');
+assert(fs.readFileSync('sw.js','utf8').includes('./i18n-weighing.js'), 'weighing-guide translations are cached offline');
+assert(fs.readFileSync('i18n-weighing.js','utf8').includes('"Як правильно зважувати продукти"'),
+  'weighing guide has an English translation');
+for(const id of ['btnWeighGuide','weighDialog','weighDialogClose','weighDialogSubject','weighScreen1','weighRuleText'])
+  assert(ids.includes(id), 'required weighing-guide control exists: ' + id);
+assert(html.includes('function weighTopicForProduct(p)') && html.includes("if(p.dish) return 'dish'") &&
+  html.includes("if(p.ml) return 'liquid'") && html.includes("if(p.dry) return 'dry'") &&
+  html.includes("if(p.raw) return 'raw'"), 'food metadata selects the matching weighing guide');
+assert(html.includes('class="weigh-help-btn"') && html.includes("openWeighGuide(weighTopicForProduct(item?.p)"),
+  'every rendered food row can open contextual weighing help');
+assert(/@keyframes weighFrame/.test(html) && /prefers-reduced-motion:reduce/.test(html),
+  'the weighing diagram is animated and respects reduced-motion preferences');
 const swSource = fs.readFileSync('sw.js','utf8');
 assert(swSource.includes('res.ok') && swSource.includes("res.type === 'basic'"),
   'service worker only runtime-caches successful same-origin app responses');
