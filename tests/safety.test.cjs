@@ -72,8 +72,15 @@ assert(html.includes('function nutritionHelp(kind,t)') && html.includes('functio
 assert(html.includes("setHelpTooltip(byId('tKcal2').closest('.tile')") &&
   html.includes("macroRow('protein','Білки'") && html.includes('quality-item ${cls} has-tooltip'),
   'target cards, macro rings and specialist quality metrics expose tooltips');
-assert(html.includes('.has-tooltip:hover::after,.has-tooltip:focus::after'),
-  'tooltips work with both pointer hover and keyboard or touch focus');
+assert(html.includes("className='nutrition-tooltip'") && html.includes('function positionHelpTooltip(target)') &&
+  html.includes("document.addEventListener('pointerover'") && html.includes("document.addEventListener('focusin'"),
+  'one viewport-positioned tooltip supports pointer, keyboard and touch without card overlap');
+assert(html.includes("!hasSideNeighbor('right')") && html.includes("!hasSideNeighbor('left')") &&
+  html.includes('Math.max(pad,Math.min(rawLeft,viewW-box.width-pad))') &&
+  html.includes("addEventListener('scroll',()=>{if(activeHelpTarget) closeHelpTooltip()"),
+  'tooltips choose a free side, stay inside the viewport and close before detaching during scroll');
+assert(html.includes('top:auto!important;right:10px') && html.includes('bottom:max(10px,env(safe-area-inset-bottom))'),
+  'narrow and foldable phone layouts use a stable safe-area-aware bottom tooltip');
 const swSource = fs.readFileSync('sw.js','utf8');
 assert(swSource.includes('res.ok') && swSource.includes("res.type === 'basic'"),
   'service worker only runtime-caches successful same-origin app responses');

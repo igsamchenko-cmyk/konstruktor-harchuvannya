@@ -292,27 +292,25 @@
   .m-val b{font-weight:750}
   .m-row.near .m-val{color:var(--warn-text)}
   .m-row.off .m-val{color:var(--critical)}
-  /* --- пояснення норм при наведенні, фокусі або дотику --- */
+  /* --- єдина плаваюча підказка: не обрізається картками й не перекриває сусідній рядок --- */
   .has-tooltip{position:relative;cursor:help}
-  .has-tooltip::after{content:attr(data-tip);position:absolute;z-index:120;top:calc(100% + 8px);left:0;
-    width:max-content;max-width:min(320px,calc(100vw - 40px));padding:10px 12px;border:1px solid var(--frame);
-    border-radius:9px;background:var(--ink);color:var(--paper);box-shadow:0 12px 30px rgba(0,0,0,.28);
-    font-size:12.5px;font-weight:500;line-height:1.45;letter-spacing:0;text-align:left;white-space:normal;
-    opacity:0;visibility:hidden;transform:translateY(-4px);pointer-events:none;transition:opacity .15s,transform .15s,visibility .15s}
-  .has-tooltip:hover::after,.has-tooltip:focus::after,.has-tooltip:focus-visible::after{
-    opacity:1;visibility:visible;transform:none}
+  .nutrition-tooltip{position:fixed;z-index:10000;width:max-content;max-width:min(360px,calc(100vw - 24px));
+    max-height:min(240px,calc(100dvh - 24px));overflow:auto;box-sizing:border-box;padding:11px 13px;
+    border:1px solid rgba(97,218,180,.48);border-radius:10px;background:#10231d;color:#f3fbf8;
+    box-shadow:0 14px 34px rgba(0,0,0,.38);font-size:12.5px;font-weight:550;line-height:1.48;
+    letter-spacing:0;text-align:left;white-space:normal;opacity:0;transform:translateY(-4px) scale(.985);
+    pointer-events:none;transition:opacity .14s ease,transform .14s ease}
+  .nutrition-tooltip.is-open{opacity:1;transform:none}
+  .nutrition-tooltip[data-side="above"]{transform-origin:center bottom}
+  .nutrition-tooltip[data-side="below"]{transform-origin:center top}
   .has-tooltip:focus-visible{outline:3px solid color-mix(in srgb,var(--card-accent,var(--accent)) 24%,transparent);outline-offset:2px}
   .m-row.has-tooltip,.quality-item.has-tooltip,.tile.has-tooltip,.split.has-tooltip{overflow:visible}
   .m-row.has-tooltip .m-name::after,.quality-item.has-tooltip .qh>span:first-child::after,
   .tile.has-tooltip .lbl::after,.split.has-tooltip .shead>span:first-child::after{
     content:"ⓘ";margin-left:3px;color:var(--muted);font-size:11px;font-weight:700}
-  .macros .m-row:nth-child(n+3)::after,.quality-grid .quality-item:last-child::after,
-  .tiles .tile:nth-child(4n)::after{right:0;left:auto}
-  @media(max-width:900px){
-    .macros .m-row:nth-child(even)::after,.tiles .tile:nth-child(even)::after{right:0;left:auto}
-  }
   @media(max-width:560px){
-    .has-tooltip::after{max-width:calc(100vw - 48px)}
+    .nutrition-tooltip{top:auto!important;right:10px;bottom:max(10px,env(safe-area-inset-bottom));left:10px!important;
+      width:auto;max-width:none;max-height:min(220px,calc(100dvh - 20px));font-size:13px}
   }
   @media(max-width:900px){.macros{grid-template-columns:repeat(2,minmax(150px,1fr))}}
   @media(max-width:420px){
@@ -2891,13 +2889,88 @@ function setHelpTooltip(el,text,label){
   el.classList.add('has-tooltip');
   el.tabIndex=0;
   el.dataset.tip=text;
-  el.setAttribute('role','note');
-  el.setAttribute('aria-label',(label?label+'. ':'')+text);
+  el.dataset.tipLabel=label||'';
 }
 function tooltipAttrs(text,label){
-  const aria=(label?label+'. ':'')+text;
-  return `tabindex="0" role="note" data-tip="${escHtml(text)}" aria-label="${escHtml(aria)}"`;
+  return `tabindex="0" data-tip="${escHtml(text)}" data-tip-label="${escHtml(label||'')}"`;
 }
+let activeHelpTarget=null;
+function helpTooltipNode(){
+  let tip=byId('nutritionTooltip');
+  if(!tip){
+    tip=document.createElement('div');
+    tip.id='nutritionTooltip';
+    tip.className='nutrition-tooltip';
+    tip.setAttribute('role','tooltip');
+    tip.hidden=true;
+    document.body.appendChild(tip);
+  }
+  return tip;
+}
+function positionHelpTooltip(target){
+  if(!target||!target.isConnected) return;
+  const tip=helpTooltipNode(),pad=10,gap=10;
+  const label=target.dataset.tipLabel;
+  tip.textContent=(label?label+' — ':'')+(target.dataset.tip||'');
+  tip.hidden=false;
+  tip.classList.add('is-open');
+  const anchor=target.getBoundingClientRect();
+  const box=tip.getBoundingClientRect();
+  const viewW=document.documentElement.clientWidth,viewH=document.documentElement.clientHeight;
+  const spaces={above:anchor.top-gap,below:viewH-anchor.bottom-gap,left:anchor.left-gap,right:viewW-anchor.right-gap};
+  const siblings=[...(target.parentElement?.children||[])].filter(el=>el!==target);
+  const hasSideNeighbor=side=>siblings.some(el=>{
+    const r=el.getBoundingClientRect();
+    const sameRow=r.bottom>anchor.top+4&&r.top<anchor.bottom-4;
+    return sameRow&&(side==='right'?r.left>=anchor.right-2:r.right<=anchor.left+2);
+  });
+  let side;
+  if(spaces.above>=box.height) side='above';
+  else if(spaces.right>=box.width&&!hasSideNeighbor('right')) side='right';
+  else if(spaces.left>=box.width&&!hasSideNeighbor('left')) side='left';
+  else if(spaces.below>=box.height) side='below';
+  else side=spaces.above>=spaces.below?'above':'below';
+  let rawTop=anchor.top+anchor.height/2-box.height/2;
+  let rawLeft=anchor.left+anchor.width/2-box.width/2;
+  if(side==='above') rawTop=anchor.top-gap-box.height;
+  if(side==='below') rawTop=anchor.bottom+gap;
+  if(side==='right') rawLeft=anchor.right+gap;
+  if(side==='left') rawLeft=anchor.left-gap-box.width;
+  const top=Math.max(pad,Math.min(rawTop,viewH-box.height-pad));
+  const left=Math.max(pad,Math.min(rawLeft,viewW-box.width-pad));
+  tip.style.top=`${Math.round(top)}px`;
+  tip.style.left=`${Math.round(left)}px`;
+  tip.dataset.side=side;
+  target.setAttribute('aria-describedby',tip.id);
+}
+function openHelpTooltip(target){
+  if(activeHelpTarget&&activeHelpTarget!==target) activeHelpTarget.removeAttribute('aria-describedby');
+  activeHelpTarget=target;
+  positionHelpTooltip(target);
+}
+function closeHelpTooltip(target=null){
+  if(target&&target!==activeHelpTarget) return;
+  if(activeHelpTarget) activeHelpTarget.removeAttribute('aria-describedby');
+  activeHelpTarget=null;
+  const tip=byId('nutritionTooltip');
+  if(!tip) return;
+  tip.classList.remove('is-open');
+  tip.hidden=true;
+}
+document.addEventListener('pointerover',e=>{
+  const target=e.target.closest?.('.has-tooltip');
+  if(target&&!target.contains(e.relatedTarget)) openHelpTooltip(target);
+});
+document.addEventListener('pointerout',e=>{
+  const target=e.target.closest?.('.has-tooltip');
+  if(target&&!target.contains(e.relatedTarget)&&document.activeElement!==target) closeHelpTooltip(target);
+});
+document.addEventListener('focusin',e=>{if(e.target.matches?.('.has-tooltip')) openHelpTooltip(e.target)});
+document.addEventListener('focusout',e=>{if(e.target.matches?.('.has-tooltip')) closeHelpTooltip(e.target)});
+document.addEventListener('pointerdown',e=>{if(activeHelpTarget&&!e.target.closest?.('.has-tooltip')) closeHelpTooltip()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&activeHelpTarget){const target=activeHelpTarget;closeHelpTooltip();target.blur()}});
+addEventListener('resize',()=>{if(activeHelpTarget) positionHelpTooltip(activeHelpTarget)});
+addEventListener('scroll',()=>{if(activeHelpTarget) closeHelpTooltip()},true);
 function applyMode(){
   document.body.setAttribute('data-mode', isClient() ? 'client' : 'pro');
   byId('btnMode').textContent = isClient() ? '⚙️' : '👤';
