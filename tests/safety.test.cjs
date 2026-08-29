@@ -86,11 +86,17 @@ assert(html.includes('class="scale-unit">ОД.</span>') && html.includes('class=
   'the scale diagram uses common Ukrainian two-button labels');
 assert(!html.includes('class="scale-tare"') && weighingI18n.includes('"ВВІМК./ТАРА":"ON/TARE"'),
   'the obsolete anonymous tare control is removed and the new labels are translated');
-assert(html.includes('function nutritionHelp(kind,t)') && html.includes('function qualityMetricHelp(kind,t,highSweat=false)'),
-  'nutrition and quality targets have contextual explanations');
+assert(html.includes('function nutritionHelp(kind,t)') && html.includes('function formulaHelp(t)') &&
+  html.includes('function qualityMetricHelp(kind,t,highSweat=false)'),
+  'nutrition, formula and quality targets have contextual explanations');
 assert(html.includes("setHelpTooltip(byId('tKcal2').closest('.tile')") &&
   html.includes("macroRow('protein','Білки'") && html.includes('quality-item ${cls} has-tooltip'),
   'target cards, macro rings and specialist quality metrics expose tooltips');
+assert(html.includes("setHelpTooltip(byId('tFormulaNote'),formulaHelp(t)"),
+  'the calculation formula exposes the shared hover, keyboard and touch tooltip');
+assert(html.includes('BMR (Basal Metabolic Rate)') && html.includes("'+ 5 (чоловік)'") &&
+  html.includes("'− 161 (жінка)'") && html.includes("'How do the formula and BMR work?'"),
+  'the formula tooltip expands BMR, shows sex-specific Mifflin constants and supports English');
 assert(html.includes("className='nutrition-tooltip'") && html.includes('function positionHelpTooltip(target)') &&
   html.includes("document.addEventListener('pointerover'") && html.includes("document.addEventListener('focusin'"),
   'one viewport-positioned tooltip supports pointer, keyboard and touch without card overlap');

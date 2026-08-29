@@ -303,7 +303,7 @@
   .m-row.off .m-val{color:var(--critical)}
   /* --- єдина плаваюча підказка: не обрізається картками й не перекриває сусідній рядок --- */
   .has-tooltip{position:relative;cursor:help}
-  .nutrition-tooltip{position:fixed;z-index:10000;width:max-content;max-width:min(360px,calc(100vw - 24px));
+  .nutrition-tooltip{position:fixed;z-index:10000;width:max-content;max-width:min(440px,calc(100vw - 24px));
     max-height:min(240px,calc(100dvh - 24px));overflow:auto;box-sizing:border-box;padding:11px 13px;
     border:1px solid rgba(97,218,180,.48);border-radius:10px;background:#10231d;color:#f3fbf8;
     box-shadow:0 14px 34px rgba(0,0,0,.38);font-size:12.5px;font-weight:550;line-height:1.48;
@@ -313,9 +313,10 @@
   .nutrition-tooltip[data-side="above"]{transform-origin:center bottom}
   .nutrition-tooltip[data-side="below"]{transform-origin:center top}
   .has-tooltip:focus-visible{outline:3px solid color-mix(in srgb,var(--card-accent,var(--accent)) 24%,transparent);outline-offset:2px}
-  .m-row.has-tooltip,.quality-item.has-tooltip,.tile.has-tooltip,.split.has-tooltip{overflow:visible}
+  .m-row.has-tooltip,.quality-item.has-tooltip,.tile.has-tooltip,.split.has-tooltip,.hint.has-tooltip{overflow:visible}
   .m-row.has-tooltip .m-name::after,.quality-item.has-tooltip .qh>span:first-child::after,
-  .tile.has-tooltip .lbl::after,.split.has-tooltip .shead>span:first-child::after{
+  .tile.has-tooltip .lbl::after,.split.has-tooltip .shead>span:first-child::after,
+  .hint.has-tooltip::after{
     content:"ⓘ";margin-left:3px;color:var(--muted);font-size:11px;font-weight:700}
   @media(max-width:560px){
     .nutrition-tooltip{top:auto!important;right:10px;bottom:max(10px,env(safe-area-inset-bottom));left:10px!important;
@@ -2902,6 +2903,18 @@ function nutritionHelp(kind,t){
     'Білки й вуглеводи дають приблизно 4 ккал на грам, жири — 9 ккал. Смуга показує частку енергії, а не просто співвідношення грамів.',
     'Protein and carbohydrate provide about 4 kcal per gram; fat provides 9 kcal. The bar shows the share of energy, not merely the ratio of grams.');
 }
+function formulaHelp(t){
+  const tr=(uk,en)=>window.nutriT?nutriT(uk,en):uk;
+  const pr=sanitizeProfile();
+  const sexUk=pr.sex==='m' ? '+ 5 (чоловік)' : '− 161 (жінка)';
+  const sexEn=pr.sex==='m' ? '+ 5 (male)' : '− 161 (female)';
+  const formulaUk='10 × '+num1(pr.weight)+' кг + 6,25 × '+fmt(pr.height)+' см − 5 × '+fmt(pr.age)+' років '+sexUk+' = '+fmt(t.bmr)+' ккал';
+  const formulaEn='10 × '+num1(pr.weight)+' kg + 6.25 × '+fmt(pr.height)+' cm − 5 × '+fmt(pr.age)+' years '+sexEn+' = '+fmt(t.bmr)+' kcal';
+  return tr(
+    'BMR (Basal Metabolic Rate) — базальний обмін речовин. У застосунку це оцінка енергії, яку організм витрачає у спокої на дихання, кровообіг, роботу органів і підтримання температури. Формула Міффліна–Сан Жеора для цього профілю: '+formulaUk+'. Далі BMR множиться на коефіцієнт активності '+num2(activityFactor(pr))+' → приблизні добові витрати '+fmt(t.tdee)+' ккал; потім враховуються ціль і обраний темп → '+fmt(t.kcal)+' ккал. Це розрахункова оцінка, а не окрема ціль харчування чи абсолютна нижня межа.',
+    'BMR (Basal Metabolic Rate) estimates the energy your body uses at rest for breathing, circulation, organ function and temperature regulation. The Mifflin–St Jeor equation for this profile is: '+formulaEn+'. BMR is then multiplied by the activity factor '+num2(activityFactor(pr))+' → estimated daily expenditure '+fmt(t.tdee)+' kcal; the goal and selected rate then set '+fmt(t.kcal)+' kcal. This is a prediction, not a standalone calorie target or an absolute minimum.'
+  );
+}
 function qualityMetricHelp(kind,t,highSweat=false){
   const tr=(uk,en)=>window.nutriT?nutriT(uk,en):uk;
   if(kind==='sodium'&&highSweat) return tr(
@@ -3071,6 +3084,8 @@ function renderTargets(){
     ` · білок ${state.settings.proteinPerKg} г/кг${t.adjusted?' розрахункової ваги':''} · жири ${state.settings.fatPct}%` +
     ` · клітковина ${t.fib} г` +
     (state.settings.sweetPct ? ` · смаколики ${state.settings.sweetPct}%` : '');
+  setHelpTooltip(byId('tFormulaNote'),formulaHelp(t),
+    window.nutriT?nutriT('Як працюють формула та BMR?','How do the formula and BMR work?'):'Як працюють формула та BMR?');
   byId('lowKcalWarn').style.display = t.clamped ? '' : 'none';
   const af = activityFactor(state.profile);
   byId('actNote').innerHTML =
