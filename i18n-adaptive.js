@@ -27,8 +27,7 @@ Object.assign(window.NUTRI_EN=window.NUTRI_EN||{}, {
   "Сім різних днів і ширше чергування продуктів. Потребує більше закупівель і приготування.":"Seven different days with broader food rotation. Requires more shopping and cooking.",
   "У ручному режимі одна категорія має однаковий список у всіх прийомах їжі. Можна свідомо повторювати той самий продукт або скопіювати готовий день на весь тиждень.":"In manual mode, each category uses the same list at every meal. You can intentionally repeat the same food or copy a completed day across the whole week.",
   "Розподіл калорій":"Calorie distribution",
-  "Баланс раціону на день":"Daily nutrition balance",
-  "Білки · жири · вуглеводи · клітковина":"Protein · fats · carbohydrates · fiber",
+  "Збалансована тарілка з куркою, гречкою та овочами":"Balanced plate with chicken, buckwheat and vegetables",
   "Відкрити список покупок":"Open shopping list",
   "Показати":"Show",
   "Згорнути":"Collapse"

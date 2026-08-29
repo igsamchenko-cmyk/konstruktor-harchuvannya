@@ -16,7 +16,7 @@ assert.equal(new Set(ids).size, ids.length, 'HTML ids remain unique');
 for (const id of ['fDiet','healthScreen','safetyWarn','poolWarn','btnGenWeek','btnShareClient','wWaist','wAdaptive',
   'ciDate','ciAdherence','ciHunger','ciEnergy','ciPerformance','btnAddCheckin','ciLatest','ciList',
   'sSodiumContext','sodiumContextHint','btnAutoFit','autoFitMsg','productPicker','productPickerSearch','productPickerClose','productPickerList',
-  'shopDetails','shopCount','macroPlate'])
+  'shopDetails','shopCount','macroBanner'])
   assert(ids.includes(id), 'required safety control exists: ' + id);
 assert(/id="fAge" min="18"/.test(html), 'age input exposes the adult-only limit');
 assert(html.includes('./i18n-safety.js'), 'safety translations are loaded');
@@ -35,10 +35,18 @@ assert(html.includes('<details class="shop-details" id="shopDetails">') && !html
   'the long shopping list is collapsed by default');
 assert(html.includes("byId('shopCount').textContent") && html.includes("ukForm(itemCount,'позиція','позиції','позицій')"),
   'shopping menu reports item and category counts with localized plurals');
-assert(html.includes("byId('macroPlate').style.setProperty('--macro-p'") && /@keyframes macroPlateFloat/.test(html),
-  'the decorative plate reflects actual macro shares and is animated');
-assert(/prefers-reduced-motion:reduce/.test(html) && html.includes('.macro-plate,.macro-dot{animation:none!important}'),
-  'the macro illustration respects reduced-motion preferences');
+assert(html.includes('id="macroBanner"') && html.includes('src="./balanced-plate-banner-wide.jpg"') &&
+  fs.existsSync('balanced-plate-banner-wide.jpg'),
+  'the calculation panel uses a local static balanced-plate banner');
+assert(!/@keyframes macroPlateFloat/.test(html) && !html.includes("setProperty('--macro-p'"),
+  'the previous decorative macro animation and dynamic styling are removed');
+assert(fs.readFileSync('sw.js','utf8').includes('./balanced-plate-banner-wide.jpg'),
+  'the balanced-plate banner is available offline');
+assert(html.includes('Рідину пийте регулярно протягом дня') && !html.includes("Воду п'ємо до 18:00"),
+  'client-note placeholder gives sensible hydration timing');
+const uiI18n = fs.readFileSync('i18n-ui.js','utf8');
+assert(uiI18n.includes('Drink fluids regularly throughout the day') && !uiI18n.includes('Finish most fluids by 6 p.m.'),
+  'hydration placeholder has a corrected English translation');
 assert(/@media\(max-width:560px\)/.test(html) && /@media\(max-width:520px\)/.test(html) && /@media\(max-width:360px\)/.test(html),
   'closed foldable and narrow-phone layouts have dedicated breakpoints');
 assert(/horizontal-viewport-segments:2/.test(html), 'dual-segment foldable layout avoids the hinge');
@@ -56,8 +64,8 @@ assert(html.includes('function positionProductPicker()') && html.includes("produ
 const adaptiveI18n = fs.readFileSync('i18n-adaptive.js','utf8');
 assert(adaptiveI18n.includes('"Збалансоване меню · 3 дні"') && adaptiveI18n.includes('"Просте меню · 2 дні"'),
   'practical week-mode labels have English translations');
-assert(adaptiveI18n.includes('"Баланс раціону на день"') && adaptiveI18n.includes('"Відкрити список покупок"'),
-  'macro illustration and shopping menu have English translations');
+assert(adaptiveI18n.includes('"Збалансована тарілка з куркою, гречкою та овочами"') && adaptiveI18n.includes('"Відкрити список покупок"'),
+  'static banner accessibility and shopping menu have English translations');
 assert(html.includes('./i18n-checkin.js'), 'check-in translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-checkin.js'), 'check-in translations are cached offline');
 assert(html.includes('./i18n-weighing.js'), 'weighing-guide translations are loaded');

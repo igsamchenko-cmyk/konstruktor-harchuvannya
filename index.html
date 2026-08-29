@@ -196,30 +196,14 @@
   .result>*{min-width:0}
   @media(max-width:900px){.result{grid-template-columns:1fr;gap:18px}}
   .result-side{display:grid;gap:12px;min-width:0}
-  .macro-scene{position:relative;display:flex;align-items:center;gap:18px;min-height:92px;padding:10px 20px;
-    overflow:hidden;border:1px solid var(--hairline);border-radius:12px;
-    background:linear-gradient(120deg,color-mix(in srgb,var(--accent) 10%,var(--surface)),var(--surface))}
-  .macro-scene::after{content:"";position:absolute;right:-32px;top:-58px;width:180px;height:180px;border-radius:50%;
-    border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);box-shadow:0 0 0 24px color-mix(in srgb,var(--accent) 4%,transparent)}
-  .macro-art{position:relative;z-index:1;flex:0 0 76px;width:76px;height:76px;display:grid;place-items:center}
-  .macro-plate{--macro-p:32%;--macro-pf:61%;position:relative;width:68px;height:68px;border-radius:50%;
-    background:conic-gradient(var(--s-prot) 0 var(--macro-p),var(--s-fat) var(--macro-p) var(--macro-pf),var(--s-carb) var(--macro-pf) 100%);
-    box-shadow:0 8px 22px rgba(0,0,0,.18),inset 0 0 0 5px color-mix(in srgb,var(--surface) 78%,transparent);
-    animation:macroPlateFloat 5.5s ease-in-out infinite}
-  .macro-plate::after{content:"";position:absolute;inset:17px;border-radius:50%;background:var(--surface);
-    box-shadow:0 0 0 1px var(--hairline)}
-  .macro-leaf{position:absolute;z-index:2;left:27px;top:23px;width:15px;height:22px;transform:rotate(-18deg)}
-  .macro-leaf::before,.macro-leaf::after{content:"";position:absolute;width:9px;height:17px;background:var(--accent);
-    border-radius:9px 1px 9px 1px;transform-origin:bottom center}
-  .macro-leaf::before{left:0;transform:rotate(-30deg)}.macro-leaf::after{right:0;transform:scaleX(-1) rotate(-30deg)}
-  .macro-dot{position:absolute;z-index:2;width:7px;height:7px;border-radius:50%;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 13%,transparent)}
-  .macro-dot.one{left:2px;top:10px;color:var(--s-prot);background:currentColor;animation:macroDot 4.3s ease-in-out infinite}
-  .macro-dot.two{right:0;bottom:11px;color:var(--s-carb);background:currentColor;animation:macroDot 4.8s ease-in-out infinite .7s}
-  .macro-scene-copy{position:relative;z-index:1;display:grid;gap:4px;min-width:0}
-  .macro-scene-copy b{font-size:15px;color:var(--ink)}.macro-scene-copy span{font-size:12.5px;color:var(--muted)}
-  @keyframes macroPlateFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-4px) rotate(3deg)}}
-  @keyframes macroDot{0%,100%{transform:translate(0,0);opacity:.6}50%{transform:translate(4px,-5px);opacity:1}}
-  @media(prefers-reduced-motion:reduce){.macro-plate,.macro-dot{animation:none!important}}
+  .macro-scene{position:relative;height:clamp(104px,10vw,132px);overflow:hidden;
+    border:1px solid var(--hairline);border-radius:12px;background:var(--surface);
+    box-shadow:0 8px 22px var(--shadow)}
+  .macro-scene img{display:block;width:100%;height:100%;object-fit:cover;object-position:center;
+    filter:saturate(.96) contrast(1.02)}
+  .macro-scene::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(90deg,transparent 58%,color-mix(in srgb,var(--surface) 18%,transparent))}
+  @media(max-width:520px){.macro-scene{height:96px}.macro-scene img{object-position:35% center}}
   .hero .kcal{font-size:56px;font-weight:800;line-height:1;letter-spacing:0;color:var(--ink)}
   @media(max-width:480px){.hero .kcal{font-size:44px}}
   .hero .unit{font-size:15px;font-weight:600;color:var(--ink-2);margin-left:6px;letter-spacing:0}
@@ -1072,9 +1056,10 @@
       <div class="fcast" id="tForecast"></div>
     </div>
     <div class="result-side">
-      <div class="macro-scene" aria-hidden="true">
-        <div class="macro-art"><div class="macro-plate" id="macroPlate"><span class="macro-leaf"></span></div><i class="macro-dot one"></i><i class="macro-dot two"></i></div>
-        <div class="macro-scene-copy"><b>Баланс раціону на день</b><span>Білки · жири · вуглеводи · клітковина</span></div>
+      <div class="macro-scene">
+        <img id="macroBanner" src="./balanced-plate-banner-wide.jpg"
+          alt="Збалансована тарілка з куркою, гречкою та овочами"
+          width="1600" height="400" loading="lazy" decoding="async">
       </div>
       <div class="split">
         <div class="shead"><span>Розподіл калорій</span></div>
@@ -1216,7 +1201,7 @@
     <div class="shop" id="shopList"></div>
   </details>
   <label class="f pro-only" style="margin-top:18px">Нотатка клієнту (буде видно у клієнтському режимі та в PDF)
-    <textarea id="proNote" rows="3" placeholder="Напр.: Олено, тиждень пробний. Воду п'ємо до 18:00, ваги — щосереди зранку. Питання — в Telegram."></textarea>
+    <textarea id="proNote" rows="3" placeholder="Напр.: Олено, це пробний тиждень. Рідину пийте регулярно протягом дня; у спеку та після тренувань потреба може зростати. Зважування — щосереди зранку. Питання — у Telegram."></textarea>
   </label>
   <div class="actions">
     <button class="btn primary" id="btnPrint">🖨 Роздрукувати / Зберегти в PDF</button>
@@ -3064,9 +3049,6 @@ function renderTargets(){
     {k:'Вуглеводи',kcal:t.carb*4, g:t.carb, col:'var(--s-carb)'}
   ];
   const sum = parts.reduce((a,p)=>a+p.kcal,0) || 1;
-  const macroP=parts[0].kcal/sum*100,macroPF=(parts[0].kcal+parts[1].kcal)/sum*100;
-  byId('macroPlate').style.setProperty('--macro-p',`${macroP}%`);
-  byId('macroPlate').style.setProperty('--macro-pf',`${macroPF}%`);
   byId('sBar').innerHTML = parts.map(p=>{
     const pc = p.kcal/sum*100;
     /* підпис усередині — лише якщо сегмент достатньо широкий */
