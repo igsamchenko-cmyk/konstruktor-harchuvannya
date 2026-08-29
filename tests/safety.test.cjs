@@ -50,6 +50,15 @@ assert(uiI18n.includes('Drink fluids regularly throughout the day') && !uiI18n.i
 assert(/@media\(max-width:560px\)/.test(html) && /@media\(max-width:520px\)/.test(html) && /@media\(max-width:360px\)/.test(html),
   'closed foldable and narrow-phone layouts have dedicated breakpoints');
 assert(/horizontal-viewport-segments:2/.test(html), 'dual-segment foldable layout avoids the hinge');
+assert(html.includes('container-name:meal-card') && html.includes('@container meal-card (max-width:620px)'),
+  'meal rows respond to their actual card width in Fold and split-screen layouts');
+assert(html.includes('grid-template-areas:"cat sel sel sel" "g g ck rst"') &&
+  html.includes('@container meal-card (max-width:440px)') &&
+  html.includes('grid-template-areas:"cat ck" "sel sel" "g rst"'),
+  'medium Fold columns use a readable two-row layout while narrow phones keep the established stacked layout');
+assert(html.includes('body:not([data-mode="client"]) .comp') &&
+  html.includes('body[data-mode="client"] .comp{grid-template-columns:96px 1fr 148px 92px}'),
+  'the Fold specialist layout does not alter the dedicated client-mode grid');
 assert(fs.readFileSync('i18n-sprint2.js','utf8').includes('"Умови тренування для оцінки натрію"'),
   'sodium exercise context has an English translation');
 assert(html.includes('./i18n-adaptive.js'), 'adaptive translations are loaded');
