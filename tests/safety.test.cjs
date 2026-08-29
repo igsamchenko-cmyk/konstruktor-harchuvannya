@@ -15,7 +15,8 @@ const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
 assert.equal(new Set(ids).size, ids.length, 'HTML ids remain unique');
 for (const id of ['fDiet','healthScreen','safetyWarn','poolWarn','btnGenWeek','btnShareClient','wWaist','wAdaptive',
   'ciDate','ciAdherence','ciHunger','ciEnergy','ciPerformance','btnAddCheckin','ciLatest','ciList',
-  'sSodiumContext','sodiumContextHint','btnAutoFit','autoFitMsg','productPicker','productPickerSearch','productPickerClose','productPickerList'])
+  'sSodiumContext','sodiumContextHint','btnAutoFit','autoFitMsg','productPicker','productPickerSearch','productPickerClose','productPickerList',
+  'shopDetails','shopCount','macroPlate'])
   assert(ids.includes(id), 'required safety control exists: ' + id);
 assert(/id="fAge" min="18"/.test(html), 'age input exposes the adult-only limit');
 assert(html.includes('./i18n-safety.js'), 'safety translations are loaded');
@@ -30,6 +31,14 @@ assert(html.includes('class="m-ring"'), 'macro summary uses large circular gauge
 assert(/viewport-fit=cover/.test(html), 'viewport includes safe-area support for foldable screens');
 assert(/max-width:1240px/.test(html), 'wide screens use the expanded content width');
 assert(/class="sitem"/.test(html), 'calorie legend uses stable non-wrapping items');
+assert(html.includes('<details class="shop-details" id="shopDetails">') && !html.includes('<details class="shop-details" id="shopDetails" open>'),
+  'the long shopping list is collapsed by default');
+assert(html.includes("byId('shopCount').textContent") && html.includes("ukForm(itemCount,'позиція','позиції','позицій')"),
+  'shopping menu reports item and category counts with localized plurals');
+assert(html.includes("byId('macroPlate').style.setProperty('--macro-p'") && /@keyframes macroPlateFloat/.test(html),
+  'the decorative plate reflects actual macro shares and is animated');
+assert(/prefers-reduced-motion:reduce/.test(html) && html.includes('.macro-plate,.macro-dot{animation:none!important}'),
+  'the macro illustration respects reduced-motion preferences');
 assert(/@media\(max-width:560px\)/.test(html) && /@media\(max-width:520px\)/.test(html) && /@media\(max-width:360px\)/.test(html),
   'closed foldable and narrow-phone layouts have dedicated breakpoints');
 assert(/horizontal-viewport-segments:2/.test(html), 'dual-segment foldable layout avoids the hinge');
@@ -47,6 +56,8 @@ assert(html.includes('function positionProductPicker()') && html.includes("produ
 const adaptiveI18n = fs.readFileSync('i18n-adaptive.js','utf8');
 assert(adaptiveI18n.includes('"Збалансоване меню · 3 дні"') && adaptiveI18n.includes('"Просте меню · 2 дні"'),
   'practical week-mode labels have English translations');
+assert(adaptiveI18n.includes('"Баланс раціону на день"') && adaptiveI18n.includes('"Відкрити список покупок"'),
+  'macro illustration and shopping menu have English translations');
 assert(html.includes('./i18n-checkin.js'), 'check-in translations are loaded');
 assert(fs.readFileSync('sw.js','utf8').includes('./i18n-checkin.js'), 'check-in translations are cached offline');
 assert(html.includes('./i18n-weighing.js'), 'weighing-guide translations are loaded');

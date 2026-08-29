@@ -195,6 +195,31 @@
     padding:6px 0 20px;border-bottom:1px solid var(--hairline);margin-bottom:18px}
   .result>*{min-width:0}
   @media(max-width:900px){.result{grid-template-columns:1fr;gap:18px}}
+  .result-side{display:grid;gap:12px;min-width:0}
+  .macro-scene{position:relative;display:flex;align-items:center;gap:18px;min-height:92px;padding:10px 20px;
+    overflow:hidden;border:1px solid var(--hairline);border-radius:12px;
+    background:linear-gradient(120deg,color-mix(in srgb,var(--accent) 10%,var(--surface)),var(--surface))}
+  .macro-scene::after{content:"";position:absolute;right:-32px;top:-58px;width:180px;height:180px;border-radius:50%;
+    border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);box-shadow:0 0 0 24px color-mix(in srgb,var(--accent) 4%,transparent)}
+  .macro-art{position:relative;z-index:1;flex:0 0 76px;width:76px;height:76px;display:grid;place-items:center}
+  .macro-plate{--macro-p:32%;--macro-pf:61%;position:relative;width:68px;height:68px;border-radius:50%;
+    background:conic-gradient(var(--s-prot) 0 var(--macro-p),var(--s-fat) var(--macro-p) var(--macro-pf),var(--s-carb) var(--macro-pf) 100%);
+    box-shadow:0 8px 22px rgba(0,0,0,.18),inset 0 0 0 5px color-mix(in srgb,var(--surface) 78%,transparent);
+    animation:macroPlateFloat 5.5s ease-in-out infinite}
+  .macro-plate::after{content:"";position:absolute;inset:17px;border-radius:50%;background:var(--surface);
+    box-shadow:0 0 0 1px var(--hairline)}
+  .macro-leaf{position:absolute;z-index:2;left:27px;top:23px;width:15px;height:22px;transform:rotate(-18deg)}
+  .macro-leaf::before,.macro-leaf::after{content:"";position:absolute;width:9px;height:17px;background:var(--accent);
+    border-radius:9px 1px 9px 1px;transform-origin:bottom center}
+  .macro-leaf::before{left:0;transform:rotate(-30deg)}.macro-leaf::after{right:0;transform:scaleX(-1) rotate(-30deg)}
+  .macro-dot{position:absolute;z-index:2;width:7px;height:7px;border-radius:50%;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 13%,transparent)}
+  .macro-dot.one{left:2px;top:10px;color:var(--s-prot);background:currentColor;animation:macroDot 4.3s ease-in-out infinite}
+  .macro-dot.two{right:0;bottom:11px;color:var(--s-carb);background:currentColor;animation:macroDot 4.8s ease-in-out infinite .7s}
+  .macro-scene-copy{position:relative;z-index:1;display:grid;gap:4px;min-width:0}
+  .macro-scene-copy b{font-size:15px;color:var(--ink)}.macro-scene-copy span{font-size:12.5px;color:var(--muted)}
+  @keyframes macroPlateFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-4px) rotate(3deg)}}
+  @keyframes macroDot{0%,100%{transform:translate(0,0);opacity:.6}50%{transform:translate(4px,-5px);opacity:1}}
+  @media(prefers-reduced-motion:reduce){.macro-plate,.macro-dot{animation:none!important}}
   .hero .kcal{font-size:56px;font-weight:800;line-height:1;letter-spacing:0;color:var(--ink)}
   @media(max-width:480px){.hero .kcal{font-size:44px}}
   .hero .unit{font-size:15px;font-weight:600;color:var(--ink-2);margin-left:6px;letter-spacing:0}
@@ -534,9 +559,22 @@
   .reset-g:hover{color:var(--accent-dark)}
   .comp.custom .gwrap input{border-color:var(--accent);}
 
-  /* --- shopping list --- */
+  /* --- compact shopping list menu --- */
+  .shop-details{margin-top:10px;border:1px solid var(--frame);border-radius:11px;background:var(--field);overflow:hidden}
+  .shop-details>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:15px 18px;cursor:pointer;user-select:none}.shop-details>summary::-webkit-details-marker{display:none}
+  .shop-summary-main{display:flex;align-items:center;gap:12px;min-width:0}.shop-summary-main b{display:block;color:var(--ink)}
+  .shop-summary-main small{display:block;margin-top:3px;color:var(--muted);font-size:12.5px}
+  .shop-bag{position:relative;flex:0 0 38px;width:38px;height:38px;border-radius:10px;background:var(--accent-soft)}
+  .shop-bag::before{content:"";position:absolute;left:10px;top:12px;width:18px;height:16px;border:2px solid var(--accent);border-radius:3px 3px 7px 7px}
+  .shop-bag::after{content:"";position:absolute;left:14px;top:7px;width:10px;height:8px;border:2px solid var(--accent);border-bottom:0;border-radius:7px 7px 0 0}
+  .shop-toggle{display:flex;align-items:center;gap:8px;color:var(--accent-dark);font-size:13px;font-weight:700;white-space:nowrap}
+  .shop-toggle i{font-style:normal;font-size:17px;transition:transform .18s}.shop-details[open] .shop-toggle i{transform:rotate(180deg)}
+  .shop-toggle .when-open{display:none}.shop-details[open] .shop-toggle .when-closed{display:none}.shop-details[open] .shop-toggle .when-open{display:inline}
+  .shop-details[open]>summary{border-bottom:1px solid var(--hairline);background:color-mix(in srgb,var(--accent) 5%,var(--field))}
   .shop{columns:2;column-gap:28px}
-  @media(max-width:640px){.shop{columns:1}}
+  .shop-details .shop{padding:18px}
+  @media(max-width:640px){.shop{columns:1}.shop-details>summary{padding:13px 14px}.shop-toggle span{display:none!important}}
   .shop h4{margin:0 0 6px;font-size:14px;break-after:avoid;color:var(--produce-dark)}
   .shop ul{margin:0 0 16px;padding:0;list-style:none;break-inside:avoid-column}
   .shop li{display:flex;justify-content:space-between;gap:12px;padding:4px 0;
@@ -1033,10 +1071,16 @@
       <div class="expl" id="tWater" style="margin-top:6px">💧</div>
       <div class="fcast" id="tForecast"></div>
     </div>
-    <div class="split">
-      <div class="shead"><span>Розподіл калорій</span></div>
-      <div class="sbar" id="sBar"></div>
-      <div class="slegend" id="sLegend"></div>
+    <div class="result-side">
+      <div class="macro-scene" aria-hidden="true">
+        <div class="macro-art"><div class="macro-plate" id="macroPlate"><span class="macro-leaf"></span></div><i class="macro-dot one"></i><i class="macro-dot two"></i></div>
+        <div class="macro-scene-copy"><b>Баланс раціону на день</b><span>Білки · жири · вуглеводи · клітковина</span></div>
+      </div>
+      <div class="split">
+        <div class="shead"><span>Розподіл калорій</span></div>
+        <div class="sbar" id="sBar"></div>
+        <div class="slegend" id="sLegend"></div>
+      </div>
     </div>
   </div>
   <div class="tiles">
@@ -1166,7 +1210,11 @@
 <section class="card" id="step4">
   <div class="step-tag"><span class="num">4</span> Результат</div>
   <h2>Список покупок на тиждень</h2>
-  <div class="shop" id="shopList"></div>
+  <details class="shop-details" id="shopDetails">
+    <summary><span class="shop-summary-main"><span class="shop-bag" aria-hidden="true"></span><span><b>Відкрити список покупок</b><small id="shopCount">—</small></span></span>
+      <span class="shop-toggle"><span class="when-closed">Показати</span><span class="when-open">Згорнути</span><i aria-hidden="true">⌄</i></span></summary>
+    <div class="shop" id="shopList"></div>
+  </details>
   <label class="f pro-only" style="margin-top:18px">Нотатка клієнту (буде видно у клієнтському режимі та в PDF)
     <textarea id="proNote" rows="3" placeholder="Напр.: Олено, тиждень пробний. Воду п'ємо до 18:00, ваги — щосереди зранку. Питання — в Telegram."></textarea>
   </label>
@@ -3016,6 +3064,9 @@ function renderTargets(){
     {k:'Вуглеводи',kcal:t.carb*4, g:t.carb, col:'var(--s-carb)'}
   ];
   const sum = parts.reduce((a,p)=>a+p.kcal,0) || 1;
+  const macroP=parts[0].kcal/sum*100,macroPF=(parts[0].kcal+parts[1].kcal)/sum*100;
+  byId('macroPlate').style.setProperty('--macro-p',`${macroP}%`);
+  byId('macroPlate').style.setProperty('--macro-pf',`${macroPF}%`);
   byId('sBar').innerHTML = parts.map(p=>{
     const pc = p.kcal/sum*100;
     /* підпис усередині — лише якщо сегмент достатньо широкий */
@@ -3340,15 +3391,21 @@ function renderShop(){
     }
   }
   const cats = Object.keys(CATS).sort((a,b)=>CATS[a].order-CATS[b].order);
-  byId('shopList').innerHTML = cats.map(c=>{
+  const groups = cats.map(c=>{
     const items = [...agg.entries()]
       .map(([id,g])=>({p:prodById(id),g}))
       .filter(x=>x.p && (x.p.dish ? c==='dish' : x.p.c===c))
       .sort((a,b)=>b.g-a.g);
-    if(!items.length) return '';
-    return `<div><h4>${CATS[c].name}</h4><ul>${items.map(x=>
-      `<li><span>${escHtml(x.p.n)}${x.p.ml?' (напій)':x.p.dry?' (суха вага)':x.p.raw?' (сира вага)':''}</span><b>${shopAmount(x.p,x.g)}</b></li>`).join('')}</ul></div>`;
-  }).join('');
+    if(!items.length) return null;
+    return {count:items.length,html:`<div><h4>${CATS[c].name}</h4><ul>${items.map(x=>
+      `<li><span>${escHtml(x.p.n)}${x.p.ml?' (напій)':x.p.dry?' (суха вага)':x.p.raw?' (сира вага)':''}</span><b>${shopAmount(x.p,x.g)}</b></li>`).join('')}</ul></div>`};
+  }).filter(Boolean);
+  byId('shopList').innerHTML = groups.map(x=>x.html).join('');
+  const itemCount=groups.reduce((sum,x)=>sum+x.count,0),categoryCount=groups.length;
+  const ukForm=(n,one,few,many)=>n%10===1&&n%100!==11?one:[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?few:many;
+  byId('shopCount').textContent=window.nutriLanguage==='en'
+    ? `${itemCount} items · ${categoryCount} categories`
+    : `${itemCount} ${ukForm(itemCount,'позиція','позиції','позицій')} · ${categoryCount} ${ukForm(categoryCount,'категорія','категорії','категорій')}`;
 }
 
 function renderTrainingPromo(){
