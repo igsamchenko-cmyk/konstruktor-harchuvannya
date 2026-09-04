@@ -2,21 +2,31 @@ const fs = require('fs');
 const vm = require('vm');
 const assert = require('assert');
 
-const html = fs.readFileSync('index.html', 'utf8');
-const inline = html.match(/<script>([\s\S]*?)<\/script>/);
-if (!inline) throw new Error('Inline application script not found');
+const documentHtml = fs.readFileSync('index.html', 'utf8');
+const foodData = fs.readFileSync('food-data.js', 'utf8');
+const app = fs.readFileSync('app.js', 'utf8');
+const css = fs.readFileSync('styles.css', 'utf8');
+const html = documentHtml+'\n'+css+'\n'+foodData+'\n'+app;
 const marker = '/* ============ РЕНДЕР ============ */';
-const core = inline[1].slice(0, inline[1].indexOf(marker));
-const progressStart = inline[1].indexOf('const fmtW =');
-const progressEnd = inline[1].indexOf('/* ============ ВИКЛЮЧЕННЯ: РЕНДЕР І ЛОГІКА ============ */');
+const core = foodData+'\n'+app.slice(0, app.indexOf(marker));
+const progressStart = app.indexOf('const fmtW =');
+const progressEnd = app.indexOf('/* ============ ВИКЛЮЧЕННЯ: РЕНДЕР І ЛОГІКА ============ */');
 assert(progressStart>0&&progressEnd>progressStart,'progress render source is discoverable');
-const progressRender = inline[1].slice(progressStart,progressEnd);
-const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
+const progressRender = app.slice(progressStart,progressEnd);
+const ids = [...documentHtml.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
+assert(documentHtml.includes('<link rel="stylesheet" href="./styles.css">') &&
+  documentHtml.includes('<script src="./food-data.js"></script>') &&
+  documentHtml.includes('<script src="./app.js"></script>') &&
+  !/<script>/.test(documentHtml),
+  'application CSS and JavaScript are externalized');
+assert(documentHtml.includes('Content-Security-Policy') && documentHtml.includes("script-src 'self'") &&
+  !documentHtml.includes("script-src 'self' 'unsafe-inline'"),
+  'CSP blocks inline JavaScript and restricts application scripts to this origin');
 assert.equal(new Set(ids).size, ids.length, 'HTML ids remain unique');
 for (const id of ['fDiet','healthScreen','safetyWarn','poolWarn','btnGenWeek','btnShareClient','wWaist','wAdaptive',
   'ciDate','ciAdherence','ciHunger','ciEnergy','ciPerformance','btnAddCheckin','ciLatest','ciList',
   'sSodiumContext','sodiumContextHint','btnAutoFit','autoFitMsg','productPicker','productPickerSearch','productPickerClose','productPickerList',
-  'shopDetails','shopCount','macroBanner'])
+  'shopDetails','shopCount','macroBanner','storageStatus','btnSaveBrowser','btnForgetLocal'])
   assert(ids.includes(id), 'required safety control exists: ' + id);
 assert(/id="fAge" min="18"/.test(html), 'age input exposes the adult-only limit');
 assert(html.includes('./i18n-safety.js'), 'safety translations are loaded');
@@ -70,6 +80,9 @@ assert(/\.product-picker\{position:fixed/.test(html) && /max-height:min\(460px,c
   'product picker is viewport-bound and scrollable');
 assert(html.includes('function positionProductPicker()') && html.includes("productPickerSearch.addEventListener('input'"),
   'product picker supports viewport-aware placement and live search');
+assert(html.includes('role="tablist"') && html.includes('role="tab"') &&
+  html.includes("weighTabs.addEventListener('keydown'") && html.includes("productPickerList.addEventListener('keydown'"),
+  'tabs and product options expose roles and arrow-key navigation');
 const adaptiveI18n = fs.readFileSync('i18n-adaptive.js','utf8');
 assert(adaptiveI18n.includes('"Збалансоване меню · 3 дні"') && adaptiveI18n.includes('"Просте меню · 2 дні"'),
   'practical week-mode labels have English translations');
@@ -118,6 +131,10 @@ assert(html.includes('top:auto!important;right:10px') && html.includes('bottom:m
 const swSource = fs.readFileSync('sw.js','utf8');
 assert(swSource.includes('res.ok') && swSource.includes("res.type === 'basic'"),
   'service worker only runtime-caches successful same-origin app responses');
+assert(swSource.includes("k.startsWith(CACHE_PREFIX)") && !swSource.includes("keys.filter(k => k !== CACHE)"),
+  'service worker deletes only caches owned by this application');
+assert(swSource.includes("e.request.mode === 'navigate'") && swSource.includes('Response.error()'),
+  'service worker uses the app shell fallback only for navigation requests');
 assert(fs.existsSync('.github/workflows/safety.yml'), 'GitHub Actions safety workflow exists');
 const context = {
   console,
@@ -129,7 +146,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext('let __seed=123456789; Math.random=()=>((__seed=Math.imul(__seed,1664525)+1013904223>>>0)/4294967296);', context);
-vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, escHtml, sanitizeCustomProduct, addCustomProduct, removeCustomProducts, excludedSet, migrateExclusionState, migrateSettings, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, selectList, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, enforceWeeklyProductLimits, gramBounds, portionUnit, dayScore, simpleFitCandidates, simpleFitScore, fitSimpleDay, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, normalizeCheckins, recentCheckin, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
+vm.runInContext(core + '\nglobalThis.api = {state, PRODUCTS, MEAL_COMPS, PRESETS, escHtml, sanitizeTime, sanitizeTimes, sanitizeCustomProduct, addCustomProduct, removeCustomProducts, applyPortableState, excludedSet, migrateExclusionState, migrateSettings, setPresetState, setManualExclusion, sanitizeProfile, calcTargets, calcWeight, categoryMatches, dietAllows, pool, selectList, menuPoolReport, medicalSafety, generationBlockReason, safeGenWeek, calcDay, genWeek, enforceWeeklyProductLimits, gramBounds, portionUnit, dayScore, simpleFitCandidates, simpleFitScore, fitSimpleDay, qualityNutrients, qualityLimits, forecastRange, expectedWeightAt, normalizeWeightEntries, normalizeCheckins, recentCheckin, rollingWeightPoints, robustWeeklyRate, weightFeedback, swapAlternatives, applyClientSwap};', context);
 
 const a = context.api;
 const reset = () => {
@@ -155,6 +172,42 @@ assert.equal(unsafe.k, 450, 'custom calories are clamped through numeric parsing
 assert(a.escHtml('"><script>alert(1)</script>') === '&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;',
   'HTML escaping covers quotes and tag delimiters');
 a.removeCustomProducts();
+
+assert.equal(a.sanitizeTime('8:05'),'08:05','valid clock time is normalized');
+assert.equal(a.sanitizeTime('будь-коли'),'будь-коли','short plain-text time labels remain supported');
+assert.equal(a.sanitizeTime('<img src=x onerror=alert(1)>'),'','HTML payload is rejected as a meal time');
+reset();
+a.state.settings.times=['08:00','<svg onload=alert(1)>','24:99','після тренування'];
+a.migrateSettings();
+assert.deepEqual(a.state.settings.times,['08:00',null,null,'після тренування'],
+  'every imported meal time is normalized to a valid clock or bounded plain text');
+assert(html.includes("${escHtml(mealTimes()[mi]||'')}") &&
+  html.includes("${esc(mealTimes()[d.meals.indexOf(m)]||'')}"),
+  'meal times are escaped in both interactive and print HTML sinks');
+assert(html.includes('function clientShareProfile()') &&
+  !/function clientShareProfile\(\)[\s\S]*?return \{[^}]*health/.test(html),
+  'simplified share payload excludes medical screening');
+assert(html.includes('importedFromLink=fromLink') &&
+  html.includes('importedFromLink || !localPersistenceEnabled') && html.includes("STORAGE_PREF_KEY,'1'"),
+  'shared links cannot overwrite the local profile and browser persistence requires opt-in');
+assert(html.includes('...localSnapshot()') && html.includes('done:state.done') && html.includes('activeDay:state.activeDay'),
+  'JSON backup includes note, checklist and UI position');
+
+reset();
+a.applyPortableState({
+  profile:{name:'<b>Олена</b>',health:{kidney:'yes',diabetes:true}},
+  settings:{times:['<img onerror=alert(1)>'],meals:99,proteinPerKg:99},
+  note:'<svg onload=alert(1)>важливо',
+  done:{'0:1':true,'__proto__':true},
+  days:[]
+});
+assert(!/[<>]/.test(a.state.profile.name+a.state.note),'imported user text is normalized');
+assert.equal(a.state.profile.health.kidney,false,'non-boolean medical flags are rejected');
+assert.equal(a.state.profile.health.diabetes,true,'boolean medical flags survive validation');
+assert.equal(a.state.settings.meals,4,'invalid imported meal count uses the safe default');
+assert.equal(a.state.settings.proteinPerKg,2.4,'imported macro settings are clamped');
+assert.deepEqual(a.state.settings.times,[null],'malicious imported meal time is rejected');
+assert.deepEqual(a.state.done,{'0:1':1},'only valid checklist keys are imported');
 
 reset();
 a.state.settings.sodiumContext='invalid';

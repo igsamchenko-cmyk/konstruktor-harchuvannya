@@ -1,9 +1,10 @@
 /* Service worker: офлайн-робота додатку.
-   При оновленні index.html підвищуйте номер версії кешу (v46 → v47), щоб
+   При оновленні index.html підвищуйте номер версії кешу (v48 → v49), щоб
    користувачі отримали свіжу версію. */
-const CACHE = 'nutri-konstruktor-v46';
+const CACHE_PREFIX = 'nutri-konstruktor-';
+const CACHE = CACHE_PREFIX + 'v48';
 const ASSETS = [
-  './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png',
+  './', './index.html', './styles.css', './food-data.js', './app.js', './manifest.webmanifest', './icon-192.png', './icon-512.png',
   './training-constructor-preview.jpg', './training-exercise-preview.webp',
   './balanced-plate-banner-wide.jpg',
   './i18n-ui.js', './i18n-safety.js', './i18n-foods-1.js', './i18n-foods-2.js', './i18n-recipes.js', './i18n-sprint2.js', './i18n-adaptive.js', './i18n-checkin.js', './i18n-weighing.js', './i18n.js'
@@ -16,7 +17,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k.startsWith(CACHE_PREFIX) && k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -35,6 +36,6 @@ self.addEventListener('fetch', e => {
         return res;
       })
       .catch(() => caches.match(e.request, { ignoreSearch: true })
-        .then(hit => hit || caches.match('./index.html')))
+        .then(hit => hit || (e.request.mode === 'navigate' ? caches.match('./index.html') : Response.error())))
   );
 });
